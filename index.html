@@ -220,6 +220,134 @@
             });
         }
 
+        // Detect primary transmission paths for vertical stacking
+        function detectLinearChains(nodes, links) {
+            // Create adjacency maps for easy traversal
+            const incomingMap = new Map(); // target -> [sources]
+            const outgoingMap = new Map(); // source -> [targets]
+            
+            // Initialize maps
+            nodes.forEach((node, id) => {
+                incomingMap.set(id, []);
+                outgoingMap.set(id, []);
+            });
+            
+            // Populate adjacency maps
+            links.forEach(link => {
+                incomingMap.get(link.target).push(link.source);
+                outgoingMap.get(link.source).push(link.target);
+            });
+            
+            const chains = [];
+            const processedNodes = new Set();
+            
+            // Find transmission roots (nodes with no teachers)
+            const roots = [];
+            nodes.forEach((node, nodeId) => {
+                if (incomingMap.get(nodeId).length === 0) {
+                    roots.push(nodeId);
+                }
+            });
+            
+            // For each root, trace primary transmission paths
+            roots.forEach(rootId => {
+                if (processedNodes.has(rootId)) return;
+                
+                const primaryPath = tracePrimaryPath(rootId, incomingMap, outgoingMap, nodes, processedNodes);
+                
+                if (primaryPath.length >= 2) {
+                    chains.push({
+                        id: `chain_${chains.length}`,
+                        nodes: primaryPath,
+                        length: primaryPath.length,
+                        startNode: primaryPath[0],
+                        endNode: primaryPath[primaryPath.length - 1]
+                    });
+                    
+                    // Mark all nodes in this chain as processed
+                    primaryPath.forEach(nodeId => processedNodes.add(nodeId));
+                }
+            });
+            
+            return chains;
+        }
+        
+        // Trace primary transmission path from a starting node
+        function tracePrimaryPath(startNodeId, incomingMap, outgoingMap, nodes, processedNodes) {
+            const path = [startNodeId];
+            let current = startNodeId;
+            
+            while (true) {
+                const children = outgoingMap.get(current);
+                
+                // No children - end of path
+                if (!children || children.length === 0) break;
+                
+                // Single child - continue path
+                if (children.length === 1) {
+                    const child = children[0];
+                    if (processedNodes.has(child)) break; // Already in another chain
+                    
+                    path.push(child);
+                    current = child;
+                    continue;
+                }
+                
+                // Multiple children - choose primary successor using heuristics
+                const primaryChild = choosePrimarySuccessor(current, children, nodes, incomingMap);
+                
+                if (primaryChild && !processedNodes.has(primaryChild)) {
+                    path.push(primaryChild);
+                    current = primaryChild;
+                } else {
+                    break;
+                }
+            }
+            
+            return path;
+        }
+        
+        // Choose primary successor when there are multiple students
+        function choosePrimarySuccessor(teacherId, studentIds, nodes, incomingMap) {
+            // Heuristic 1: Prefer students with single teacher (main transmission line)
+            const singleTeacherStudents = studentIds.filter(studentId => {
+                return incomingMap.get(studentId).length === 1;
+            });
+            
+            if (singleTeacherStudents.length === 1) {
+                return singleTeacherStudents[0];
+            }
+            
+            // Heuristic 2: Prefer chronologically first student (earliest dates)
+            const studentsWithDates = studentIds.map(studentId => {
+                const student = nodes.get(studentId);
+                const parsedDate = student ? parseDate(student.dates) : null;
+                return { id: studentId, date: parsedDate, student: student };
+            }).filter(item => item.date !== null);
+            
+            if (studentsWithDates.length > 0) {
+                studentsWithDates.sort((a, b) => a.date - b.date);
+                return studentsWithDates[0].id;
+            }
+            
+            // Heuristic 3: Prefer same transmission mode as teacher
+            const teacher = nodes.get(teacherId);
+            if (teacher) {
+                const sameTransmissionStudents = studentIds.filter(studentId => {
+                    const student = nodes.get(studentId);
+                    return student && student.transmissionMode === teacher.transmissionMode;
+                });
+                
+                if (sameTransmissionStudents.length === 1) {
+                    return sameTransmissionStudents[0];
+                }
+            }
+            
+            // Heuristic 4: Fall back to alphabetical order for consistency
+            const sortedStudents = studentIds.slice().sort();
+            return sortedStudents[0];
+        }
+
         // Build node and link data
         function buildGraphData(data) {
             const nodes = new Map();
@@ -259,9 +387,31 @@
                 }
             });
 
+            // Detect linear chains for vertical stacking
+            const chains = detectLinearChains(nodes, links);
+            
+            // Sort chains by length (longest first) for center-out positioning
+            chains.sort((a, b) => b.length - a.length);
+            
+            // Mark nodes with their chain information
+            const nodeArray = Array.from(nodes.values());
+            chains.forEach((chain, chainIndex) => {
+                chain.nodes.forEach((nodeId, positionInChain) => {
+                    const node = nodes.get(nodeId);
+                    if (node) {
+                        node.chainId = chain.id;
+                        node.chainIndex = chainIndex;
+                        node.positionInChain = positionInChain;
+                        node.isInChain = true;
+                        node.chainLength = chain.length;
+                    }
+                });
+            });
+            
             return {
-                nodes: Array.from(nodes.values()),
-                links: links
+                nodes: nodeArray,
+                links: links,
+                chains: chains
             };
         }
 
@@ -624,51 +774,76 @@
             const levelGroups = d3.groups(data.nodes, d => d.level);
             const maxLevel = d3.max(levelGroups, d => d[0]);
 
-            // Position nodes with chronological horizontal sorting and better vertical spacing
-            levelGroups.forEach(([level, levelNodes]) => {
-                const verticalSpacing = 120; // Increased spacing between levels
-                const y = level * verticalSpacing + 100; // Start from top with margin
+            // Implement center-out positioning system for chains
+            positionNodesWithChains(data, width, height);
+            
+            function positionNodesWithChains(data, width, height) {
+                const chains = data.chains || [];
+                const nodes = data.nodes;
                 
-                // Sort nodes within each level by date (left to right = earliest to latest)
-                levelNodes.sort((a, b) => {
-                    const dateA = a.parsedDate || 9999; // Put undated nodes at end
-                    const dateB = b.parsedDate || 9999;
-                    
-                    if (dateA !== dateB) {
-                        return dateA - dateB;
+                // Calculate chain column positions using center-out algorithm
+                const chainColumnSpacing = 250; // Space between chain columns
+                const centerX = width / 2;
+                const chainPositions = new Map();
+                
+                // Assign X positions to chains (center-out)
+                chains.forEach((chain, index) => {
+                    let x;
+                    if (index === 0) {
+                        // Longest chain goes in center
+                        x = centerX;
+                    } else {
+                        // Alternate left/right placement
+                        const side = index % 2 === 1 ? -1 : 1; // odd = left, even = right
+                        const distance = Math.ceil(index / 2) * chainColumnSpacing;
+                        x = centerX + (side * distance);
                     }
-                    
-                    // If dates are equal or both null, sort by lineage for consistency
-                    if (a.lineage !== b.lineage) {
-                        return a.lineage.localeCompare(b.lineage);
-                    }
-                    
-                    // Finally sort by name
-                    return a.name.localeCompare(b.name);
+                    chainPositions.set(chain.id, x);
                 });
                 
-                const totalWidth = width - 200; // Leave horizontal margin
-                const spacing = totalWidth / (levelNodes.length + 1);
+                // Position chain nodes vertically within their columns
+                const chainVerticalSpacing = 60; // Tight spacing within chains
+                const levelVerticalSpacing = 120; // Standard level spacing
                 
-                levelNodes.forEach((node, i) => {
-                    let x = 100 + spacing * (i + 1); // Start with left margin
+                chains.forEach(chain => {
+                    const baseX = chainPositions.get(chain.id);
                     
-                    // Special positioning for Śākyamuni Buddha - place it to the left side
-                    if (node.name === 'Śākyamuni Buddha') {
-                        // Find Cheu Nangwa Dampa's position from previous level
-                        const prevLevelNodes = data.nodes.filter(n => n.level === level - 1);
-                        const cheuNangwa = prevLevelNodes.find(n => n.name === 'Cheu Nangwa Dampa Samkyi Mikhyapa');
-                        if (cheuNangwa) {
-                            x = cheuNangwa.x; // Align directly below Cheu Nangwa
-                        } else {
-                            x = 200; // Fallback to left side
+                    chain.nodes.forEach((nodeId, positionInChain) => {
+                        const node = nodes.find(n => n.id === nodeId);
+                        if (node) {
+                            node.x = baseX;
+                            // Use tight vertical spacing for chain nodes
+                            node.y = (node.level * levelVerticalSpacing) + (positionInChain * chainVerticalSpacing) + 100;
                         }
-                    }
-                    
-                    node.x = x;
-                    node.y = y;
+                    });
                 });
-            });
+                
+                // Position non-chain nodes (branching points) with standard spacing
+                const nonChainNodes = nodes.filter(node => !node.isInChain);
+                const levelGroups = d3.groups(nonChainNodes, d => d.level);
+                
+                levelGroups.forEach(([level, levelNodes]) => {
+                    const y = level * levelVerticalSpacing + 100;
+                    
+                    // Sort non-chain nodes for consistent positioning
+                    levelNodes.sort((a, b) => {
+                        const dateA = a.parsedDate || 9999;
+                        const dateB = b.parsedDate || 9999;
+                        if (dateA !== dateB) return dateA - dateB;
+                        if (a.lineage !== b.lineage) return a.lineage.localeCompare(b.lineage);
+                        return a.name.localeCompare(b.name);
+                    });
+                    
+                    // Position non-chain nodes between chain columns
+                    const availableWidth = width - 400; // Leave margins
+                    const spacing = availableWidth / (levelNodes.length + 1);
+                    
+                    levelNodes.forEach((node, i) => {
+                        node.x = 200 + spacing * (i + 1);
+                        node.y = y;
+                    });
+                });
+            }
 
             // Create links
             const links = g.selectAll('.link')
@@ -696,6 +871,50 @@
                 })
                 .attr('stroke-width', 2)
                 .attr('fill', 'none');
+
+            // Create chain containers first (behind nodes)
+            if (data.chains && data.chains.length > 0) {
+                const chainContainers = g.selectAll('.chain-container')
+                    .data(data.chains)
+                    .enter()
+                    .append('g')
+                    .attr('class', 'chain-container');
+
+                // Add chain background rectangles
+                chainContainers.append('rect')
+                    .attr('class', 'chain-background')
+                    .attr('x', d => {
+                        const firstNode = data.nodes.find(n => n.id === d.nodes[0]);
+                        return firstNode ? firstNode.x - 100 : 0;
+                    })
+                    .attr('y', d => {
+                        const firstNode = data.nodes.find(n => n.id === d.nodes[0]);
+                        return firstNode ? firstNode.y - 40 : 0;
+                    })
+                    .attr('width', 200)
+                    .attr('height', d => d.length * 60 + 20) // Height based on chain length
+                    .attr('fill', 'rgba(200, 200, 200, 0.1)')
+                    .attr('stroke', 'rgba(150, 150, 150, 0.3)')
+                    .attr('stroke-width', 1)
+                    .attr('rx', 8)
+                    .attr('ry', 8);
+
+                // Add chain labels
+                chainContainers.append('text')
+                    .attr('class', 'chain-label')
+                    .attr('x', d => {
+                        const firstNode = data.nodes.find(n => n.id === d.nodes[0]);
+                        return firstNode ? firstNode.x : 0;
+                    })
+                    .attr('y', d => {
+                        const firstNode = data.nodes.find(n => n.id === d.nodes[0]);
+                        return firstNode ? firstNode.y - 50 : 0;
+                    })
+                    .attr('text-anchor', 'middle')
+                    .attr('font-size', '11px')
+                    .attr('fill', '#666')
+                    .text(d => `Chain (${d.length} nodes)`);
+            }
 
             // Create node groups
             const nodeGroups = g.selectAll('.node-group')
