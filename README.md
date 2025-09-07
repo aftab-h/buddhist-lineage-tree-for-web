@@ -7,7 +7,7 @@ An interactive web visualization of the Dzogchen Buddhist lineage transmission t
 - **Interactive Visualization**: Hierarchical flow chart showing transmission relationships
 - **Color-coded Lineages**: Different colors for Mind-Mind, Symbolic, and Aural transmissions
 - **Search Functionality**: Find specific teachers by English or Tibetan names
-- **Filter by Lineage**: Focus on Vimalamitra, Vairocana, or Heart Essence branches
+- **Filter by Lineage**: Focus on Vimalamitra, Vairocana, or Padmasambhava branches
 - **Hover Tooltips**: Detailed information about each teacher
 - **Click to Highlight**: Show complete transmission paths
 - **Zoom & Pan**: Navigate the full lineage tree

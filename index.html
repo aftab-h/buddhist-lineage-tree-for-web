@@ -149,7 +149,7 @@
                 <button class="filter-btn active" data-filter="all">All Lineages</button>
                 <button class="filter-btn" data-filter="Vimalamitra">Vimalamitra</button>
                 <button class="filter-btn" data-filter="Vairocana">Vairocana</button>
-                <button class="filter-btn" data-filter="Heart Essence of the Ḍākinī">Heart Essence</button>
+                <button class="filter-btn" data-filter="Padmasambhava">Padmasambhava</button>
             </div>
         </div>
 
@@ -578,8 +578,16 @@
             // Initial render
             renderVisualization(graphData);
 
-            // Center the view initially
-            const initialTransform = d3.zoomIdentity.translate(0, 0).scale(0.6);
+            // Center the view initially at top portion of the map
+            const bounds = g.node().getBBox();
+            const fullWidth = window.innerWidth;
+            const fullHeight = window.innerHeight;
+            const scale = 0.6;
+            const translateX = (fullWidth - bounds.width * scale) / 2 - bounds.x * scale;
+            // Position at top portion - show top 25% of the visualization
+            const translateY = -bounds.y * scale + 100; // Start from top with some padding
+            
+            const initialTransform = d3.zoomIdentity.translate(translateX, translateY).scale(scale);
             svg.transition().duration(750).call(zoom.transform, initialTransform);
         }
 
