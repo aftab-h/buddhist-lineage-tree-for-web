@@ -220,132 +220,71 @@
             });
         }
 
-        // Detect primary transmission paths for vertical stacking
-        function detectLinearChains(nodes, links) {
-            // Create adjacency maps for easy traversal
-            const incomingMap = new Map(); // target -> [sources]
-            const outgoingMap = new Map(); // source -> [targets]
-            
-            // Initialize maps
-            nodes.forEach((node, id) => {
-                incomingMap.set(id, []);
-                outgoingMap.set(id, []);
-            });
-            
-            // Populate adjacency maps
-            links.forEach(link => {
-                incomingMap.get(link.target).push(link.source);
-                outgoingMap.get(link.source).push(link.target);
-            });
-            
-            const chains = [];
-            const processedNodes = new Set();
-            
-            // Find transmission roots (nodes with no teachers)
-            const roots = [];
-            nodes.forEach((node, nodeId) => {
-                if (incomingMap.get(nodeId).length === 0) {
-                    roots.push(nodeId);
+        // Define columns within each transmission type zone
+        function defineTransmissionColumns(nodes) {
+            // Define columns within each transmission zone
+            const transmissionColumns = {
+                // Blue zone (Mind-to-Mind) - single central column
+                mindToMind: {
+                    column1: [
+                        'Samantabhadra',
+                        'Samantabhadrī', 
+                        'Buddhas of the Five Families',
+                        'Supreme Emanation Blessing',
+                        'Sublime Wisdom Emanation (Vajradhara)',
+                        'Vajrasattva',
+                        'Vajrapāṇi',
+                        'Cheu Nangwa Dampa Samkyi Mikhyapa',
+                        'Śākyamuni Buddha'
+                    ]
+                },
+                
+                // Purple zone (Symbolic) - three main columns  
+                symbolic: {
+                    vimalamitra: ['Garab Dorje', 'Mañjuśrimitra', 'Śrī Siṃha', 'Jñānasūtra', 'Vimalamitra'],
+                    padmasambhava: ['Garab Dorje', 'Mañjuśrimitra', 'Śrī Siṃha', 'Padmasambhava'],
+                    vairocana: ['Garab Dorje', 'Śrī Siṃha', 'Vairocana']
+                },
+                
+                // Green zone (Aural) - three descendant columns
+                aural: {
+                    vimalamitra: [
+                        'King Trisong Detsen', 'Nyang Tingzin Zanpo', 'Bé Lodrö Wangchuk', 
+                        'Drom Rinchen Bar', 'Dangma Lhundrup Gyaltsen', 'Chetsun Sengge Wangchuk',
+                        'Zhangtön Tashi Dorje', 'Nyima Bum', 'Guru Jober', 'Trulzhik Senggé Gyabpa',
+                        'Melong Dorje', 'Kumārarāja', 'Longchenpa Drime Özer'
+                    ],
+                    padmasambhava: [
+                        'Yeshe Tsogyel', 'Princess Lhacam Pema Sel', 'Pema Ledreltsel/Tsultrim Dorje',
+                        'Tulku Legden/Gyalse Legpa', 'Karmapa Rangjung Dorje', 'Gyalwa Yungtön Dorje',
+                        'Meban Rinchen Lingpa', 'Rigzin Gödem', 'Jadralwa Zöpa'
+                    ],
+                    vairocana: [
+                        'Pang Sang-gyé Gönpo', 'Ngenlam Jangchub Gyaltsen', 'Zadam Rinchenyik',
+                        'Khugyur Salwaichok', 'Yudra Nyingpo', 'Aro Yeshe Jungne', 'Setsün',
+                        'Jangtön Namdak', 'Kadampa Deshek'
+                    ]
                 }
-            });
+            };
+
+            // Mark nodes with their transmission zone and column
+            const nodeMap = new Map(nodes.map(n => [n.id, n]));
             
-            // For each root, trace primary transmission paths
-            roots.forEach(rootId => {
-                if (processedNodes.has(rootId)) return;
-                
-                const primaryPath = tracePrimaryPath(rootId, incomingMap, outgoingMap, nodes, processedNodes);
-                
-                if (primaryPath.length >= 2) {
-                    chains.push({
-                        id: `chain_${chains.length}`,
-                        nodes: primaryPath,
-                        length: primaryPath.length,
-                        startNode: primaryPath[0],
-                        endNode: primaryPath[primaryPath.length - 1]
+            Object.keys(transmissionColumns).forEach(transmissionType => {
+                Object.keys(transmissionColumns[transmissionType]).forEach(columnName => {
+                    transmissionColumns[transmissionType][columnName].forEach((nodeName, index) => {
+                        const node = nodeMap.get(nodeName);
+                        if (node) {
+                            node.transmissionZone = transmissionType;
+                            node.columnName = columnName;
+                            node.positionInColumn = index;
+                            node.isInMainColumn = true;
+                        }
                     });
-                    
-                    // Mark all nodes in this chain as processed
-                    primaryPath.forEach(nodeId => processedNodes.add(nodeId));
-                }
-            });
-            
-            return chains;
-        }
-        
-        // Trace primary transmission path from a starting node
-        function tracePrimaryPath(startNodeId, incomingMap, outgoingMap, nodes, processedNodes) {
-            const path = [startNodeId];
-            let current = startNodeId;
-            
-            while (true) {
-                const children = outgoingMap.get(current);
-                
-                // No children - end of path
-                if (!children || children.length === 0) break;
-                
-                // Single child - continue path
-                if (children.length === 1) {
-                    const child = children[0];
-                    if (processedNodes.has(child)) break; // Already in another chain
-                    
-                    path.push(child);
-                    current = child;
-                    continue;
-                }
-                
-                // Multiple children - choose primary successor using heuristics
-                const primaryChild = choosePrimarySuccessor(current, children, nodes, incomingMap);
-                
-                if (primaryChild && !processedNodes.has(primaryChild)) {
-                    path.push(primaryChild);
-                    current = primaryChild;
-                } else {
-                    break;
-                }
-            }
-            
-            return path;
-        }
-        
-        // Choose primary successor when there are multiple students
-        function choosePrimarySuccessor(teacherId, studentIds, nodes, incomingMap) {
-            // Heuristic 1: Prefer students with single teacher (main transmission line)
-            const singleTeacherStudents = studentIds.filter(studentId => {
-                return incomingMap.get(studentId).length === 1;
-            });
-            
-            if (singleTeacherStudents.length === 1) {
-                return singleTeacherStudents[0];
-            }
-            
-            // Heuristic 2: Prefer chronologically first student (earliest dates)
-            const studentsWithDates = studentIds.map(studentId => {
-                const student = nodes.get(studentId);
-                const parsedDate = student ? parseDate(student.dates) : null;
-                return { id: studentId, date: parsedDate, student: student };
-            }).filter(item => item.date !== null);
-            
-            if (studentsWithDates.length > 0) {
-                studentsWithDates.sort((a, b) => a.date - b.date);
-                return studentsWithDates[0].id;
-            }
-            
-            // Heuristic 3: Prefer same transmission mode as teacher
-            const teacher = nodes.get(teacherId);
-            if (teacher) {
-                const sameTransmissionStudents = studentIds.filter(studentId => {
-                    const student = nodes.get(studentId);
-                    return student && student.transmissionMode === teacher.transmissionMode;
                 });
-                
-                if (sameTransmissionStudents.length === 1) {
-                    return sameTransmissionStudents[0];
-                }
-            }
-            
-            // Heuristic 4: Fall back to alphabetical order for consistency
-            const sortedStudents = studentIds.slice().sort();
-            return sortedStudents[0];
+            });
+
+            return transmissionColumns;
         }
 
         // Build node and link data
@@ -387,31 +326,14 @@
                 }
             });
 
-            // Detect linear chains for vertical stacking
-            const chains = detectLinearChains(nodes, links);
-            
-            // Sort chains by length (longest first) for center-out positioning
-            chains.sort((a, b) => b.length - a.length);
-            
-            // Mark nodes with their chain information
+            // Define transmission columns and mark nodes
             const nodeArray = Array.from(nodes.values());
-            chains.forEach((chain, chainIndex) => {
-                chain.nodes.forEach((nodeId, positionInChain) => {
-                    const node = nodes.get(nodeId);
-                    if (node) {
-                        node.chainId = chain.id;
-                        node.chainIndex = chainIndex;
-                        node.positionInChain = positionInChain;
-                        node.isInChain = true;
-                        node.chainLength = chain.length;
-                    }
-                });
-            });
+            const transmissionColumns = defineTransmissionColumns(nodeArray);
             
             return {
                 nodes: nodeArray,
                 links: links,
-                chains: chains
+                transmissionColumns: transmissionColumns
             };
         }
 
@@ -729,7 +651,7 @@
             // Parse data and build graph
             const rawData = parseCSV(csvData);
             graphData = buildGraphData(rawData);
-            graphData.nodes = assignLevels(graphData.nodes, graphData.links);
+            assignLevels(graphData.nodes, graphData.links);
 
             // Initial render
             renderVisualization(graphData);
@@ -774,74 +696,75 @@
             const levelGroups = d3.groups(data.nodes, d => d.level);
             const maxLevel = d3.max(levelGroups, d => d[0]);
 
-            // Implement center-out positioning system for chains
-            positionNodesWithChains(data, width, height);
+            // Hybrid positioning: levels for transmission zones, columns within zones
+            positionNodesWithTransmissionColumns(data, width, height);
             
-            function positionNodesWithChains(data, width, height) {
-                const chains = data.chains || [];
+            function positionNodesWithTransmissionColumns(data, width, height) {
                 const nodes = data.nodes;
+                const transmissionColumns = data.transmissionColumns;
                 
-                // Calculate chain column positions using center-out algorithm
-                const chainColumnSpacing = 250; // Space between chain columns
+                // Define base Y positions for each transmission zone
+                const baseY = 100;
+                const levelSpacing = 120;
+                
+                // Define column positions within each transmission zone
+                const columnSpacing = 280;
                 const centerX = width / 2;
-                const chainPositions = new Map();
                 
-                // Assign X positions to chains (center-out)
-                chains.forEach((chain, index) => {
-                    let x;
-                    if (index === 0) {
-                        // Longest chain goes in center
-                        x = centerX;
-                    } else {
-                        // Alternate left/right placement
-                        const side = index % 2 === 1 ? -1 : 1; // odd = left, even = right
-                        const distance = Math.ceil(index / 2) * chainColumnSpacing;
-                        x = centerX + (side * distance);
+                // Column positions for each zone
+                const zoneColumns = {
+                    mindToMind: {
+                        column1: centerX
+                    },
+                    symbolic: {
+                        vimalamitra: centerX - columnSpacing,
+                        padmasambhava: centerX,
+                        vairocana: centerX + columnSpacing
+                    },
+                    aural: {
+                        vimalamitra: centerX - columnSpacing,
+                        padmasambhava: centerX,
+                        vairocana: centerX + columnSpacing
                     }
-                    chainPositions.set(chain.id, x);
+                };
+                
+                // Position nodes in main columns using both level and column
+                Object.keys(transmissionColumns).forEach(transmissionZone => {
+                    Object.keys(transmissionColumns[transmissionZone]).forEach(columnName => {
+                        const x = zoneColumns[transmissionZone][columnName];
+                        
+                        transmissionColumns[transmissionZone][columnName].forEach(nodeName => {
+                            const node = nodes.find(n => n.id === nodeName);
+                            if (node && x) {
+                                node.x = x;
+                                // Use the original level-based Y position for transmission type separation
+                                node.y = baseY + (node.level * levelSpacing);
+                            }
+                        });
+                    });
                 });
                 
-                // Position chain nodes vertically within their columns
-                const chainVerticalSpacing = 60; // Tight spacing within chains
-                const levelVerticalSpacing = 120; // Standard level spacing
-                
-                chains.forEach(chain => {
-                    const baseX = chainPositions.get(chain.id);
+                // Position side branch nodes
+                const sideNodes = nodes.filter(node => !node.isInMainColumn);
+                sideNodes.forEach(node => {
+                    // Use level-based Y positioning
+                    node.y = baseY + (node.level * levelSpacing);
                     
-                    chain.nodes.forEach((nodeId, positionInChain) => {
-                        const node = nodes.find(n => n.id === nodeId);
-                        if (node) {
-                            node.x = baseX;
-                            // Use tight vertical spacing for chain nodes
-                            node.y = (node.level * levelVerticalSpacing) + (positionInChain * chainVerticalSpacing) + 100;
+                    // Find parent to position horizontally
+                    const parentLink = data.links.find(link => link.target === node.id);
+                    if (parentLink) {
+                        const parent = nodes.find(n => n.id === parentLink.source);
+                        if (parent && parent.x) {
+                            // Position to the right of parent 
+                            node.x = parent.x + 200;
+                        } else {
+                            // Default position if no parent found
+                            node.x = centerX + columnSpacing * 2;
                         }
-                    });
-                });
-                
-                // Position non-chain nodes (branching points) with standard spacing
-                const nonChainNodes = nodes.filter(node => !node.isInChain);
-                const levelGroups = d3.groups(nonChainNodes, d => d.level);
-                
-                levelGroups.forEach(([level, levelNodes]) => {
-                    const y = level * levelVerticalSpacing + 100;
-                    
-                    // Sort non-chain nodes for consistent positioning
-                    levelNodes.sort((a, b) => {
-                        const dateA = a.parsedDate || 9999;
-                        const dateB = b.parsedDate || 9999;
-                        if (dateA !== dateB) return dateA - dateB;
-                        if (a.lineage !== b.lineage) return a.lineage.localeCompare(b.lineage);
-                        return a.name.localeCompare(b.name);
-                    });
-                    
-                    // Position non-chain nodes between chain columns
-                    const availableWidth = width - 400; // Leave margins
-                    const spacing = availableWidth / (levelNodes.length + 1);
-                    
-                    levelNodes.forEach((node, i) => {
-                        node.x = 200 + spacing * (i + 1);
-                        node.y = y;
-                    });
+                    } else {
+                        // No parent, place in side area
+                        node.x = centerX + columnSpacing * 2;
+                    }
                 });
             }
 
@@ -872,49 +795,55 @@
                 .attr('stroke-width', 2)
                 .attr('fill', 'none');
 
-            // Create chain containers first (behind nodes)
-            if (data.chains && data.chains.length > 0) {
-                const chainContainers = g.selectAll('.chain-container')
-                    .data(data.chains)
-                    .enter()
-                    .append('g')
-                    .attr('class', 'chain-container');
-
-                // Add chain background rectangles
-                chainContainers.append('rect')
-                    .attr('class', 'chain-background')
-                    .attr('x', d => {
-                        const firstNode = data.nodes.find(n => n.id === d.nodes[0]);
-                        return firstNode ? firstNode.x - 100 : 0;
-                    })
-                    .attr('y', d => {
-                        const firstNode = data.nodes.find(n => n.id === d.nodes[0]);
-                        return firstNode ? firstNode.y - 40 : 0;
-                    })
-                    .attr('width', 200)
-                    .attr('height', d => d.length * 60 + 20) // Height based on chain length
-                    .attr('fill', 'rgba(200, 200, 200, 0.1)')
-                    .attr('stroke', 'rgba(150, 150, 150, 0.3)')
-                    .attr('stroke-width', 1)
-                    .attr('rx', 8)
-                    .attr('ry', 8);
-
-                // Add chain labels
-                chainContainers.append('text')
-                    .attr('class', 'chain-label')
-                    .attr('x', d => {
-                        const firstNode = data.nodes.find(n => n.id === d.nodes[0]);
-                        return firstNode ? firstNode.x : 0;
-                    })
-                    .attr('y', d => {
-                        const firstNode = data.nodes.find(n => n.id === d.nodes[0]);
-                        return firstNode ? firstNode.y - 50 : 0;
-                    })
-                    .attr('text-anchor', 'middle')
-                    .attr('font-size', '11px')
-                    .attr('fill', '#666')
-                    .text(d => `Chain (${d.length} nodes)`);
-            }
+            // Create transmission zone backgrounds
+            const columnSpacing = 280;
+            const centerX = width / 2;
+            const zoneColors = {
+                mindToMind: 'rgba(79, 195, 247, 0.1)',
+                symbolic: 'rgba(186, 104, 200, 0.1)', 
+                aural: 'rgba(129, 199, 132, 0.1)'
+            };
+            
+            // Create backgrounds for transmission zones
+            Object.keys(zoneColors).forEach(zoneName => {
+                const zoneNodes = data.nodes.filter(node => {
+                    if (zoneName === 'mindToMind') return node.transmissionMode === 'Mind to Mind';
+                    if (zoneName === 'symbolic') return node.transmissionMode === 'Symbolic';
+                    if (zoneName === 'aural') return node.transmissionMode === 'Aural';
+                    return false;
+                });
+                
+                if (zoneNodes.length > 0) {
+                    const minY = Math.min(...zoneNodes.map(n => n.y)) - 40;
+                    const maxY = Math.max(...zoneNodes.map(n => n.y)) + 80;
+                    
+                    g.append('rect')
+                        .attr('class', 'transmission-zone-background')
+                        .attr('x', centerX - columnSpacing * 2)
+                        .attr('y', minY)
+                        .attr('width', columnSpacing * 4)
+                        .attr('height', maxY - minY)
+                        .attr('fill', zoneColors[zoneName])
+                        .attr('stroke', 'rgba(150, 150, 150, 0.2)')
+                        .attr('stroke-width', 1)
+                        .attr('rx', 8);
+                    
+                    // Add zone label
+                    let zoneLabel = '';
+                    if (zoneName === 'mindToMind') zoneLabel = 'Mind-to-Mind Transmission';
+                    if (zoneName === 'symbolic') zoneLabel = 'Symbolic Transmission';
+                    if (zoneName === 'aural') zoneLabel = 'Aural Lineage';
+                    
+                    g.append('text')
+                        .attr('class', 'zone-label')
+                        .attr('x', centerX - columnSpacing * 1.8)
+                        .attr('y', minY + 20)
+                        .attr('font-size', '16px')
+                        .attr('font-weight', 'bold')
+                        .attr('fill', '#444')
+                        .text(zoneLabel);
+                }
+            });
 
             // Create node groups
             const nodeGroups = g.selectAll('.node-group')
