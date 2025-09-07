@@ -405,10 +405,11 @@
             const levelGroups = d3.groups(data.nodes, d => d.level);
             const maxLevel = d3.max(levelGroups, d => d[0]);
 
-            // Position nodes with better spacing
+            // Position nodes with much better vertical spacing
             levelGroups.forEach(([level, levelNodes]) => {
-                const y = (level * (height / (maxLevel + 2))) + 120;
-                const totalWidth = width - 200; // Leave margin
+                const verticalSpacing = 120; // Increased spacing between levels
+                const y = level * verticalSpacing + 100; // Start from top with margin
+                const totalWidth = width - 200; // Leave horizontal margin
                 const spacing = totalWidth / (levelNodes.length + 1);
                 
                 levelNodes.forEach((node, i) => {
