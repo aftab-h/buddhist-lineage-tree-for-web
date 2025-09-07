@@ -1,0 +1,17 @@
+{
+  "name": "dzogchen-lineage-tree",
+  "version": "1.0.0",
+  "description": "Interactive Dzogchen Buddhist lineage tree visualization",
+  "main": "index.html",
+  "scripts": {
+    "dev": "vite --open",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "keywords": ["dzogchen", "buddhist", "lineage", "visualization", "d3js"],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "vite": "^5.0.0"
+  }
+}

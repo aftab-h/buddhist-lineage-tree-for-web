@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dzogchen Lineage Tree - Interactive Visualization</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            overflow: hidden;
+        }
+
+        #container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+
+        #controls {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        #search {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            width: 200px;
+        }
+
+        .filter-btn {
+            padding: 6px 12px;
+            margin: 2px;
+            border: 1px solid #ddd;
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .filter-btn:hover {
+            background: #f0f0f0;
+        }
+
+        .filter-btn.active {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .node {
+            cursor: pointer;
+            stroke-width: 2px;
+        }
+
+        .node-text {
+            font-size: 12px;
+            font-weight: bold;
+            text-anchor: middle;
+            pointer-events: none;
+            fill: #333;
+        }
+
+        .node-date {
+            font-size: 10px;
+            text-anchor: middle;
+            pointer-events: none;
+            fill: #666;
+        }
+
+        .link {
+            fill: none;
+            stroke-width: 2px;
+            stroke-opacity: 0.7;
+        }
+
+        .tooltip {
+            position: absolute;
+            padding: 12px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            border-radius: 8px;
+            pointer-events: none;
+            z-index: 1000;
+            max-width: 300px;
+            font-size: 13px;
+            line-height: 1.4;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .highlighted {
+            stroke-width: 4px !important;
+            stroke: #ff6b35 !important;
+        }
+
+        .transmission-label {
+            font-size: 16px;
+            font-weight: bold;
+            fill: #444;
+            text-anchor: middle;
+        }
+
+        #legend {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+            font-size: 12px;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 15px;
+            margin-right: 8px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <div id="controls">
+            <input type="text" id="search" placeholder="Search for a teacher...">
+            <div>
+                <button class="filter-btn active" data-filter="all">All Lineages</button>
+                <button class="filter-btn" data-filter="Vimalamitra">Vimalamitra</button>
+                <button class="filter-btn" data-filter="Vairocana">Vairocana</button>
+                <button class="filter-btn" data-filter="Heart Essence of the Ḍākinī">Heart Essence</button>
+            </div>
+        </div>
+
+        <div id="legend">
+            <h4 style="margin-top: 0;">Transmission Types</h4>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #4FC3F7;"></div>
+                <span>Mind-Mind (Primordial)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #BA68C8;"></div>
+                <span>Symbolic Transmission</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #81C784;"></div>
+                <span>Aural Lineage</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #FFB74D;"></div>
+                <span>Multiple Lineages</span>
+            </div>
+        </div>
+
+        <div class="tooltip hidden" id="tooltip"></div>
+        <svg id="svg"></svg>
+    </div>
+
+    <script>
+        // Load CSV data dynamically
+        let graphData = null;
+        let currentFilter = 'all';
+
+        async function loadCSVData() {
+            try {
+                const response = await fetch('./data/dzogchen_lineage.csv');
+                const csvText = await response.text();
+                return csvText;
+            } catch (error) {
+                console.error('Error loading CSV:', error);
+                return null;
+            }
+        }
+
+        // Parse CSV data
+        function parseCSV(data) {
+            const lines = data.trim().split('\n');
+            const headers = lines[0].split(',');
+            return lines.slice(1).map(line => {
+                const values = [];
+                let inQuotes = false;
+                let currentValue = '';
+                
+                for (let char of line) {
+                    if (char === '"' && !inQuotes) {
+                        inQuotes = true;
+                    } else if (char === '"' && inQuotes) {
+                        inQuotes = false;
+                    } else if (char === ',' && !inQuotes) {
+                        values.push(currentValue.trim());
+                        currentValue = '';
+                    } else {
+                        currentValue += char;
+                    }
+                }
+                values.push(currentValue.trim());
+
+                const obj = {};
+                headers.forEach((header, i) => {
+                    obj[header.trim()] = values[i] || '';
+                });
+                return obj;
+            });
+        }
+
+        // Build node and link data
+        function buildGraphData(data) {
+            const nodes = new Map();
+            const links = [];
+
+            // Create nodes
+            data.forEach(person => {
+                if (!nodes.has(person.Name_English)) {
+                    nodes.set(person.Name_English, {
+                        id: person.Name_English,
+                        name: person.Name_English,
+                        tibetan: person.Name_Wylie_Tibetan,
+                        dates: person.Dates,
+                        description: person.Description_English,
+                        lineage: person.Lineage,
+                        level: 0,
+                        children: []
+                    });
+                }
+            });
+
+            // Create links
+            data.forEach(person => {
+                if (person.Received_Teachings_From) {
+                    const teachers = person.Received_Teachings_From.split(';').map(t => t.trim());
+                    teachers.forEach(teacher => {
+                        if (teacher && nodes.has(teacher) && nodes.has(person.Name_English)) {
+                            links.push({
+                                source: teacher,
+                                target: person.Name_English,
+                                lineage: person.Lineage
+                            });
+                            nodes.get(teacher).children.push(person.Name_English);
+                        }
+                    });
+                }
+            });
+
+            return {
+                nodes: Array.from(nodes.values()),
+                links: links
+            };
+        }
+
+        // Get color for lineage
+        function getLineageColor(lineage) {
+            if (lineage.includes('All lineages')) return '#4FC3F7'; // Light blue for primordial
+            if (lineage.includes('Vimalamitra') && !lineage.includes('Heart Essence')) return '#BA68C8'; // Purple for Vimalamitra
+            if (lineage.includes('Vairocana')) return '#81C784'; // Green for Vairocana
+            if (lineage.includes('Heart Essence')) return '#FFB74D'; // Orange for Heart Essence
+            return '#E0E0E0'; // Default gray
+        }
+
+        // Assign levels based on transmission hierarchy
+        function assignLevels(nodes, links) {
+            const levelMap = new Map();
+            const visited = new Set();
+
+            // Define root nodes (primordial buddhas)
+            const roots = ['Samantabhadra', 'Samantabhadrī'];
+            roots.forEach(root => levelMap.set(root, 0));
+
+            function assignLevel(nodeId, level) {
+                if (visited.has(nodeId)) return;
+                visited.add(nodeId);
+                
+                const currentLevel = levelMap.get(nodeId) || 0;
+                const newLevel = Math.max(currentLevel, level);
+                levelMap.set(nodeId, newLevel);
+
+                // Find children and assign them the next level
+                links.forEach(link => {
+                    if (link.source === nodeId) {
+                        assignLevel(link.target, newLevel + 1);
+                    }
+                });
+            }
+
+            roots.forEach(root => assignLevel(root, 0));
+
+            // Update nodes with level information
+            nodes.forEach(node => {
+                node.level = levelMap.get(node.id) || 0;
+            });
+
+            return nodes;
+        }
+
+        // Initialize visualization
+        const container = d3.select('#container');
+        const svg = d3.select('#svg');
+        const tooltip = d3.select('#tooltip');
+
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+
+        svg.attr('width', width).attr('height', height);
+
+        const g = svg.append('g');
+
+        // Zoom behavior
+        const zoom = d3.zoom()
+            .scaleExtent([0.1, 3])
+            .on('zoom', (event) => {
+                g.attr('transform', event.transform);
+            });
+
+        svg.call(zoom);
+
+        // Initialize the application
+        async function initializeApp() {
+            const csvData = await loadCSVData();
+            if (!csvData) {
+                console.error('Failed to load CSV data');
+                return;
+            }
+
+            // Parse data and build graph
+            const rawData = parseCSV(csvData);
+            graphData = buildGraphData(rawData);
+            graphData.nodes = assignLevels(graphData.nodes, graphData.links);
+
+            // Initial render
+            renderVisualization(graphData);
+
+            // Center the view initially
+            const initialTransform = d3.zoomIdentity.translate(0, 0).scale(0.6);
+            svg.transition().duration(750).call(zoom.transform, initialTransform);
+        }
+
+        function filterData(filter) {
+            if (filter === 'all') {
+                return graphData;
+            }
+
+            const filteredNodes = graphData.nodes.filter(node => 
+                node.lineage.includes(filter) || node.lineage.includes('All lineages')
+            );
+            const filteredNodeIds = new Set(filteredNodes.map(node => node.id));
+            const filteredLinks = graphData.links.filter(link => 
+                filteredNodeIds.has(link.source) && filteredNodeIds.has(link.target)
+            );
+
+            return {
+                nodes: filteredNodes,
+                links: filteredLinks
+            };
+        }
+
+        function renderVisualization(data) {
+            // Clear previous visualization
+            g.selectAll('*').remove();
+
+            // Calculate positions
+            const levelGroups = d3.groups(data.nodes, d => d.level);
+            const maxLevel = d3.max(levelGroups, d => d[0]);
+
+            // Position nodes
+            levelGroups.forEach(([level, nodes]) => {
+                const y = (level * (height / (maxLevel + 1))) + 100;
+                nodes.forEach((node, i) => {
+                    const x = (width / (nodes.length + 1)) * (i + 1);
+                    node.x = x;
+                    node.y = y;
+                });
+            });
+
+            // Create links
+            const links = g.selectAll('.link')
+                .data(data.links)
+                .enter()
+                .append('path')
+                .attr('class', 'link')
+                .attr('d', d => {
+                    const source = data.nodes.find(n => n.id === d.source);
+                    const target = data.nodes.find(n => n.id === d.target);
+                    if (!source || !target) return '';
+                    
+                    const path = d3.path();
+                    path.moveTo(source.x, source.y + 30);
+                    path.bezierCurveTo(
+                        source.x, source.y + 60,
+                        target.x, target.y - 60,
+                        target.x, target.y - 30
+                    );
+                    return path.toString();
+                })
+                .attr('stroke', d => getLineageColor(d.lineage))
+                .attr('stroke-width', 2)
+                .attr('fill', 'none');
+
+            // Create node groups
+            const nodeGroups = g.selectAll('.node-group')
+                .data(data.nodes)
+                .enter()
+                .append('g')
+                .attr('class', 'node-group')
+                .attr('transform', d => `translate(${d.x}, ${d.y})`);
+
+            // Add node rectangles
+            nodeGroups.append('rect')
+                .attr('class', 'node')
+                .attr('x', -80)
+                .attr('y', -30)
+                .attr('width', 160)
+                .attr('height', 60)
+                .attr('rx', 8)
+                .attr('fill', d => getLineageColor(d.lineage))
+                .attr('stroke', '#333')
+                .attr('stroke-width', 1);
+
+            // Add node text (name)
+            nodeGroups.append('text')
+                .attr('class', 'node-text')
+                .attr('y', -5)
+                .text(d => d.name.length > 20 ? d.name.substring(0, 18) + '...' : d.name);
+
+            // Add node text (dates)
+            nodeGroups.append('text')
+                .attr('class', 'node-date')
+                .attr('y', 15)
+                .text(d => d.dates);
+
+            // Add interaction events
+            nodeGroups
+                .on('mouseover', function(event, d) {
+                    tooltip.classed('hidden', false)
+                        .html(`
+                            <strong>${d.name}</strong><br/>
+                            ${d.tibetan ? `<em>${d.tibetan}</em><br/>` : ''}
+                            <strong>Dates:</strong> ${d.dates}<br/>
+                            <strong>Lineage:</strong> ${d.lineage}<br/><br/>
+                            ${d.description}
+                        `)
+                        .style('left', (event.pageX + 10) + 'px')
+                        .style('top', (event.pageY - 10) + 'px');
+                })
+                .on('mousemove', function(event) {
+                    tooltip.style('left', (event.pageX + 10) + 'px')
+                        .style('top', (event.pageY - 10) + 'px');
+                })
+                .on('mouseout', function() {
+                    tooltip.classed('hidden', true);
+                })
+                .on('click', function(event, d) {
+                    highlightLineage(d);
+                });
+        }
+
+        function highlightLineage(node) {
+            g.selectAll('.node').classed('highlighted', false);
+            g.selectAll('.link').classed('highlighted', false);
+
+            // Highlight connected nodes and links
+            const connectedNodes = new Set([node.id]);
+            
+            // Find all ancestors
+            function findAncestors(nodeId) {
+                graphData.links.forEach(link => {
+                    if (link.target === nodeId) {
+                        connectedNodes.add(link.source);
+                        findAncestors(link.source);
+                    }
+                });
+            }
+
+            // Find all descendants
+            function findDescendants(nodeId) {
+                graphData.links.forEach(link => {
+                    if (link.source === nodeId) {
+                        connectedNodes.add(link.target);
+                        findDescendants(link.target);
+                    }
+                });
+            }
+
+            findAncestors(node.id);
+            findDescendants(node.id);
+
+            // Highlight nodes
+            g.selectAll('.node-group').each(function(d) {
+                if (connectedNodes.has(d.id)) {
+                    d3.select(this).select('.node').classed('highlighted', true);
+                }
+            });
+
+            // Highlight links
+            g.selectAll('.link').each(function(d) {
+                if (connectedNodes.has(d.source) && connectedNodes.has(d.target)) {
+                    d3.select(this).classed('highlighted', true);
+                }
+            });
+        }
+
+        // Search functionality
+        const searchInput = d3.select('#search');
+        searchInput.on('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            
+            g.selectAll('.node-group').each(function(d) {
+                const isMatch = d.name.toLowerCase().includes(searchTerm) || 
+                               d.tibetan.toLowerCase().includes(searchTerm);
+                d3.select(this).style('opacity', searchTerm === '' || isMatch ? 1 : 0.2);
+            });
+        });
+
+        // Filter functionality
+        d3.selectAll('.filter-btn').on('click', function() {
+            d3.selectAll('.filter-btn').classed('active', false);
+            d3.select(this).classed('active', true);
+            
+            currentFilter = this.dataset.filter;
+            const filteredData = filterData(currentFilter);
+            renderVisualization(filteredData);
+        });
+
+        // Start the application
+        initializeApp();
+    </script>
+</body>
+</html>
