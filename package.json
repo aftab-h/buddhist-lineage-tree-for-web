@@ -8,6 +8,7 @@
     "build": "vite build",
     "preview": "vite preview"
   },
+  "homepage": "https://aftabhafeez07.github.io/buddhist-lineage-tree-for-web",
   "keywords": ["dzogchen", "buddhist", "lineage", "visualization", "d3js"],
   "author": "",
   "license": "MIT",
