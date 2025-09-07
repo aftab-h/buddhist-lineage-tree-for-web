@@ -167,10 +167,6 @@
                 <div class="legend-color" style="background: #81C784;"></div>
                 <span>Aural Lineage</span>
             </div>
-            <div class="legend-item">
-                <div class="legend-color" style="background: #FFB74D;"></div>
-                <span>Multiple Lineages</span>
-            </div>
         </div>
 
         <div class="tooltip hidden" id="tooltip"></div>
@@ -238,6 +234,7 @@
                         tibetan: person.Name_Wylie_Tibetan,
                         dates: person.Dates,
                         description: person.Description_English,
+                        transmissionMode: person.Transmission_Mode,
                         lineage: person.Lineage,
                         level: 0,
                         children: []
@@ -268,41 +265,68 @@
             };
         }
 
-        // Get color for lineage
-        function getLineageColor(lineage) {
-            if (lineage.includes('All lineages')) return '#4FC3F7'; // Light blue for primordial
-            if (lineage.includes('Vimalamitra') && !lineage.includes('Heart Essence')) return '#BA68C8'; // Purple for Vimalamitra
-            if (lineage.includes('Vairocana')) return '#81C784'; // Green for Vairocana
-            if (lineage.includes('Heart Essence')) return '#FFB74D'; // Orange for Heart Essence
-            return '#E0E0E0'; // Default gray
+        // Get color based on transmission mode
+        function getTransmissionColor(transmissionMode) {
+            switch (transmissionMode) {
+                case 'Mind to Mind':
+                    return '#4FC3F7'; // Blue for Mind-to-Mind transmission
+                case 'Symbolic':
+                    return '#BA68C8'; // Purple for Symbolic transmission
+                case 'Aural':
+                    return '#81C784'; // Green for Aural transmission
+                default:
+                    return '#E0E0E0'; // Gray for unknown/mixed
+            }
         }
 
-        // Assign levels based on transmission hierarchy
+        // Assign levels based on transmission hierarchy using breadth-first approach
         function assignLevels(nodes, links) {
             const levelMap = new Map();
-            const visited = new Set();
+            const childrenMap = new Map();
+            const parentsMap = new Map();
+            
+            // Build parent-child relationships
+            nodes.forEach(node => {
+                childrenMap.set(node.id, []);
+                parentsMap.set(node.id, []);
+            });
+            
+            links.forEach(link => {
+                if (childrenMap.has(link.source)) {
+                    childrenMap.get(link.source).push(link.target);
+                }
+                if (parentsMap.has(link.target)) {
+                    parentsMap.get(link.target).push(link.source);
+                }
+            });
 
-            // Define root nodes (primordial buddhas)
-            const roots = ['Samantabhadra', 'Samantabhadrī'];
-            roots.forEach(root => levelMap.set(root, 0));
+            // Find root nodes (no parents)
+            const roots = nodes.filter(node => 
+                parentsMap.get(node.id).length === 0
+            ).map(node => node.id);
 
-            function assignLevel(nodeId, level) {
-                if (visited.has(nodeId)) return;
-                visited.add(nodeId);
+            // Use breadth-first search to assign levels
+            const queue = roots.map(root => ({ id: root, level: 0 }));
+            const processed = new Set();
+
+            while (queue.length > 0) {
+                const { id, level } = queue.shift();
                 
-                const currentLevel = levelMap.get(nodeId) || 0;
-                const newLevel = Math.max(currentLevel, level);
-                levelMap.set(nodeId, newLevel);
-
-                // Find children and assign them the next level
-                links.forEach(link => {
-                    if (link.source === nodeId) {
-                        assignLevel(link.target, newLevel + 1);
+                if (processed.has(id)) continue;
+                processed.add(id);
+                
+                // Set level (take maximum if already set)
+                const currentLevel = levelMap.get(id) || 0;
+                levelMap.set(id, Math.max(currentLevel, level));
+                
+                // Add children to queue with next level
+                const children = childrenMap.get(id) || [];
+                children.forEach(childId => {
+                    if (!processed.has(childId)) {
+                        queue.push({ id: childId, level: level + 1 });
                     }
                 });
             }
-
-            roots.forEach(root => assignLevel(root, 0));
 
             // Update nodes with level information
             nodes.forEach(node => {
@@ -381,11 +405,14 @@
             const levelGroups = d3.groups(data.nodes, d => d.level);
             const maxLevel = d3.max(levelGroups, d => d[0]);
 
-            // Position nodes
-            levelGroups.forEach(([level, nodes]) => {
-                const y = (level * (height / (maxLevel + 1))) + 100;
-                nodes.forEach((node, i) => {
-                    const x = (width / (nodes.length + 1)) * (i + 1);
+            // Position nodes with better spacing
+            levelGroups.forEach(([level, levelNodes]) => {
+                const y = (level * (height / (maxLevel + 2))) + 120;
+                const totalWidth = width - 200; // Leave margin
+                const spacing = totalWidth / (levelNodes.length + 1);
+                
+                levelNodes.forEach((node, i) => {
+                    const x = 100 + spacing * (i + 1); // Start with left margin
                     node.x = x;
                     node.y = y;
                 });
@@ -411,7 +438,10 @@
                     );
                     return path.toString();
                 })
-                .attr('stroke', d => getLineageColor(d.lineage))
+                .attr('stroke', d => {
+                    const sourceNode = data.nodes.find(n => n.id === d.source);
+                    return sourceNode ? getTransmissionColor(sourceNode.transmissionMode) : '#E0E0E0';
+                })
                 .attr('stroke-width', 2)
                 .attr('fill', 'none');
 
@@ -431,7 +461,7 @@
                 .attr('width', 160)
                 .attr('height', 60)
                 .attr('rx', 8)
-                .attr('fill', d => getLineageColor(d.lineage))
+                .attr('fill', d => getTransmissionColor(d.transmissionMode))
                 .attr('stroke', '#333')
                 .attr('stroke-width', 1);
 
@@ -455,6 +485,7 @@
                             <strong>${d.name}</strong><br/>
                             ${d.tibetan ? `<em>${d.tibetan}</em><br/>` : ''}
                             <strong>Dates:</strong> ${d.dates}<br/>
+                            <strong>Transmission:</strong> ${d.transmissionMode}<br/>
                             <strong>Lineage:</strong> ${d.lineage}<br/><br/>
                             ${d.description}
                         `)
