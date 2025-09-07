@@ -279,34 +279,99 @@
             }
         }
 
-        // Assign levels based on transmission hierarchy using breadth-first approach
+        // Parse dates from various formats and return approximate year
+        function parseDate(dateString) {
+            if (!dateString || dateString === 'N/A' || dateString === 'Date unknown' || dateString.includes('Beyond time')) {
+                return null; // No date available
+            }
+            
+            // Handle century formats like "8th century", "7th to 8th centuries"
+            const centuryMatch = dateString.match(/(\d+)(?:th|st|nd|rd)\s+century/i);
+            if (centuryMatch) {
+                const century = parseInt(centuryMatch[1]);
+                return (century - 1) * 100 + 50; // Middle of century (8th century = 750)
+            }
+            
+            // Handle ranges like "1308-1364", "8th-9th centuries"
+            const rangeMatch = dateString.match(/(\d{3,4})-(\d{3,4})/);
+            if (rangeMatch) {
+                return parseInt(rangeMatch[1]); // Take the start year
+            }
+            
+            // Handle single years or "8th century BCE"
+            const yearMatch = dateString.match(/(\d{3,4})/);
+            if (yearMatch) {
+                const year = parseInt(yearMatch[1]);
+                // Handle BCE dates
+                return dateString.includes('BCE') ? -year : year;
+            }
+            
+            return null; // Couldn't parse
+        }
+
+        // Assign levels using three-tier chronological system
         function assignLevels(nodes, links) {
-            const levelMap = new Map();
+            // Parse dates for all nodes
+            nodes.forEach(node => {
+                node.parsedDate = parseDate(node.dates);
+            });
+
+            // Separate nodes by transmission mode
+            const mindToMindNodes = nodes.filter(node => node.transmissionMode === 'Mind to Mind');
+            const symbolicNodes = nodes.filter(node => node.transmissionMode === 'Symbolic');
+            const auralNodes = nodes.filter(node => node.transmissionMode === 'Aural');
+
+            // Build parent-child relationships for symbolic nodes (relationship-based positioning)
             const childrenMap = new Map();
             const parentsMap = new Map();
             
-            // Build parent-child relationships
-            nodes.forEach(node => {
+            symbolicNodes.forEach(node => {
                 childrenMap.set(node.id, []);
                 parentsMap.set(node.id, []);
             });
             
             links.forEach(link => {
-                if (childrenMap.has(link.source)) {
+                const sourceNode = nodes.find(n => n.id === link.source);
+                const targetNode = nodes.find(n => n.id === link.target);
+                
+                if (sourceNode && targetNode && 
+                    sourceNode.transmissionMode === 'Symbolic' && 
+                    targetNode.transmissionMode === 'Symbolic') {
                     childrenMap.get(link.source).push(link.target);
-                }
-                if (parentsMap.has(link.target)) {
                     parentsMap.get(link.target).push(link.source);
                 }
             });
 
-            // Find root nodes (no parents)
-            const roots = nodes.filter(node => 
-                parentsMap.get(node.id).length === 0
-            ).map(node => node.id);
+            // TIER 1: Mind to Mind (Levels 0-3) - Primordial/Timeless with specific hierarchy
+            mindToMindNodes.forEach(node => {
+                switch (node.name) {
+                    case 'Samantabhadra':
+                    case 'Samantabhadrī':
+                        node.level = 0; // Very top
+                        break;
+                    case 'Buddhas of the Five Families':
+                        node.level = 1; // Below primordial couple
+                        break;
+                    case 'Vajradhara':
+                        node.level = 2; // Below Five Buddha Families
+                        break;
+                    case 'Vajrapāṇi':
+                    case 'Vajrasattva':
+                        node.level = 3; // Below Vajradhara
+                        break;
+                    default:
+                        // Any other Mind to Mind entities (like emanations of Vajradhara)
+                        node.level = 3; // Same level as Vajrapani/Vajrasattva
+                        break;
+                }
+            });
 
-            // Use breadth-first search to assign levels
-            const queue = roots.map(root => ({ id: root, level: 0 }));
+            // TIER 2: Symbolic (Levels 4-6) - Relationship-based
+            const symbolicRoots = symbolicNodes.filter(node => 
+                parentsMap.get(node.id)?.length === 0 || !parentsMap.has(node.id)
+            );
+            
+            const queue = symbolicRoots.map(root => ({ id: root.id, level: 4 }));
             const processed = new Set();
 
             while (queue.length > 0) {
@@ -315,23 +380,163 @@
                 if (processed.has(id)) continue;
                 processed.add(id);
                 
-                // Set level (take maximum if already set)
-                const currentLevel = levelMap.get(id) || 0;
-                levelMap.set(id, Math.max(currentLevel, level));
-                
-                // Add children to queue with next level
-                const children = childrenMap.get(id) || [];
-                children.forEach(childId => {
-                    if (!processed.has(childId)) {
-                        queue.push({ id: childId, level: level + 1 });
-                    }
-                });
+                const node = symbolicNodes.find(n => n.id === id);
+                if (node) {
+                    node.level = Math.min(level, 6); // Cap at level 6
+                    
+                    // Add children
+                    const children = childrenMap.get(id) || [];
+                    children.forEach(childId => {
+                        if (!processed.has(childId)) {
+                            queue.push({ id: childId, level: level + 1 });
+                        }
+                    });
+                }
             }
 
-            // Update nodes with level information
-            nodes.forEach(node => {
-                node.level = levelMap.get(node.id) || 0;
+            // TIER 3: Aural (Levels 7+) - Chronologically sorted
+            auralNodes.sort((a, b) => {
+                const dateA = a.parsedDate || 9999; // Put undated at end
+                const dateB = b.parsedDate || 9999;
+                return dateA - dateB;
             });
+
+            // Group aural nodes by finer time periods with smart density detection
+            function createTimeGroups(auralNodes) {
+                const timeGroups = [];
+                let currentGroup = [];
+                let currentPeriod = null;
+                const QUARTER_CENTURY = 25; // Start with 25-year periods
+                const MAX_NODES_PER_GROUP = 4; // Maximum nodes before subdividing
+                
+                auralNodes.forEach(node => {
+                    const date = node.parsedDate;
+                    const period = date ? Math.floor(date / QUARTER_CENTURY) * QUARTER_CENTURY : 9999;
+                    
+                    if (currentPeriod === null || period === currentPeriod) {
+                        currentGroup.push(node);
+                        currentPeriod = period;
+                    } else {
+                        if (currentGroup.length > 0) {
+                            // Check if group is too crowded and needs subdivision
+                            if (currentGroup.length > MAX_NODES_PER_GROUP) {
+                                const subdivided = subdivideGroup(currentGroup, 10); // 10-year periods
+                                timeGroups.push(...subdivided);
+                            } else {
+                                timeGroups.push([...currentGroup]);
+                            }
+                        }
+                        currentGroup = [node];
+                        currentPeriod = period;
+                    }
+                });
+                
+                // Handle the last group
+                if (currentGroup.length > 0) {
+                    if (currentGroup.length > MAX_NODES_PER_GROUP) {
+                        const subdivided = subdivideGroup(currentGroup, 10);
+                        timeGroups.push(...subdivided);
+                    } else {
+                        timeGroups.push(currentGroup);
+                    }
+                }
+                
+                return timeGroups;
+            }
+            
+            // Subdivide overcrowded groups into smaller time periods
+            function subdivideGroup(group, yearSpan) {
+                const subGroups = [];
+                let currentSubGroup = [];
+                let currentSubPeriod = null;
+                
+                group.forEach(node => {
+                    const date = node.parsedDate;
+                    const period = date ? Math.floor(date / yearSpan) * yearSpan : 9999;
+                    
+                    if (currentSubPeriod === null || period === currentSubPeriod) {
+                        currentSubGroup.push(node);
+                        currentSubPeriod = period;
+                    } else {
+                        if (currentSubGroup.length > 0) {
+                            subGroups.push([...currentSubGroup]);
+                        }
+                        currentSubGroup = [node];
+                        currentSubPeriod = period;
+                    }
+                });
+                
+                if (currentSubGroup.length > 0) {
+                    subGroups.push(currentSubGroup);
+                }
+                
+                return subGroups;
+            }
+            
+            // Create time groups with enhanced resolution
+            const timeGroups = createTimeGroups(auralNodes);
+
+            // Assign levels to aural nodes with transmission-aware positioning
+            let currentLevel = 7;
+            timeGroups.forEach((group, groupIndex) => {
+                if (group.length <= 2) {
+                    // Small groups can share a level
+                    group.sort((a, b) => {
+                        const dateA = a.parsedDate || 9999;
+                        const dateB = b.parsedDate || 9999;
+                        if (dateA !== dateB) return dateA - dateB;
+                        return a.lineage.localeCompare(b.lineage);
+                    });
+                    
+                    group.forEach(node => {
+                        node.level = currentLevel;
+                    });
+                    currentLevel++;
+                } else {
+                    // Larger groups need transmission-aware sub-positioning
+                    const subLevels = arrangeByTransmission(group, links);
+                    subLevels.forEach(subGroup => {
+                        subGroup.forEach(node => {
+                            node.level = currentLevel;
+                        });
+                        currentLevel++;
+                    });
+                }
+            });
+            
+            // Helper function to arrange nodes by transmission relationships
+            function arrangeByTransmission(nodes, links) {
+                const nodeMap = new Map(nodes.map(n => [n.id, n]));
+                const children = new Map();
+                const parents = new Map();
+                
+                // Build relationships within this group
+                nodes.forEach(node => {
+                    children.set(node.id, []);
+                    parents.set(node.id, []);
+                });
+                
+                links.forEach(link => {
+                    if (nodeMap.has(link.source) && nodeMap.has(link.target)) {
+                        children.get(link.source).push(link.target);
+                        parents.get(link.target).push(link.source);
+                    }
+                });
+                
+                // Find nodes with no parents in this group (teachers)
+                const roots = nodes.filter(node => parents.get(node.id).length === 0);
+                const remaining = nodes.filter(node => parents.get(node.id).length > 0);
+                
+                const levels = [];
+                if (roots.length > 0) {
+                    levels.push(roots.sort((a, b) => (a.parsedDate || 9999) - (b.parsedDate || 9999)));
+                }
+                if (remaining.length > 0) {
+                    levels.push(remaining.sort((a, b) => (a.parsedDate || 9999) - (b.parsedDate || 9999)));
+                }
+                
+                return levels.length > 0 ? levels : [nodes];
+            }
 
             return nodes;
         }
@@ -405,10 +610,29 @@
             const levelGroups = d3.groups(data.nodes, d => d.level);
             const maxLevel = d3.max(levelGroups, d => d[0]);
 
-            // Position nodes with much better vertical spacing
+            // Position nodes with chronological horizontal sorting and better vertical spacing
             levelGroups.forEach(([level, levelNodes]) => {
                 const verticalSpacing = 120; // Increased spacing between levels
                 const y = level * verticalSpacing + 100; // Start from top with margin
+                
+                // Sort nodes within each level by date (left to right = earliest to latest)
+                levelNodes.sort((a, b) => {
+                    const dateA = a.parsedDate || 9999; // Put undated nodes at end
+                    const dateB = b.parsedDate || 9999;
+                    
+                    if (dateA !== dateB) {
+                        return dateA - dateB;
+                    }
+                    
+                    // If dates are equal or both null, sort by lineage for consistency
+                    if (a.lineage !== b.lineage) {
+                        return a.lineage.localeCompare(b.lineage);
+                    }
+                    
+                    // Finally sort by name
+                    return a.name.localeCompare(b.name);
+                });
+                
                 const totalWidth = width - 200; // Leave horizontal margin
                 const spacing = totalWidth / (levelNodes.length + 1);
                 
