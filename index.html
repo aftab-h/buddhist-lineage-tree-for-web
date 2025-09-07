@@ -352,26 +352,32 @@
                     case 'Buddhas of the Five Families':
                         node.level = 1; // Below primordial couple
                         break;
+                    case 'Supreme Emanation Blessing':
+                    case 'Sublime Wisdom Emanation (Vajradhara)':
                     case 'Vajradhara':
                         node.level = 2; // Below Five Buddha Families
                         break;
                     case 'Vajrapāṇi':
                     case 'Vajrasattva':
-                        node.level = 3; // Below Vajradhara
+                    case 'Cheu Nangwa Dampa Samkyi Mikhyapa':
+                        node.level = 3; // Below Vajradhara/Supreme Emanation Blessing
+                        break;
+                    case 'Śākyamuni Buddha':
+                        node.level = 4; // Below Cheu Nangwa Dampa Samkyi Mikhyapa
                         break;
                     default:
-                        // Any other Mind to Mind entities (like emanations of Vajradhara)
-                        node.level = 3; // Same level as Vajrapani/Vajrasattva
+                        // Any other Mind to Mind entities
+                        node.level = 3; // Default to level 3
                         break;
                 }
             });
 
-            // TIER 2: Symbolic (Levels 4-6) - Relationship-based
+            // TIER 2: Symbolic (Levels 5-7) - Relationship-based
             const symbolicRoots = symbolicNodes.filter(node => 
                 parentsMap.get(node.id)?.length === 0 || !parentsMap.has(node.id)
             );
             
-            const queue = symbolicRoots.map(root => ({ id: root.id, level: 4 }));
+            const queue = symbolicRoots.map(root => ({ id: root.id, level: 5 }));
             const processed = new Set();
 
             while (queue.length > 0) {
@@ -382,7 +388,7 @@
                 
                 const node = symbolicNodes.find(n => n.id === id);
                 if (node) {
-                    node.level = Math.min(level, 6); // Cap at level 6
+                    node.level = Math.min(level, 7); // Cap at level 7
                     
                     // Add children
                     const children = childrenMap.get(id) || [];
@@ -477,7 +483,7 @@
             const timeGroups = createTimeGroups(auralNodes);
 
             // Assign levels to aural nodes with transmission-aware positioning
-            let currentLevel = 7;
+            let currentLevel = 8;
             timeGroups.forEach((group, groupIndex) => {
                 if (group.length <= 2) {
                     // Small groups can share a level
@@ -645,7 +651,20 @@
                 const spacing = totalWidth / (levelNodes.length + 1);
                 
                 levelNodes.forEach((node, i) => {
-                    const x = 100 + spacing * (i + 1); // Start with left margin
+                    let x = 100 + spacing * (i + 1); // Start with left margin
+                    
+                    // Special positioning for Śākyamuni Buddha - place it to the left side
+                    if (node.name === 'Śākyamuni Buddha') {
+                        // Find Cheu Nangwa Dampa's position from previous level
+                        const prevLevelNodes = data.nodes.filter(n => n.level === level - 1);
+                        const cheuNangwa = prevLevelNodes.find(n => n.name === 'Cheu Nangwa Dampa Samkyi Mikhyapa');
+                        if (cheuNangwa) {
+                            x = cheuNangwa.x; // Align directly below Cheu Nangwa
+                        } else {
+                            x = 200; // Fallback to left side
+                        }
+                    }
+                    
                     node.x = x;
                     node.y = y;
                 });
