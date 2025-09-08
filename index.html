@@ -357,32 +357,69 @@
             }
         }
 
-        // Parse Position_Date and map to reasonable layer levels
+        // Get arrowhead marker based on transmission mode
+        function getArrowheadMarker(transmissionMode) {
+            switch (transmissionMode) {
+                case 'Mind to Mind':
+                    return 'url(#arrowhead-mind)';
+                case 'Symbolic':
+                    return 'url(#arrowhead-symbolic)';
+                case 'Aural':
+                    return 'url(#arrowhead-aural)';
+                default:
+                    return 'url(#arrowhead-default)';
+            }
+        }
+
+        // Parse Position_Date and map to fine-grained layer levels for better vertical resolution
         function parsePositionDate(positionDate) {
             if (!positionDate || positionDate === 'N/A' || positionDate === '') {
-                return 10; // Put undated entities at layer 10
+                return 20; // Put undated entities at layer 20
             }
             
             const rawDate = parseInt(positionDate);
             
-            // Map Position_Date values to reasonable layer levels
+            // Enhanced granular mapping - much finer time resolution (30+ layers)
             if (rawDate === 0) return 0;
             if (rawDate === 1) return 1;
             if (rawDate === 2) return 2;
             if (rawDate === 3) return 3;
-            if (rawDate >= 500 && rawDate < 600) return 4; // Garab Dorje at 500
-            if (rawDate >= 600 && rawDate < 680) return 5; // Śākyamuni at 600
-            if (rawDate >= 680 && rawDate < 700) return 6; // Mañjuśrimitra at 680
-            if (rawDate >= 700 && rawDate < 750) return 7; // Śrī Siṃha, Ḍākinīs at 700
-            if (rawDate >= 750 && rawDate < 800) return 8; // Padmasambhava, Jñānasūtra at 750
-            if (rawDate >= 800 && rawDate < 825) return 9; // Vimalamitra, Vairocana at 800
-            if (rawDate >= 825 && rawDate < 900) return 10;
-            if (rawDate >= 900 && rawDate < 1000) return 11;
-            if (rawDate >= 1000 && rawDate < 1200) return 12;
-            if (rawDate >= 1200 && rawDate < 1400) return 13;
-            if (rawDate >= 1400) return 14;
             
-            return 10; // fallback
+            // Pre-historical period - finer granularity
+            if (rawDate >= 500 && rawDate < 550) return 4; // Early Garab Dorje period
+            if (rawDate >= 550 && rawDate < 600) return 5; // Late pre-historical
+            if (rawDate >= 600 && rawDate < 650) return 6; // Śākyamuni Buddha period
+            if (rawDate >= 650 && rawDate < 680) return 7; // Post-Buddha early period
+            if (rawDate >= 680 && rawDate < 700) return 8; // Mañjuśrimitra period
+            if (rawDate >= 700 && rawDate < 720) return 9; // Early Śrī Siṃha period
+            if (rawDate >= 720 && rawDate < 750) return 10; // Late Śrī Siṃha period
+            
+            // Critical 8th century - very fine granularity due to many figures
+            if (rawDate >= 750 && rawDate < 770) return 11; // Early Padmasambhava/Jñānasūtra
+            if (rawDate >= 770 && rawDate < 790) return 12; // Mid 8th century
+            if (rawDate >= 790 && rawDate < 810) return 13; // Late 8th century (Vimalamitra/Vairocana)
+            if (rawDate >= 810 && rawDate < 830) return 14; // Early 9th century transition
+            if (rawDate >= 830 && rawDate < 850) return 15; // Mid 9th century
+            if (rawDate >= 850 && rawDate < 875) return 16; // Late 9th century
+            if (rawDate >= 875 && rawDate < 900) return 17; // End 9th century
+            
+            // 10th-11th centuries - moderate granularity
+            if (rawDate >= 900 && rawDate < 950) return 18; // Early 10th century
+            if (rawDate >= 950 && rawDate < 1000) return 19; // Late 10th century
+            if (rawDate >= 1000 && rawDate < 1050) return 20; // Early 11th century
+            if (rawDate >= 1050 && rawDate < 1100) return 21; // Mid 11th century
+            if (rawDate >= 1100 && rawDate < 1150) return 22; // Late 11th century
+            if (rawDate >= 1150 && rawDate < 1200) return 23; // Early 12th century
+            
+            // Later periods - reasonable granularity
+            if (rawDate >= 1200 && rawDate < 1250) return 24; // Early 13th century
+            if (rawDate >= 1250 && rawDate < 1300) return 25; // Mid 13th century
+            if (rawDate >= 1300 && rawDate < 1350) return 26; // Early 14th century
+            if (rawDate >= 1350 && rawDate < 1400) return 27; // Mid 14th century
+            if (rawDate >= 1400 && rawDate < 1450) return 28; // 15th century
+            if (rawDate >= 1450) return 29; // Later periods
+            
+            return 20; // fallback
         }
 
         // Assign vertical positions using Position_Date from CSV
@@ -397,45 +434,148 @@
             return nodes;
         }
 
-        // Hierarchical Tree Layout with Chronological Constraints
+        // Option A: Chronologically-Constrained Tree (Hybrid)
         function applyHierarchicalTreeLayout(nodes, links) {
-            console.log('=== HIERARCHICAL TREE LAYOUT START ===');
+            console.log('=== OPTION A: CHRONOLOGICALLY-CONSTRAINED TREE ===');
             
             // Build true parent-child hierarchy
             const hierarchy = buildTreeHierarchy(nodes, links);
             console.log('Tree hierarchy built:', hierarchy);
             
-            // Apply D3 tree layout for proper branching
+            // Step 1: Let D3 create proper tree branching with good separation
             const treeLayout = d3.tree()
-                .size([2000, 1000]) // Much larger canvas for better spreading
+                .size([1200, 800]) // Reasonable canvas size
                 .separation((a, b) => {
-                    // Much more separation to prevent overlaps
-                    if (a.parent === b.parent) return 3; // Siblings further apart
-                    return 5; // Different lineages much further apart
+                    // Good separation for tree structure
+                    if (a.parent === b.parent) return 2; // Siblings apart
+                    return 3; // Different branches apart
                 });
             
-            // Process each root node (there might be multiple starting points)
+            // Process each root node
             hierarchy.roots.forEach((root, rootIndex) => {
                 const treeData = d3.hierarchy(root, d => d.children);
                 const treeNodes = treeLayout(treeData);
                 
-                // Offset different root trees horizontally
-                const rootOffset = rootIndex * 400;
-                
+                // Step 2: Store D3's tree positions (for good horizontal separation)
                 treeNodes.each(node => {
-                    // Apply chronological constraints
-                    const chronologicalY = node.data.timeLayer * 150; // More vertical space
-                    
-                    // Use D3's x for horizontal branching, but respect chronology for y
-                    node.data.treeX = (node.x / 10) + rootOffset; // Scale down D3's x
-                    node.data.treeY = Math.max(node.y / 10, chronologicalY); // Respect both tree depth and chronology
-                    
-                    console.log(`${node.data.name}: treeX=${node.data.treeX.toFixed(1)}, treeY=${node.data.treeY.toFixed(1)}, timeLayer=${node.data.timeLayer}`);
+                    node.data.d3TreeX = node.x; // Keep D3's horizontal positioning
+                    node.data.d3TreeY = node.y; // Keep D3's tree depth
                 });
             });
             
-            console.log('=== HIERARCHICAL TREE LAYOUT COMPLETE ===');
+            // Step 3: Apply chronological constraints to Y positions
+            applyChronologicalConstraints(nodes);
+            
+            // Step 4: Fix overlaps caused by chronological adjustment
+            fixChronologicalOverlaps(nodes);
+            
+            console.log('=== OPTION A COMPLETE ===');
             return nodes;
+        }
+        
+        // Step 3: Apply chronological constraints with intelligent sub-layering
+        function applyChronologicalConstraints(nodes) {
+            console.log('Applying chronological constraints with intelligent sub-layering...');
+            
+            // Group nodes by time layer to detect crowded periods
+            const layerGroups = d3.groups(nodes, d => d.timeLayer);
+            const layerAdjustments = new Map();
+            
+            // Detect crowded layers and plan sub-layer adjustments
+            layerGroups.forEach(([timeLayer, layerNodes]) => {
+                if (layerNodes.length > 3) { // If more than 3 nodes in same time layer
+                    console.log(`Crowded layer ${timeLayer} detected with ${layerNodes.length} nodes`);
+                    
+                    // Sort nodes by their tree branching position for consistent sub-layering
+                    layerNodes.sort((a, b) => (a.d3TreeX || 0) - (b.d3TreeX || 0));
+                    
+                    // Create sub-layers within the main time layer
+                    const subLayerHeight = 0.8; // Fraction of main layer height for sub-layers
+                    layerNodes.forEach((node, index) => {
+                        const subLayerOffset = (index / (layerNodes.length - 1)) * subLayerHeight - (subLayerHeight / 2);
+                        layerAdjustments.set(node.id, timeLayer + subLayerOffset);
+                    });
+                } else {
+                    // Not crowded - use standard positioning
+                    layerNodes.forEach(node => {
+                        layerAdjustments.set(node.id, timeLayer);
+                    });
+                }
+            });
+            
+            // Apply the calculated positions
+            nodes.forEach(node => {
+                // Use D3's X position for horizontal (preserves tree branching)
+                node.treeX = node.d3TreeX || 0;
+                
+                // Use adjusted Y position with sub-layering
+                const adjustedLayer = layerAdjustments.get(node.id) || node.timeLayer;
+                const chronologicalY = adjustedLayer * 140; // Increased spacing for better visibility
+                node.treeY = chronologicalY;
+                
+                console.log(`${node.name}: Layer ${node.timeLayer} -> Adjusted ${adjustedLayer.toFixed(2)} -> Y=${node.treeY}`);
+            });
+        }
+        
+        // Step 4: Adaptive spacing algorithm that expands crowded layers automatically
+        function fixChronologicalOverlaps(nodes) {
+            console.log('Applying adaptive spacing algorithm...');
+            
+            // Group nodes by their adjusted time layer (after sub-layering)
+            const layerMap = new Map();
+            nodes.forEach(node => {
+                const adjustedLayer = Math.round(node.treeY / 140); // Convert back from pixels
+                if (!layerMap.has(adjustedLayer)) {
+                    layerMap.set(adjustedLayer, []);
+                }
+                layerMap.get(adjustedLayer).push(node);
+            });
+            
+            // Process each layer
+            layerMap.forEach((layerNodes, layerKey) => {
+                if (layerNodes.length <= 1) return; // No overlaps possible
+                
+                // Sort by D3's original X position to maintain genealogical order
+                layerNodes.sort((a, b) => (a.d3TreeX || 0) - (b.d3TreeX || 0));
+                
+                // Adaptive separation based on layer crowding
+                let minSeparation = 180; // Base minimum separation
+                
+                if (layerNodes.length > 6) {
+                    minSeparation = 220; // More space for very crowded layers
+                } else if (layerNodes.length > 4) {
+                    minSeparation = 200; // Extra space for moderately crowded
+                }
+                
+                // Apply intelligent horizontal spacing
+                for (let i = 1; i < layerNodes.length; i++) {
+                    const prevNode = layerNodes[i - 1];
+                    const currentNode = layerNodes[i];
+                    
+                    const currentSeparation = Math.abs(currentNode.treeX - prevNode.treeX);
+                    
+                    if (currentSeparation < minSeparation) {
+                        // Too close! Apply adaptive expansion
+                        const expansionNeeded = minSeparation - currentSeparation;
+                        currentNode.treeX = prevNode.treeX + minSeparation;
+                        
+                        console.log(`Adaptive expansion: ${currentNode.name} moved from X=${currentNode.treeX - expansionNeeded} to X=${currentNode.treeX} (gap: ${minSeparation}px)`);
+                        
+                        // Ripple effect: push subsequent nodes if needed
+                        for (let j = i + 1; j < layerNodes.length; j++) {
+                            const nextNode = layerNodes[j];
+                            if (Math.abs(nextNode.treeX - currentNode.treeX) < minSeparation) {
+                                nextNode.treeX = currentNode.treeX + minSeparation;
+                                console.log(`Ripple expansion: ${nextNode.name} adjusted to X=${nextNode.treeX}`);
+                            } else {
+                                break; // No more adjustments needed
+                            }
+                        }
+                    }
+                }
+                
+                console.log(`Layer ${layerKey} adaptive spacing complete: ${layerNodes.length} nodes with ${minSeparation}px separation`);
+            });
         }
         
         // Build tree hierarchy from parent-child relationships
@@ -503,6 +643,65 @@
         svg.attr('width', width).attr('height', height);
 
         const g = svg.append('g');
+
+        // Define arrowhead markers for different transmission types
+        const defs = svg.append('defs');
+        
+        // Mind-to-Mind transmission arrowhead (blue)
+        defs.append('marker')
+            .attr('id', 'arrowhead-mind')
+            .attr('viewBox', '0 -5 10 10')
+            .attr('refX', 8)
+            .attr('refY', 0)
+            .attr('markerWidth', 6)
+            .attr('markerHeight', 6)
+            .attr('orient', 'auto')
+            .append('path')
+            .attr('d', 'M0,-5L10,0L0,5')
+            .attr('fill', '#4FC3F7')
+            .attr('opacity', 0.8);
+
+        // Symbolic transmission arrowhead (purple)
+        defs.append('marker')
+            .attr('id', 'arrowhead-symbolic')
+            .attr('viewBox', '0 -5 10 10')
+            .attr('refX', 8)
+            .attr('refY', 0)
+            .attr('markerWidth', 6)
+            .attr('markerHeight', 6)
+            .attr('orient', 'auto')
+            .append('path')
+            .attr('d', 'M0,-5L10,0L0,5')
+            .attr('fill', '#BA68C8')
+            .attr('opacity', 0.8);
+
+        // Aural transmission arrowhead (green)
+        defs.append('marker')
+            .attr('id', 'arrowhead-aural')
+            .attr('viewBox', '0 -5 10 10')
+            .attr('refX', 8)
+            .attr('refY', 0)
+            .attr('markerWidth', 6)
+            .attr('markerHeight', 6)
+            .attr('orient', 'auto')
+            .append('path')
+            .attr('d', 'M0,-5L10,0L0,5')
+            .attr('fill', '#81C784')
+            .attr('opacity', 0.8);
+
+        // Default arrowhead (gray)
+        defs.append('marker')
+            .attr('id', 'arrowhead-default')
+            .attr('viewBox', '0 -5 10 10')
+            .attr('refX', 8)
+            .attr('refY', 0)
+            .attr('markerWidth', 6)
+            .attr('markerHeight', 6)
+            .attr('orient', 'auto')
+            .append('path')
+            .attr('d', 'M0,-5L10,0L0,5')
+            .attr('fill', '#666')
+            .attr('opacity', 0.8);
 
         // Zoom behavior
         const zoom = d3.zoom()
@@ -602,9 +801,9 @@
             function convertAlgorithmicPositionsToPixels(data, width, height) {
                 const nodes = data.nodes;
                 
-                // Grid configuration - more spacing to prevent overlaps
-                const gridWidth = 200;  // More horizontal pixels per unit
-                const gridHeight = 120; // vertical space between generations
+                // Grid configuration - enhanced spacing for better vertical resolution
+                const gridWidth = 220;  // Increased horizontal pixels per unit
+                const gridHeight = 160; // Increased vertical space between generations (was 120px)
                 const baseX = 100;      // larger left margin
                 const baseY = 50;       // top margin
                 
@@ -613,8 +812,8 @@
                     let xPos, yPos;
                     
                     if (typeof node.treeX === 'number' && !isNaN(node.treeX)) {
-                        // Scale down the D3 tree coordinates with better distribution
-                        xPos = node.treeX / 50; // Divide by 50 for more spread (was 100)
+                        // Use D3 tree coordinates directly (already processed for overlaps)
+                        xPos = node.treeX / 100; // Light scaling for viewport
                     } else {
                         // Fallback: simple column by lineage
                         if (node.primaryLineage === 'Vimalamitra' || node.lineage?.includes('Vimalamitra')) {
@@ -629,8 +828,8 @@
                     }
                     
                     if (typeof node.treeY === 'number' && !isNaN(node.treeY)) {
-                        // Scale down the huge Y coordinates too
-                        yPos = node.treeY / 150; // Bring 1500 down to 10
+                        // Use chronological Y coordinates directly with new spacing
+                        yPos = node.treeY / 140; // Convert to layer units (matches 140px spacing from chronological constraints)
                     } else {
                         yPos = node.level || 0; // Fallback to timeLayer
                     }
@@ -645,7 +844,7 @@
                 });
             }
 
-            // Create tree-style links with proper branching
+            // Create smooth curved links with arrowheads
             const links = g.selectAll('.link')
                 .data(data.links)
                 .enter()
@@ -656,37 +855,53 @@
                     const target = data.nodes.find(n => n.id === d.target);
                     if (!source || !target) return '';
                     
-                    // Tree-style edge routing - clear parent-child relationships
-                    const path = d3.path();
+                    // Smooth curved edge routing with better visual flow
                     const sourceX = source.x;
                     const sourceY = source.y + 25; // Bottom of parent node
                     const targetX = target.x;
                     const targetY = target.y - 25; // Top of child node
                     
-                    path.moveTo(sourceX, sourceY);
+                    const deltaY = targetY - sourceY;
+                    const deltaX = targetX - sourceX;
                     
-                    // Tree-like connections: straight down then across
-                    const midY = sourceY + (targetY - sourceY) * 0.6;
-                    
-                    if (Math.abs(sourceX - targetX) < 10) {
-                        // Direct parent-child: straight line
-                        path.lineTo(targetX, targetY);
+                    if (Math.abs(deltaX) < 10) {
+                        // Direct parent-child: smooth vertical curve
+                        const midY = sourceY + deltaY * 0.5;
+                        const controlOffset = Math.min(Math.abs(deltaY) * 0.3, 50);
+                        
+                        return `M${sourceX},${sourceY} 
+                                C${sourceX},${sourceY + controlOffset} 
+                                 ${targetX},${targetY - controlOffset} 
+                                 ${targetX},${targetY}`;
                     } else {
-                        // Branching: create tree-like elbow connection
-                        path.lineTo(sourceX, midY);        // Down from parent
-                        path.lineTo(targetX, midY);        // Across to child position
-                        path.lineTo(targetX, targetY);     // Down to child
+                        // Branching: smooth S-curve connection
+                        const midY = sourceY + deltaY * 0.6;
+                        const controlOffset1 = Math.min(Math.abs(deltaY) * 0.25, 40);
+                        const controlOffset2 = Math.min(Math.abs(deltaX) * 0.3, 60);
+                        
+                        return `M${sourceX},${sourceY} 
+                                C${sourceX},${sourceY + controlOffset1} 
+                                 ${sourceX},${midY - controlOffset1} 
+                                 ${sourceX},${midY}
+                                C${sourceX + controlOffset2},${midY} 
+                                 ${targetX - controlOffset2},${midY} 
+                                 ${targetX},${midY}
+                                C${targetX},${midY + controlOffset1} 
+                                 ${targetX},${targetY - controlOffset1} 
+                                 ${targetX},${targetY}`;
                     }
-                    
-                    return path.toString();
                 })
                 .attr('stroke', d => {
                     const sourceNode = data.nodes.find(n => n.id === d.source);
                     return sourceNode ? getTransmissionColor(sourceNode.transmissionMode) : '#666';
                 })
+                .attr('marker-end', d => {
+                    const sourceNode = data.nodes.find(n => n.id === d.source);
+                    return sourceNode ? getArrowheadMarker(sourceNode.transmissionMode) : 'url(#arrowhead-default)';
+                })
                 .attr('stroke-width', 2)
                 .attr('fill', 'none')
-                .attr('opacity', 0.7);
+                .attr('opacity', 0.8);
 
             // Simplified rendering - no background zones or guides for now
 
