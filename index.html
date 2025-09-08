@@ -397,17 +397,52 @@
             return nodes;
         }
 
-        // Sugiyama layered graph algorithm
-        function applySugiyamaLayout(nodes, links) {
-            console.log('=== SUGIYAMA LAYOUT START ===');
+        // Hierarchical Tree Layout with Chronological Constraints
+        function applyHierarchicalTreeLayout(nodes, links) {
+            console.log('=== HIERARCHICAL TREE LAYOUT START ===');
             
-            // Step 1: Layer assignment (already done by timeLayer)
-            const timeLayers = d3.groups(nodes, d => d.timeLayer);
-            timeLayers.sort((a, b) => a[0] - b[0]);
+            // Build true parent-child hierarchy
+            const hierarchy = buildTreeHierarchy(nodes, links);
+            console.log('Tree hierarchy built:', hierarchy);
             
-            console.log(`Found ${timeLayers.length} time layers:`, timeLayers.map(([layer, nodes]) => `Layer ${layer}: ${nodes.length} nodes`));
+            // Apply D3 tree layout for proper branching
+            const treeLayout = d3.tree()
+                .size([2000, 1000]) // Much larger canvas for better spreading
+                .separation((a, b) => {
+                    // Much more separation to prevent overlaps
+                    if (a.parent === b.parent) return 3; // Siblings further apart
+                    return 5; // Different lineages much further apart
+                });
             
-            // Build adjacency maps
+            // Process each root node (there might be multiple starting points)
+            hierarchy.roots.forEach((root, rootIndex) => {
+                const treeData = d3.hierarchy(root, d => d.children);
+                const treeNodes = treeLayout(treeData);
+                
+                // Offset different root trees horizontally
+                const rootOffset = rootIndex * 400;
+                
+                treeNodes.each(node => {
+                    // Apply chronological constraints
+                    const chronologicalY = node.data.timeLayer * 150; // More vertical space
+                    
+                    // Use D3's x for horizontal branching, but respect chronology for y
+                    node.data.treeX = (node.x / 10) + rootOffset; // Scale down D3's x
+                    node.data.treeY = Math.max(node.y / 10, chronologicalY); // Respect both tree depth and chronology
+                    
+                    console.log(`${node.data.name}: treeX=${node.data.treeX.toFixed(1)}, treeY=${node.data.treeY.toFixed(1)}, timeLayer=${node.data.timeLayer}`);
+                });
+            });
+            
+            console.log('=== HIERARCHICAL TREE LAYOUT COMPLETE ===');
+            return nodes;
+        }
+        
+        // Build tree hierarchy from parent-child relationships
+        function buildTreeHierarchy(nodes, links) {
+            console.log('Building tree hierarchy...');
+            
+            // Create adjacency maps
             const childrenMap = new Map();
             const parentsMap = new Map();
             
@@ -423,65 +458,37 @@
                 }
             });
             
-            // Step 2: Node ordering within layers to minimize crossings
-            timeLayers.forEach(([timeLayer, layerNodes], layerIndex) => {
-                console.log(`Processing layer ${timeLayer} with ${layerNodes.length} nodes`);
-                
-                if (layerIndex === 0) {
-                    // First layer: order by lineage preference
-                    layerNodes.sort((a, b) => {
-                        const aLineage = getLineageOrder(a);
-                        const bLineage = getLineageOrder(b);
-                        return aLineage - bLineage;
-                    });
-                } else {
-                    // Other layers: order to minimize crossings with previous layer
-                    layerNodes.sort((a, b) => {
-                        const aParentPos = getAverageParentPosition(a, parentsMap, nodes);
-                        const bParentPos = getAverageParentPosition(b, parentsMap, nodes);
-                        return aParentPos - bParentPos;
-                    });
-                }
-                
-                // Step 3: Assign horizontal positions within layer
-                const layerWidth = Math.max(8, layerNodes.length * 1.5); // Dynamic width based on node count
-                layerNodes.forEach((node, index) => {
-                    // Evenly distribute nodes across layer width
-                    node.treeX = (index + 0.5) * (layerWidth / layerNodes.length);
-                });
-                
-                console.log(`Layer ${timeLayer} positions:`, layerNodes.map(n => `${n.name}: ${n.treeX.toFixed(1)}`));
+            // Find root nodes (nodes with no parents)
+            const rootNodes = nodes.filter(node => {
+                const parents = parentsMap.get(node.id) || [];
+                return parents.length === 0;
             });
             
-            console.log('=== SUGIYAMA LAYOUT COMPLETE ===');
-            return nodes;
-        }
-        
-        // Helper: Get lineage ordering preference
-        function getLineageOrder(node) {
-            if (node.primaryLineage === 'Vimalamitra' || node.lineage?.includes('Vimalamitra')) return 1;
-            if (node.primaryLineage === 'Padmasambhava' || node.lineage?.includes('Padmasambhava')) return 2;
-            if (node.primaryLineage === 'Vairocana' || node.lineage?.includes('Vairocana')) return 3;
-            return 1.5; // Center for shared/primordial entities
-        }
-        
-        // Helper: Get average position of parent nodes
-        function getAverageParentPosition(node, parentsMap, allNodes) {
-            const parents = parentsMap.get(node.id) || [];
-            if (parents.length === 0) {
-                return getLineageOrder(node); // Fallback to lineage preference
-            }
+            console.log(`Found ${rootNodes.length} root nodes:`, rootNodes.map(n => n.name));
             
-            const parentPositions = parents
-                .map(parentId => allNodes.find(n => n.id === parentId))
-                .filter(parent => parent && typeof parent.treeX === 'number')
-                .map(parent => parent.treeX);
+            // Build tree structure recursively
+            function buildChildren(parentNode) {
+                const childIds = childrenMap.get(parentNode.id) || [];
+                const children = childIds
+                    .map(childId => nodes.find(n => n.id === childId))
+                    .filter(child => child);
+                    
+                children.forEach(child => {
+                    child.children = buildChildren(child);
+                    child.parent = parentNode;
+                });
                 
-            if (parentPositions.length === 0) {
-                return getLineageOrder(node);
+                return children;
             }
             
-            return parentPositions.reduce((sum, pos) => sum + pos, 0) / parentPositions.length;
+            // Build full tree structure
+            rootNodes.forEach(root => {
+                root.children = buildChildren(root);
+                root.parent = null;
+                root.depth = 0;
+            });
+            
+            return { roots: rootNodes, childrenMap, parentsMap };
         }
 
 
@@ -518,51 +525,46 @@
             const rawData = parseCSV(csvData);
             graphData = buildGraphData(rawData);
             
-            // Apply Sugiyama layered graph algorithm
+            // Apply hierarchical tree layout with chronological constraints
             assignVerticalPositions(graphData.nodes, graphData.links);
-            applySugiyamaLayout(graphData.nodes, graphData.links);
+            applyHierarchicalTreeLayout(graphData.nodes, graphData.links);
             
-            // Debug: Check positioning of all nodes
-            console.log('=== POSITIONING DEBUG ===');
+            // Debug: Check everything step by step
+            console.log('=== COMPLETE DEBUG ===');
             console.log(`Total nodes: ${graphData.nodes.length}`);
+            console.log(`Total links: ${graphData.links.length}`);
             
-            // Group by timeLayer to see distribution
-            const layerCounts = {};
-            graphData.nodes.forEach(node => {
-                const layer = node.timeLayer || 'undefined';
-                layerCounts[layer] = (layerCounts[layer] || 0) + 1;
+            // Check if nodes have coordinates
+            const nodesWithCoords = graphData.nodes.filter(n => n.x !== undefined && n.y !== undefined);
+            console.log(`Nodes with coordinates: ${nodesWithCoords.length}`);
+            
+            // Sample coordinate check
+            graphData.nodes.slice(0, 5).forEach(node => {
+                console.log(`${node.name}: x=${node.x}, y=${node.y}, treeX=${node.treeX}, treeY=${node.treeY}`);
             });
-            console.log('Nodes per time layer:', layerCounts);
             
-            // Check coordinate ranges
-            const xCoords = graphData.nodes.map(n => n.x).filter(x => x !== undefined);
-            const yCoords = graphData.nodes.map(n => n.y).filter(y => y !== undefined);
-            console.log(`X range: ${Math.min(...xCoords)} to ${Math.max(...xCoords)}`);
-            console.log(`Y range: ${Math.min(...yCoords)} to ${Math.max(...yCoords)}`);
+            // Check if any nodes are positioned
+            const xCoords = graphData.nodes.map(n => n.x).filter(x => x !== undefined && !isNaN(x));
+            const yCoords = graphData.nodes.map(n => n.y).filter(y => y !== undefined && !isNaN(y));
             
-            // Sample nodes from different layers
-            console.log('Sample nodes:');
-            [0, 1, 4, 5, 6].forEach(layer => {
-                const layerNode = graphData.nodes.find(n => n.timeLayer === layer);
-                if (layerNode) {
-                    console.log(`Layer ${layer}: ${layerNode.name} at (${layerNode.x}, ${layerNode.y}) - lineage: ${layerNode.primaryLineage}`);
-                }
-            });
+            if (xCoords.length > 0 && yCoords.length > 0) {
+                console.log(`X range: ${Math.min(...xCoords)} to ${Math.max(...xCoords)}`);
+                console.log(`Y range: ${Math.min(...yCoords)} to ${Math.max(...yCoords)}`);
+            } else {
+                console.error('ERROR: No valid coordinates found!');
+            }
 
             // Initial render
             renderVisualization(graphData);
 
-            // Center the view initially at top portion of the map
-            const bounds = g.node().getBBox();
-            const fullWidth = window.innerWidth;
-            const fullHeight = window.innerHeight;
-            const scale = 0.6;
-            const translateX = (fullWidth - bounds.width * scale) / 2 - bounds.x * scale;
-            // Position at top portion - show top 25% of the visualization
-            const translateY = -bounds.y * scale + 100; // Start from top with some padding
+            // Reset zoom to show all content - start simple
+            console.log('Resetting zoom...');
             
-            const initialTransform = d3.zoomIdentity.translate(translateX, translateY).scale(scale);
-            svg.transition().duration(750).call(zoom.transform, initialTransform);
+            // Simple zoom reset - no fancy centering until we see the nodes
+            const initialTransform = d3.zoomIdentity.translate(0, 0).scale(0.5);
+            svg.call(zoom.transform, initialTransform);
+            
+            console.log('Zoom reset complete');
         }
 
         function filterData(filter) {
@@ -600,25 +602,50 @@
             function convertAlgorithmicPositionsToPixels(data, width, height) {
                 const nodes = data.nodes;
                 
-                // Grid configuration - optimized for Sugiyama layout
-                const gridWidth = 150; // pixels per grid column
-                const gridHeight = 100; // pixels per grid row (tighter vertical spacing)
-                const baseX = 50;      // smaller left margin
-                const baseY = 50;      // smaller top margin
+                // Grid configuration - more spacing to prevent overlaps
+                const gridWidth = 200;  // More horizontal pixels per unit
+                const gridHeight = 120; // vertical space between generations
+                const baseX = 100;      // larger left margin
+                const baseY = 50;       // top margin
                 
-                // Convert algorithmic positions to pixel coordinates
+                // Convert tree positions to pixel coordinates - FIXED scaling
                 nodes.forEach(node => {
-                    // Use treeX from tree layout algorithm, fallback to center if not set
-                    const xPos = (typeof node.treeX === 'number') ? node.treeX : 20;
-                    // Use timeLayer (level) for vertical positioning
-                    const yPos = node.level;
+                    let xPos, yPos;
+                    
+                    if (typeof node.treeX === 'number' && !isNaN(node.treeX)) {
+                        // Scale down the D3 tree coordinates with better distribution
+                        xPos = node.treeX / 50; // Divide by 50 for more spread (was 100)
+                    } else {
+                        // Fallback: simple column by lineage
+                        if (node.primaryLineage === 'Vimalamitra' || node.lineage?.includes('Vimalamitra')) {
+                            xPos = 2;
+                        } else if (node.primaryLineage === 'Padmasambhava' || node.lineage?.includes('Padmasambhava')) {
+                            xPos = 6;
+                        } else if (node.primaryLineage === 'Vairocana' || node.lineage?.includes('Vairocana')) {
+                            xPos = 10;
+                        } else {
+                            xPos = 4; // Center for shared entities
+                        }
+                    }
+                    
+                    if (typeof node.treeY === 'number' && !isNaN(node.treeY)) {
+                        // Scale down the huge Y coordinates too
+                        yPos = node.treeY / 150; // Bring 1500 down to 10
+                    } else {
+                        yPos = node.level || 0; // Fallback to timeLayer
+                    }
                     
                     node.x = baseX + (xPos * gridWidth);
                     node.y = baseY + (yPos * gridHeight);
+                    
+                    // Debug key nodes
+                    if (['Samantabhadra', 'Vimalamitra', 'Śākyamuni Buddha'].includes(node.name)) {
+                        console.log(`${node.name}: treeX=${node.treeX} -> scaled=${xPos} -> pixel (${node.x}, ${node.y})`);
+                    }
                 });
             }
 
-            // Create improved links with better edge routing
+            // Create tree-style links with proper branching
             const links = g.selectAll('.link')
                 .data(data.links)
                 .enter()
@@ -629,40 +656,37 @@
                     const target = data.nodes.find(n => n.id === d.target);
                     if (!source || !target) return '';
                     
-                    // Improved edge routing - smoother curves, less crossing
+                    // Tree-style edge routing - clear parent-child relationships
                     const path = d3.path();
-                    const sourceY = source.y + 25; // Bottom of source node
-                    const targetY = target.y - 25; // Top of target node
-                    const midY = (sourceY + targetY) / 2;
+                    const sourceX = source.x;
+                    const sourceY = source.y + 25; // Bottom of parent node
+                    const targetX = target.x;
+                    const targetY = target.y - 25; // Top of child node
                     
-                    path.moveTo(source.x, sourceY);
+                    path.moveTo(sourceX, sourceY);
                     
-                    // Use smoother bezier curves for better visual flow
-                    if (Math.abs(source.x - target.x) < 75) {
-                        // Nodes are close horizontally - simple curve
-                        path.bezierCurveTo(
-                            source.x, sourceY + 20,
-                            target.x, targetY - 20,
-                            target.x, targetY
-                        );
+                    // Tree-like connections: straight down then across
+                    const midY = sourceY + (targetY - sourceY) * 0.6;
+                    
+                    if (Math.abs(sourceX - targetX) < 10) {
+                        // Direct parent-child: straight line
+                        path.lineTo(targetX, targetY);
                     } else {
-                        // Nodes are far apart - more controlled curve
-                        path.bezierCurveTo(
-                            source.x, midY - 15,
-                            target.x, midY + 15,
-                            target.x, targetY
-                        );
+                        // Branching: create tree-like elbow connection
+                        path.lineTo(sourceX, midY);        // Down from parent
+                        path.lineTo(targetX, midY);        // Across to child position
+                        path.lineTo(targetX, targetY);     // Down to child
                     }
                     
                     return path.toString();
                 })
                 .attr('stroke', d => {
                     const sourceNode = data.nodes.find(n => n.id === d.source);
-                    return sourceNode ? getTransmissionColor(sourceNode.transmissionMode) : '#E0E0E0';
+                    return sourceNode ? getTransmissionColor(sourceNode.transmissionMode) : '#666';
                 })
-                .attr('stroke-width', 1.5)
+                .attr('stroke-width', 2)
                 .attr('fill', 'none')
-                .attr('opacity', 0.8);
+                .attr('opacity', 0.7);
 
             // Simplified rendering - no background zones or guides for now
 
@@ -674,25 +698,25 @@
                 .attr('class', 'node-group')
                 .attr('transform', d => `translate(${d.x}, ${d.y})`);
 
-            // Add node rectangles with better sizing
+            // Add node rectangles optimized for tree layout - wider to prevent overlap
             nodeGroups.append('rect')
                 .attr('class', 'node')
-                .attr('x', -70) // Slightly smaller nodes
+                .attr('x', -90) // Wider nodes to accommodate longer names
                 .attr('y', -25)
-                .attr('width', 140)
+                .attr('width', 180) // Increased width
                 .attr('height', 50)
-                .attr('rx', 6)
+                .attr('rx', 8)
                 .attr('fill', d => getTransmissionColor(d.transmissionMode))
                 .attr('stroke', '#333')
-                .attr('stroke-width', 1)
-                .attr('opacity', 0.9);
+                .attr('stroke-width', 2)
+                .attr('opacity', 0.95);
 
-            // Add node text (name) - better text handling
+            // Add node text (name) - better text handling with longer names
             nodeGroups.append('text')
                 .attr('class', 'node-text')
                 .attr('y', -3)
                 .attr('font-size', '11px')
-                .text(d => d.name.length > 18 ? d.name.substring(0, 16) + '...' : d.name);
+                .text(d => d.name.length > 22 ? d.name.substring(0, 20) + '...' : d.name);
 
             // Add node text (dates) - smaller dates
             nodeGroups.append('text')
