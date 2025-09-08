@@ -434,42 +434,159 @@
             return nodes;
         }
 
-        // Option A: Chronologically-Constrained Tree (Hybrid)
-        function applyHierarchicalTreeLayout(nodes, links) {
-            console.log('=== OPTION A: CHRONOLOGICALLY-CONSTRAINED TREE ===');
+        // Split data into three separate lineage trees for preprocessing
+        function splitIntoLineageTrees(nodes, links) {
+            console.log('=== SPLITTING INTO LINEAGE TREES ===');
             
-            // Build true parent-child hierarchy
-            const hierarchy = buildTreeHierarchy(nodes, links);
-            console.log('Tree hierarchy built:', hierarchy);
+            const lineages = {
+                vimalamitra: { nodes: [], links: [] },
+                padmasambhava: { nodes: [], links: [] },
+                vairocana: { nodes: [], links: [] },
+                shared: { nodes: [], links: [] } // For nodes that belong to multiple lineages
+            };
             
-            // Step 1: Let D3 create proper tree branching with good separation
-            const treeLayout = d3.tree()
-                .size([1200, 800]) // Reasonable canvas size
-                .separation((a, b) => {
-                    // Good separation for tree structure
-                    if (a.parent === b.parent) return 2; // Siblings apart
-                    return 3; // Different branches apart
-                });
+            // Identify shared ancestor nodes that appear in multiple lineages
+            const sharedAncestors = ['Samantabhadra/Samantabhadrī', 'Buddhas of the Five Families', 
+                                   'Supreme Emanation Blessing', 'Sublime Wisdom Emanation (Vajradhara)',
+                                   'Vajrasattva', 'Vajrapāṇi', 'Cheu Nangwa Dampa Samkyi Mikhyapa', 
+                                   'Śākyamuni Buddha', 'Garab Dorje', 'Mañjuśrimitra', 'Śrī Siṃha'];
             
-            // Process each root node
-            hierarchy.roots.forEach((root, rootIndex) => {
-                const treeData = d3.hierarchy(root, d => d.children);
-                const treeNodes = treeLayout(treeData);
-                
-                // Step 2: Store D3's tree positions (for good horizontal separation)
-                treeNodes.each(node => {
-                    node.data.d3TreeX = node.x; // Keep D3's horizontal positioning
-                    node.data.d3TreeY = node.y; // Keep D3's tree depth
-                });
+            // Split nodes into lineages
+            nodes.forEach(node => {
+                if (sharedAncestors.includes(node.id)) {
+                    lineages.shared.nodes.push(node);
+                } else if (node.primaryLineage === 'Vimalamitra' || 
+                          (node.lineage && node.lineage.includes('Vimalamitra'))) {
+                    lineages.vimalamitra.nodes.push(node);
+                } else if (node.primaryLineage === 'Padmasambhava' || 
+                          (node.lineage && node.lineage.includes('Padmasambhava'))) {
+                    lineages.padmasambhava.nodes.push(node);
+                } else if (node.primaryLineage === 'Vairocana' || 
+                          (node.lineage && node.lineage.includes('Vairocana'))) {
+                    lineages.vairocana.nodes.push(node);
+                } else {
+                    lineages.shared.nodes.push(node); // Fallback to shared
+                }
             });
             
-            // Step 3: Apply chronological constraints to Y positions
-            applyChronologicalConstraints(nodes);
+            // Split links based on node assignments
+            links.forEach(link => {
+                const sourceNode = nodes.find(n => n.id === link.source);
+                const targetNode = nodes.find(n => n.id === link.target);
+                
+                if (!sourceNode || !targetNode) return;
+                
+                // Determine which lineage this link belongs to based on target node
+                if (lineages.vimalamitra.nodes.includes(targetNode)) {
+                    lineages.vimalamitra.links.push(link);
+                } else if (lineages.padmasambhava.nodes.includes(targetNode)) {
+                    lineages.padmasambhava.links.push(link);
+                } else if (lineages.vairocana.nodes.includes(targetNode)) {
+                    lineages.vairocana.links.push(link);
+                } else {
+                    lineages.shared.links.push(link);
+                }
+            });
             
-            // Step 4: Fix overlaps caused by chronological adjustment
-            fixChronologicalOverlaps(nodes);
+            console.log('Lineage split results:', {
+                vimalamitra: lineages.vimalamitra.nodes.length + ' nodes',
+                padmasambhava: lineages.padmasambhava.nodes.length + ' nodes', 
+                vairocana: lineages.vairocana.nodes.length + ' nodes',
+                shared: lineages.shared.nodes.length + ' nodes'
+            });
             
-            console.log('=== OPTION A COMPLETE ===');
+            return lineages;
+        }
+
+        // Apply simple parent-child positioning within a single lineage
+        function positionLineageNodes(lineageData, baseX) {
+            console.log('Positioning lineage nodes with base X:', baseX);
+            
+            const { nodes, links } = lineageData;
+            if (nodes.length === 0) return;
+            
+            // Create parent-child map
+            const childrenMap = new Map();
+            const hasParent = new Set();
+            
+            nodes.forEach(node => childrenMap.set(node.id, []));
+            
+            links.forEach(link => {
+                if (childrenMap.has(link.source)) {
+                    childrenMap.get(link.source).push(link.target);
+                    hasParent.add(link.target);
+                }
+            });
+            
+            // Process nodes level by level
+            const processed = new Set();
+            
+            nodes.forEach(node => {
+                if (processed.has(node.id)) return;
+                
+                const children = childrenMap.get(node.id) || [];
+                const childrenInLineage = children.filter(childId => 
+                    nodes.some(n => n.id === childId)
+                );
+                
+                if (childrenInLineage.length === 0) {
+                    // No children - use base X position
+                    node.lineageX = baseX;
+                } else if (childrenInLineage.length === 1) {
+                    // Single child - center under parent
+                    node.lineageX = baseX;
+                    const childNode = nodes.find(n => n.id === childrenInLineage[0]);
+                    if (childNode) childNode.lineageX = baseX;
+                } else {
+                    // Multiple children - spread symmetrically around parent
+                    node.lineageX = baseX;
+                    const spacing = 180; // Pixels between siblings
+                    const totalWidth = (childrenInLineage.length - 1) * spacing;
+                    const startX = baseX - totalWidth / 2;
+                    
+                    childrenInLineage.forEach((childId, index) => {
+                        const childNode = nodes.find(n => n.id === childId);
+                        if (childNode) {
+                            childNode.lineageX = startX + (index * spacing);
+                        }
+                    });
+                }
+                
+                processed.add(node.id);
+            });
+        }
+
+        // New main positioning function using lineage preprocessing
+        function applyLineageBasedLayout(nodes, links) {
+            console.log('=== LINEAGE-BASED LAYOUT ===');
+            
+            // Step 1: Split into lineage trees
+            const lineages = splitIntoLineageTrees(nodes, links);
+            
+            // Step 2: Position each lineage in its column
+            positionLineageNodes(lineages.vimalamitra, 300);   // Left column
+            positionLineageNodes(lineages.padmasambhava, 800); // Center column  
+            positionLineageNodes(lineages.vairocana, 1300);    // Right column
+            
+            // Step 3: Position shared ancestors in center
+            lineages.shared.nodes.forEach(node => {
+                node.lineageX = 800; // Center position
+            });
+            
+            // Step 4: Apply lineage X positions to all nodes
+            nodes.forEach(node => {
+                if (typeof node.lineageX === 'number') {
+                    node.treeX = node.lineageX;
+                } else {
+                    node.treeX = 800; // Default center position
+                }
+                
+                // Keep the chronological Y positioning we already have
+                const chronologicalY = node.timeLayer * 140;
+                node.treeY = chronologicalY;
+            });
+            
+            console.log('=== LINEAGE-BASED LAYOUT COMPLETE ===');
             return nodes;
         }
         
@@ -724,9 +841,9 @@
             const rawData = parseCSV(csvData);
             graphData = buildGraphData(rawData);
             
-            // Apply hierarchical tree layout with chronological constraints
+            // Apply lineage-based layout with chronological constraints
             assignVerticalPositions(graphData.nodes, graphData.links);
-            applyHierarchicalTreeLayout(graphData.nodes, graphData.links);
+            applyLineageBasedLayout(graphData.nodes, graphData.links);
             
             // Debug: Check everything step by step
             console.log('=== COMPLETE DEBUG ===');
