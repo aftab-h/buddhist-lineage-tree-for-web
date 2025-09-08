@@ -579,12 +579,37 @@
             positionLineageNodes(lineages.padmasambhava, 800, 400); // Center column, 400px wide
             positionLineageNodes(lineages.vairocana, 1300, 400);    // Right column, 400px wide
             
-            // Step 3: Position shared ancestors in center
-            lineages.shared.nodes.forEach(node => {
-                node.lineageX = 800; // Center position for shared nodes
+            // Step 3: Apply D3 tree layout to shared ancestors too (no more hardcoding!)
+            positionLineageNodes(lineages.shared, 800, 600);        // Center column, wider to accommodate branching
+            
+            // Step 4: Apply final positioning - D3's X + Chronological Y with sub-layer offsets
+            
+            // First, group nodes by timeLayer to detect stacking
+            const layerGroups = d3.groups(nodes, d => d.timeLayer);
+            const layerOffsets = new Map();
+            
+            layerGroups.forEach(([timeLayer, layerNodes]) => {
+                if (layerNodes.length === 1) {
+                    // Single node - use exact layer position
+                    layerOffsets.set(layerNodes[0].id, 0);
+                } else {
+                    // Multiple nodes - spread them vertically within the layer
+                    const verticalSpacing = 25; // 25px between nodes in same layer
+                    const totalHeight = (layerNodes.length - 1) * verticalSpacing;
+                    const startOffset = -totalHeight / 2; // Center the spread around the layer
+                    
+                    // Sort nodes by X position for consistent ordering
+                    layerNodes.sort((a, b) => (a.lineageX || 0) - (b.lineageX || 0));
+                    
+                    layerNodes.forEach((node, index) => {
+                        const offset = startOffset + (index * verticalSpacing);
+                        layerOffsets.set(node.id, offset);
+                        console.log(`Layer ${timeLayer} sub-positioning: ${node.name} gets Y offset ${offset}`);
+                    });
+                }
             });
             
-            // Step 4: Apply final positioning - D3's X + Chronological Y
+            // Apply final positioning
             nodes.forEach(node => {
                 // Use D3's calculated X position (lineageX) or fallback to center
                 if (typeof node.lineageX === 'number') {
@@ -593,11 +618,12 @@
                     node.treeX = 800; // Default center position
                 }
                 
-                // Override Y with chronological positioning (this is the key!)
-                const chronologicalY = node.timeLayer * 140;
-                node.treeY = chronologicalY;
+                // Apply chronological Y + sub-layer offset
+                const baseY = node.timeLayer * 140;
+                const offset = layerOffsets.get(node.id) || 0;
+                node.treeY = baseY + offset;
                 
-                console.log(`Final position - ${node.name}: (${node.treeX}, ${node.treeY})`);
+                console.log(`Final position - ${node.name}: (${node.treeX}, ${node.treeY}) [base: ${baseY}, offset: ${offset}]`);
             });
             
             console.log('=== D3 LINEAGE LAYOUT COMPLETE ===');
