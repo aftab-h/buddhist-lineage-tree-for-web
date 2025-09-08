@@ -498,95 +498,109 @@
             return lineages;
         }
 
-        // Apply simple parent-child positioning within a single lineage
-        function positionLineageNodes(lineageData, baseX) {
-            console.log('Positioning lineage nodes with base X:', baseX);
-            
+        // Build hierarchical tree structure for D3
+        function buildLineageHierarchy(lineageData) {
             const { nodes, links } = lineageData;
-            if (nodes.length === 0) return;
+            if (nodes.length === 0) return null;
             
-            // Create parent-child map
-            const childrenMap = new Map();
+            // Create maps for tree building
+            const nodeMap = new Map(nodes.map(n => [n.id, { ...n, children: [] }]));
             const hasParent = new Set();
             
-            nodes.forEach(node => childrenMap.set(node.id, []));
-            
+            // Build parent-child relationships
             links.forEach(link => {
-                if (childrenMap.has(link.source)) {
-                    childrenMap.get(link.source).push(link.target);
+                const parent = nodeMap.get(link.source);
+                const child = nodeMap.get(link.target);
+                if (parent && child) {
+                    parent.children.push(child);
                     hasParent.add(link.target);
                 }
             });
             
-            // Process nodes level by level
-            const processed = new Set();
+            // Find root nodes (nodes with no parents in this lineage)
+            const roots = nodes.filter(n => !hasParent.has(n.id)).map(n => nodeMap.get(n.id));
             
-            nodes.forEach(node => {
-                if (processed.has(node.id)) return;
-                
-                const children = childrenMap.get(node.id) || [];
-                const childrenInLineage = children.filter(childId => 
-                    nodes.some(n => n.id === childId)
-                );
-                
-                if (childrenInLineage.length === 0) {
-                    // No children - use base X position
-                    node.lineageX = baseX;
-                } else if (childrenInLineage.length === 1) {
-                    // Single child - center under parent
-                    node.lineageX = baseX;
-                    const childNode = nodes.find(n => n.id === childrenInLineage[0]);
-                    if (childNode) childNode.lineageX = baseX;
-                } else {
-                    // Multiple children - spread symmetrically around parent
-                    node.lineageX = baseX;
-                    const spacing = 180; // Pixels between siblings
-                    const totalWidth = (childrenInLineage.length - 1) * spacing;
-                    const startX = baseX - totalWidth / 2;
-                    
-                    childrenInLineage.forEach((childId, index) => {
-                        const childNode = nodes.find(n => n.id === childId);
-                        if (childNode) {
-                            childNode.lineageX = startX + (index * spacing);
-                        }
-                    });
+            // If multiple roots, create artificial root to connect them
+            if (roots.length === 1) {
+                return roots[0];
+            } else if (roots.length > 1) {
+                return {
+                    id: 'artificial-root',
+                    name: 'Root',
+                    children: roots
+                };
+            }
+            return null;
+        }
+
+        // Use D3's native tree layout for proper positioning
+        function positionLineageNodes(lineageData, baseX, lineageWidth = 400) {
+            console.log('Using D3 tree layout for lineage with base X:', baseX);
+            
+            const { nodes } = lineageData;
+            if (nodes.length === 0) return;
+            
+            // Build D3 hierarchy
+            const root = buildLineageHierarchy(lineageData);
+            if (!root) return;
+            
+            // Create D3 tree layout
+            const treeLayout = d3.tree()
+                .size([lineageWidth, 1000]) // Width x Height - height doesn't matter since we'll override Y
+                .separation((a, b) => {
+                    // Good separation between siblings
+                    return a.parent === b.parent ? 1.5 : 2;
+                });
+            
+            // Apply D3 tree layout
+            const hierarchy = d3.hierarchy(root);
+            const treeNodes = treeLayout(hierarchy);
+            
+            // Extract D3's X positions and store them
+            treeNodes.each(d => {
+                const originalNode = nodes.find(n => n.id === d.data.id);
+                if (originalNode && d.data.id !== 'artificial-root') {
+                    // D3's X becomes our relative X within the lineage
+                    originalNode.lineageX = baseX + (d.x - lineageWidth/2); // Center the tree around baseX
+                    console.log(`${originalNode.name}: D3 positioned at X=${d.x} -> lineageX=${originalNode.lineageX}`);
                 }
-                
-                processed.add(node.id);
             });
         }
 
-        // New main positioning function using lineage preprocessing
+        // New main positioning function using lineage preprocessing with D3 tree layout
         function applyLineageBasedLayout(nodes, links) {
-            console.log('=== LINEAGE-BASED LAYOUT ===');
+            console.log('=== LINEAGE-BASED LAYOUT WITH D3 TREES ===');
             
             // Step 1: Split into lineage trees
             const lineages = splitIntoLineageTrees(nodes, links);
             
-            // Step 2: Position each lineage in its column
-            positionLineageNodes(lineages.vimalamitra, 300);   // Left column
-            positionLineageNodes(lineages.padmasambhava, 800); // Center column  
-            positionLineageNodes(lineages.vairocana, 1300);    // Right column
+            // Step 2: Use D3 tree layout for each lineage's X positioning
+            positionLineageNodes(lineages.vimalamitra, 300, 400);   // Left column, 400px wide
+            positionLineageNodes(lineages.padmasambhava, 800, 400); // Center column, 400px wide
+            positionLineageNodes(lineages.vairocana, 1300, 400);    // Right column, 400px wide
             
             // Step 3: Position shared ancestors in center
             lineages.shared.nodes.forEach(node => {
-                node.lineageX = 800; // Center position
+                node.lineageX = 800; // Center position for shared nodes
             });
             
-            // Step 4: Apply lineage X positions to all nodes
+            // Step 4: Apply final positioning - D3's X + Chronological Y
             nodes.forEach(node => {
+                // Use D3's calculated X position (lineageX) or fallback to center
                 if (typeof node.lineageX === 'number') {
                     node.treeX = node.lineageX;
                 } else {
                     node.treeX = 800; // Default center position
                 }
                 
-                // Keep the chronological Y positioning we already have
+                // Override Y with chronological positioning (this is the key!)
                 const chronologicalY = node.timeLayer * 140;
                 node.treeY = chronologicalY;
+                
+                console.log(`Final position - ${node.name}: (${node.treeX}, ${node.treeY})`);
             });
             
-            console.log('=== LINEAGE-BASED LAYOUT COMPLETE ===');
+            console.log('=== D3 LINEAGE LAYOUT COMPLETE ===');
             return nodes;
         }
         
