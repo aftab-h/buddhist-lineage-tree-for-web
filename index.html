@@ -147,9 +147,6 @@
             <input type="text" id="search" placeholder="Search for a teacher...">
             <div>
                 <button class="filter-btn active" data-filter="all">All Lineages</button>
-                <button class="filter-btn" data-filter="Vimalamitra">Vimalamitra</button>
-                <button class="filter-btn" data-filter="Vairocana">Vairocana</button>
-                <button class="filter-btn" data-filter="Padmasambhava">Padmasambhava</button>
             </div>
         </div>
 
@@ -220,71 +217,19 @@
             });
         }
 
-        // Define columns within each transmission type zone
-        function defineTransmissionColumns(nodes) {
-            // Define columns within each transmission zone
-            const transmissionColumns = {
-                // Blue zone (Mind-to-Mind) - single central column
-                mindToMind: {
-                    column1: [
-                        'Samantabhadra',
-                        'Samantabhadrī', 
-                        'Buddhas of the Five Families',
-                        'Supreme Emanation Blessing',
-                        'Sublime Wisdom Emanation (Vajradhara)',
-                        'Vajrasattva',
-                        'Vajrapāṇi',
-                        'Cheu Nangwa Dampa Samkyi Mikhyapa',
-                        'Śākyamuni Buddha'
-                    ]
-                },
-                
-                // Purple zone (Symbolic) - three main columns  
-                symbolic: {
-                    vimalamitra: ['Garab Dorje', 'Mañjuśrimitra', 'Śrī Siṃha', 'Jñānasūtra', 'Vimalamitra'],
-                    padmasambhava: ['Garab Dorje', 'Mañjuśrimitra', 'Śrī Siṃha', 'Padmasambhava'],
-                    vairocana: ['Garab Dorje', 'Śrī Siṃha', 'Vairocana']
-                },
-                
-                // Green zone (Aural) - three descendant columns
-                aural: {
-                    vimalamitra: [
-                        'King Trisong Detsen', 'Nyang Tingzin Zanpo', 'Bé Lodrö Wangchuk', 
-                        'Drom Rinchen Bar', 'Dangma Lhundrup Gyaltsen', 'Chetsun Sengge Wangchuk',
-                        'Zhangtön Tashi Dorje', 'Nyima Bum', 'Guru Jober', 'Trulzhik Senggé Gyabpa',
-                        'Melong Dorje', 'Kumārarāja', 'Longchenpa Drime Özer'
-                    ],
-                    padmasambhava: [
-                        'Yeshe Tsogyel', 'Princess Lhacam Pema Sel', 'Pema Ledreltsel/Tsultrim Dorje',
-                        'Tulku Legden/Gyalse Legpa', 'Karmapa Rangjung Dorje', 'Gyalwa Yungtön Dorje',
-                        'Meban Rinchen Lingpa', 'Rigzin Gödem', 'Jadralwa Zöpa'
-                    ],
-                    vairocana: [
-                        'Pang Sang-gyé Gönpo', 'Ngenlam Jangchub Gyaltsen', 'Zadam Rinchenyik',
-                        'Khugyur Salwaichok', 'Yudra Nyingpo', 'Aro Yeshe Jungne', 'Setsün',
-                        'Jangtön Namdak', 'Kadampa Deshek'
-                    ]
-                }
+        // Identify main transmission spines algorithmically
+        function identifyTransmissionSpines(nodes, links) {
+            // Main spine entities - these form the core transmission lines
+            const spineEntities = {
+                vimalamitra: 'Vimalamitra',
+                padmasambhava: 'Padmasambhava', 
+                vairocana: 'Vairocana'
             };
-
-            // Mark nodes with their transmission zone and column
+            
+            // Mark nodes with their primary lineage affiliation
             const nodeMap = new Map(nodes.map(n => [n.id, n]));
             
-            Object.keys(transmissionColumns).forEach(transmissionType => {
-                Object.keys(transmissionColumns[transmissionType]).forEach(columnName => {
-                    transmissionColumns[transmissionType][columnName].forEach((nodeName, index) => {
-                        const node = nodeMap.get(nodeName);
-                        if (node) {
-                            node.transmissionZone = transmissionType;
-                            node.columnName = columnName;
-                            node.positionInColumn = index;
-                            node.isInMainColumn = true;
-                        }
-                    });
-                });
-            });
-
-            return transmissionColumns;
+            return spineEntities;
         }
         
         // Mark all nodes with proper lineage affiliation for filtering
@@ -351,7 +296,7 @@
             const nodes = new Map();
             const links = [];
 
-            // Create nodes
+            // Create nodes - now including Position_Date!
             data.forEach(person => {
                 if (!nodes.has(person.Name_English)) {
                     nodes.set(person.Name_English, {
@@ -362,6 +307,7 @@
                         description: person.Description_English,
                         transmissionMode: person.Transmission_Mode,
                         lineage: person.Lineage,
+                        positionDate: person.Position_Date, // Key addition!
                         level: 0,
                         children: []
                     });
@@ -385,17 +331,15 @@
                 }
             });
 
-            // Define transmission columns and mark nodes
+            // Convert to array and mark lineages
             const nodeArray = Array.from(nodes.values());
-            const transmissionColumns = defineTransmissionColumns(nodeArray);
             
             // Ensure all nodes have proper lineage marking for filtering
             markAllNodesWithLineage(nodeArray, links);
             
             return {
                 nodes: nodeArray,
-                links: links,
-                transmissionColumns: transmissionColumns
+                links: links
             };
         }
 
@@ -413,273 +357,133 @@
             }
         }
 
-        // Parse dates from various formats and return approximate year
-        function parseDate(dateString) {
-            if (!dateString || dateString === 'N/A' || dateString === 'Date unknown' || dateString.includes('Beyond time')) {
-                return null; // No date available
+        // Parse Position_Date and map to reasonable layer levels
+        function parsePositionDate(positionDate) {
+            if (!positionDate || positionDate === 'N/A' || positionDate === '') {
+                return 10; // Put undated entities at layer 10
             }
             
-            // Handle century formats like "8th century", "7th to 8th centuries"
-            const centuryMatch = dateString.match(/(\d+)(?:th|st|nd|rd)\s+century/i);
-            if (centuryMatch) {
-                const century = parseInt(centuryMatch[1]);
-                return (century - 1) * 100 + 50; // Middle of century (8th century = 750)
-            }
+            const rawDate = parseInt(positionDate);
             
-            // Handle ranges like "1308-1364", "8th-9th centuries"
-            const rangeMatch = dateString.match(/(\d{3,4})-(\d{3,4})/);
-            if (rangeMatch) {
-                return parseInt(rangeMatch[1]); // Take the start year
-            }
+            // Map Position_Date values to reasonable layer levels
+            if (rawDate === 0) return 0;
+            if (rawDate === 1) return 1;
+            if (rawDate === 2) return 2;
+            if (rawDate === 3) return 3;
+            if (rawDate >= 500 && rawDate < 600) return 4; // Garab Dorje at 500
+            if (rawDate >= 600 && rawDate < 680) return 5; // Śākyamuni at 600
+            if (rawDate >= 680 && rawDate < 700) return 6; // Mañjuśrimitra at 680
+            if (rawDate >= 700 && rawDate < 750) return 7; // Śrī Siṃha, Ḍākinīs at 700
+            if (rawDate >= 750 && rawDate < 800) return 8; // Padmasambhava, Jñānasūtra at 750
+            if (rawDate >= 800 && rawDate < 825) return 9; // Vimalamitra, Vairocana at 800
+            if (rawDate >= 825 && rawDate < 900) return 10;
+            if (rawDate >= 900 && rawDate < 1000) return 11;
+            if (rawDate >= 1000 && rawDate < 1200) return 12;
+            if (rawDate >= 1200 && rawDate < 1400) return 13;
+            if (rawDate >= 1400) return 14;
             
-            // Handle single years or "8th century BCE"
-            const yearMatch = dateString.match(/(\d{3,4})/);
-            if (yearMatch) {
-                const year = parseInt(yearMatch[1]);
-                // Handle BCE dates
-                return dateString.includes('BCE') ? -year : year;
-            }
-            
-            return null; // Couldn't parse
+            return 10; // fallback
         }
 
-        // Assign levels using three-tier chronological system
-        function assignLevels(nodes, links) {
-            // Parse dates for all nodes
+        // Assign vertical positions using Position_Date from CSV
+        function assignVerticalPositions(nodes, links) {
+            // Use Position_Date directly for vertical positioning - this is the key change!
             nodes.forEach(node => {
-                node.parsedDate = parseDate(node.dates);
+                node.timeLayer = parsePositionDate(node.positionDate);
+                // Convert timeLayer to level for compatibility with existing rendering code
+                node.level = node.timeLayer;
             });
 
-            // Separate nodes by transmission mode
-            const mindToMindNodes = nodes.filter(node => node.transmissionMode === 'Mind to Mind');
-            const symbolicNodes = nodes.filter(node => node.transmissionMode === 'Symbolic');
-            const auralNodes = nodes.filter(node => node.transmissionMode === 'Aural');
+            return nodes;
+        }
 
-            // Build parent-child relationships for symbolic nodes (relationship-based positioning)
+        // Sugiyama layered graph algorithm
+        function applySugiyamaLayout(nodes, links) {
+            console.log('=== SUGIYAMA LAYOUT START ===');
+            
+            // Step 1: Layer assignment (already done by timeLayer)
+            const timeLayers = d3.groups(nodes, d => d.timeLayer);
+            timeLayers.sort((a, b) => a[0] - b[0]);
+            
+            console.log(`Found ${timeLayers.length} time layers:`, timeLayers.map(([layer, nodes]) => `Layer ${layer}: ${nodes.length} nodes`));
+            
+            // Build adjacency maps
             const childrenMap = new Map();
             const parentsMap = new Map();
             
-            symbolicNodes.forEach(node => {
+            nodes.forEach(node => {
                 childrenMap.set(node.id, []);
                 parentsMap.set(node.id, []);
             });
             
             links.forEach(link => {
-                const sourceNode = nodes.find(n => n.id === link.source);
-                const targetNode = nodes.find(n => n.id === link.target);
-                
-                if (sourceNode && targetNode && 
-                    sourceNode.transmissionMode === 'Symbolic' && 
-                    targetNode.transmissionMode === 'Symbolic') {
+                if (childrenMap.has(link.source) && childrenMap.has(link.target)) {
                     childrenMap.get(link.source).push(link.target);
                     parentsMap.get(link.target).push(link.source);
                 }
             });
-
-            // TIER 1: Mind to Mind (Levels 0-3) - Primordial/Timeless with specific hierarchy
-            mindToMindNodes.forEach(node => {
-                switch (node.name) {
-                    case 'Samantabhadra':
-                    case 'Samantabhadrī':
-                        node.level = 0; // Very top
-                        break;
-                    case 'Buddhas of the Five Families':
-                        node.level = 1; // Below primordial couple
-                        break;
-                    case 'Supreme Emanation Blessing':
-                    case 'Sublime Wisdom Emanation (Vajradhara)':
-                    case 'Vajradhara':
-                        node.level = 2; // Below Five Buddha Families
-                        break;
-                    case 'Vajrapāṇi':
-                    case 'Vajrasattva':
-                    case 'Cheu Nangwa Dampa Samkyi Mikhyapa':
-                        node.level = 3; // Below Vajradhara/Supreme Emanation Blessing
-                        break;
-                    case 'Śākyamuni Buddha':
-                        node.level = 4; // Below Cheu Nangwa Dampa Samkyi Mikhyapa
-                        break;
-                    default:
-                        // Any other Mind to Mind entities
-                        node.level = 3; // Default to level 3
-                        break;
-                }
-            });
-
-            // TIER 2: Symbolic (Levels 5-7) - Relationship-based
-            const symbolicRoots = symbolicNodes.filter(node => 
-                parentsMap.get(node.id)?.length === 0 || !parentsMap.has(node.id)
-            );
             
-            const queue = symbolicRoots.map(root => ({ id: root.id, level: 5 }));
-            const processed = new Set();
-
-            while (queue.length > 0) {
-                const { id, level } = queue.shift();
+            // Step 2: Node ordering within layers to minimize crossings
+            timeLayers.forEach(([timeLayer, layerNodes], layerIndex) => {
+                console.log(`Processing layer ${timeLayer} with ${layerNodes.length} nodes`);
                 
-                if (processed.has(id)) continue;
-                processed.add(id);
-                
-                const node = symbolicNodes.find(n => n.id === id);
-                if (node) {
-                    node.level = Math.min(level, 7); // Cap at level 7
-                    
-                    // Add children
-                    const children = childrenMap.get(id) || [];
-                    children.forEach(childId => {
-                        if (!processed.has(childId)) {
-                            queue.push({ id: childId, level: level + 1 });
-                        }
+                if (layerIndex === 0) {
+                    // First layer: order by lineage preference
+                    layerNodes.sort((a, b) => {
+                        const aLineage = getLineageOrder(a);
+                        const bLineage = getLineageOrder(b);
+                        return aLineage - bLineage;
                     });
-                }
-            }
-
-            // TIER 3: Aural (Levels 7+) - Chronologically sorted
-            auralNodes.sort((a, b) => {
-                const dateA = a.parsedDate || 9999; // Put undated at end
-                const dateB = b.parsedDate || 9999;
-                return dateA - dateB;
-            });
-
-            // Group aural nodes by finer time periods with smart density detection
-            function createTimeGroups(auralNodes) {
-                const timeGroups = [];
-                let currentGroup = [];
-                let currentPeriod = null;
-                const QUARTER_CENTURY = 25; // Start with 25-year periods
-                const MAX_NODES_PER_GROUP = 4; // Maximum nodes before subdividing
-                
-                auralNodes.forEach(node => {
-                    const date = node.parsedDate;
-                    const period = date ? Math.floor(date / QUARTER_CENTURY) * QUARTER_CENTURY : 9999;
-                    
-                    if (currentPeriod === null || period === currentPeriod) {
-                        currentGroup.push(node);
-                        currentPeriod = period;
-                    } else {
-                        if (currentGroup.length > 0) {
-                            // Check if group is too crowded and needs subdivision
-                            if (currentGroup.length > MAX_NODES_PER_GROUP) {
-                                const subdivided = subdivideGroup(currentGroup, 10); // 10-year periods
-                                timeGroups.push(...subdivided);
-                            } else {
-                                timeGroups.push([...currentGroup]);
-                            }
-                        }
-                        currentGroup = [node];
-                        currentPeriod = period;
-                    }
-                });
-                
-                // Handle the last group
-                if (currentGroup.length > 0) {
-                    if (currentGroup.length > MAX_NODES_PER_GROUP) {
-                        const subdivided = subdivideGroup(currentGroup, 10);
-                        timeGroups.push(...subdivided);
-                    } else {
-                        timeGroups.push(currentGroup);
-                    }
-                }
-                
-                return timeGroups;
-            }
-            
-            // Subdivide overcrowded groups into smaller time periods
-            function subdivideGroup(group, yearSpan) {
-                const subGroups = [];
-                let currentSubGroup = [];
-                let currentSubPeriod = null;
-                
-                group.forEach(node => {
-                    const date = node.parsedDate;
-                    const period = date ? Math.floor(date / yearSpan) * yearSpan : 9999;
-                    
-                    if (currentSubPeriod === null || period === currentSubPeriod) {
-                        currentSubGroup.push(node);
-                        currentSubPeriod = period;
-                    } else {
-                        if (currentSubGroup.length > 0) {
-                            subGroups.push([...currentSubGroup]);
-                        }
-                        currentSubGroup = [node];
-                        currentSubPeriod = period;
-                    }
-                });
-                
-                if (currentSubGroup.length > 0) {
-                    subGroups.push(currentSubGroup);
-                }
-                
-                return subGroups;
-            }
-            
-            // Create time groups with enhanced resolution
-            const timeGroups = createTimeGroups(auralNodes);
-
-            // Assign levels to aural nodes with transmission-aware positioning
-            let currentLevel = 8;
-            timeGroups.forEach((group, groupIndex) => {
-                if (group.length <= 2) {
-                    // Small groups can share a level
-                    group.sort((a, b) => {
-                        const dateA = a.parsedDate || 9999;
-                        const dateB = b.parsedDate || 9999;
-                        if (dateA !== dateB) return dateA - dateB;
-                        return a.lineage.localeCompare(b.lineage);
-                    });
-                    
-                    group.forEach(node => {
-                        node.level = currentLevel;
-                    });
-                    currentLevel++;
                 } else {
-                    // Larger groups need transmission-aware sub-positioning
-                    const subLevels = arrangeByTransmission(group, links);
-                    subLevels.forEach(subGroup => {
-                        subGroup.forEach(node => {
-                            node.level = currentLevel;
-                        });
-                        currentLevel++;
+                    // Other layers: order to minimize crossings with previous layer
+                    layerNodes.sort((a, b) => {
+                        const aParentPos = getAverageParentPosition(a, parentsMap, nodes);
+                        const bParentPos = getAverageParentPosition(b, parentsMap, nodes);
+                        return aParentPos - bParentPos;
                     });
                 }
+                
+                // Step 3: Assign horizontal positions within layer
+                const layerWidth = Math.max(8, layerNodes.length * 1.5); // Dynamic width based on node count
+                layerNodes.forEach((node, index) => {
+                    // Evenly distribute nodes across layer width
+                    node.treeX = (index + 0.5) * (layerWidth / layerNodes.length);
+                });
+                
+                console.log(`Layer ${timeLayer} positions:`, layerNodes.map(n => `${n.name}: ${n.treeX.toFixed(1)}`));
             });
             
-            // Helper function to arrange nodes by transmission relationships
-            function arrangeByTransmission(nodes, links) {
-                const nodeMap = new Map(nodes.map(n => [n.id, n]));
-                const children = new Map();
-                const parents = new Map();
-                
-                // Build relationships within this group
-                nodes.forEach(node => {
-                    children.set(node.id, []);
-                    parents.set(node.id, []);
-                });
-                
-                links.forEach(link => {
-                    if (nodeMap.has(link.source) && nodeMap.has(link.target)) {
-                        children.get(link.source).push(link.target);
-                        parents.get(link.target).push(link.source);
-                    }
-                });
-                
-                // Find nodes with no parents in this group (teachers)
-                const roots = nodes.filter(node => parents.get(node.id).length === 0);
-                const remaining = nodes.filter(node => parents.get(node.id).length > 0);
-                
-                const levels = [];
-                if (roots.length > 0) {
-                    levels.push(roots.sort((a, b) => (a.parsedDate || 9999) - (b.parsedDate || 9999)));
-                }
-                if (remaining.length > 0) {
-                    levels.push(remaining.sort((a, b) => (a.parsedDate || 9999) - (b.parsedDate || 9999)));
-                }
-                
-                return levels.length > 0 ? levels : [nodes];
-            }
-
+            console.log('=== SUGIYAMA LAYOUT COMPLETE ===');
             return nodes;
         }
+        
+        // Helper: Get lineage ordering preference
+        function getLineageOrder(node) {
+            if (node.primaryLineage === 'Vimalamitra' || node.lineage?.includes('Vimalamitra')) return 1;
+            if (node.primaryLineage === 'Padmasambhava' || node.lineage?.includes('Padmasambhava')) return 2;
+            if (node.primaryLineage === 'Vairocana' || node.lineage?.includes('Vairocana')) return 3;
+            return 1.5; // Center for shared/primordial entities
+        }
+        
+        // Helper: Get average position of parent nodes
+        function getAverageParentPosition(node, parentsMap, allNodes) {
+            const parents = parentsMap.get(node.id) || [];
+            if (parents.length === 0) {
+                return getLineageOrder(node); // Fallback to lineage preference
+            }
+            
+            const parentPositions = parents
+                .map(parentId => allNodes.find(n => n.id === parentId))
+                .filter(parent => parent && typeof parent.treeX === 'number')
+                .map(parent => parent.treeX);
+                
+            if (parentPositions.length === 0) {
+                return getLineageOrder(node);
+            }
+            
+            return parentPositions.reduce((sum, pos) => sum + pos, 0) / parentPositions.length;
+        }
+
 
         // Initialize visualization
         const container = d3.select('#container');
@@ -713,7 +517,37 @@
             // Parse data and build graph
             const rawData = parseCSV(csvData);
             graphData = buildGraphData(rawData);
-            assignLevels(graphData.nodes, graphData.links);
+            
+            // Apply Sugiyama layered graph algorithm
+            assignVerticalPositions(graphData.nodes, graphData.links);
+            applySugiyamaLayout(graphData.nodes, graphData.links);
+            
+            // Debug: Check positioning of all nodes
+            console.log('=== POSITIONING DEBUG ===');
+            console.log(`Total nodes: ${graphData.nodes.length}`);
+            
+            // Group by timeLayer to see distribution
+            const layerCounts = {};
+            graphData.nodes.forEach(node => {
+                const layer = node.timeLayer || 'undefined';
+                layerCounts[layer] = (layerCounts[layer] || 0) + 1;
+            });
+            console.log('Nodes per time layer:', layerCounts);
+            
+            // Check coordinate ranges
+            const xCoords = graphData.nodes.map(n => n.x).filter(x => x !== undefined);
+            const yCoords = graphData.nodes.map(n => n.y).filter(y => y !== undefined);
+            console.log(`X range: ${Math.min(...xCoords)} to ${Math.max(...xCoords)}`);
+            console.log(`Y range: ${Math.min(...yCoords)} to ${Math.max(...yCoords)}`);
+            
+            // Sample nodes from different layers
+            console.log('Sample nodes:');
+            [0, 1, 4, 5, 6].forEach(layer => {
+                const layerNode = graphData.nodes.find(n => n.timeLayer === layer);
+                if (layerNode) {
+                    console.log(`Layer ${layer}: ${layerNode.name} at (${layerNode.x}, ${layerNode.y}) - lineage: ${layerNode.primaryLineage}`);
+                }
+            });
 
             // Initial render
             renderVisualization(graphData);
@@ -748,8 +582,7 @@
 
             return {
                 nodes: filteredNodes,
-                links: filteredLinks,
-                transmissionColumns: graphData.transmissionColumns
+                links: filteredLinks
             };
         }
 
@@ -761,106 +594,31 @@
             const levelGroups = d3.groups(data.nodes, d => d.level);
             const maxLevel = d3.max(levelGroups, d => d[0]);
 
-            // Grid-based positioning system
-            positionNodesInGrid(data, width, height);
+            // New algorithmic positioning system
+            convertAlgorithmicPositionsToPixels(data, width, height);
             
-            function positionNodesInGrid(data, width, height) {
+            function convertAlgorithmicPositionsToPixels(data, width, height) {
                 const nodes = data.nodes;
-                const transmissionColumns = data.transmissionColumns;
                 
-                // Grid configuration
-                const gridWidth = 90;  // pixels per grid column
-                const gridHeight = 120; // pixels per grid row
-                const baseX = 100;     // left margin
-                const baseY = 100;     // top margin
+                // Grid configuration - optimized for Sugiyama layout
+                const gridWidth = 150; // pixels per grid column
+                const gridHeight = 100; // pixels per grid row (tighter vertical spacing)
+                const baseX = 50;      // smaller left margin
+                const baseY = 50;      // smaller top margin
                 
-                // Main lineage columns with 10-column spacing
-                const mainColumns = {
-                    vimalamitra: 10,
-                    padmasambhava: 20,
-                    vairocana: 30
-                };
-                
-                // Assign grid positions to all nodes
-                assignGridPositions(nodes, transmissionColumns, mainColumns, data.links);
-                
-                // Convert grid positions to pixel coordinates
+                // Convert algorithmic positions to pixel coordinates
                 nodes.forEach(node => {
-                    if (typeof node.gridCol === 'number' && typeof node.gridRow === 'number') {
-                        node.x = baseX + (node.gridCol * gridWidth);
-                        node.y = baseY + (node.gridRow * gridHeight);
-                    } else {
-                        // Fallback for nodes without grid position
-                        console.warn('Node without grid position:', node.name);
-                        node.x = baseX + (20 * gridWidth); // Default position
-                        node.y = baseY + (node.level * gridHeight);
-                    }
-                });
-            }
-            
-            function assignGridPositions(nodes, transmissionColumns, mainColumns, links) {
-                // First, assign main lineage nodes to their primary columns
-                Object.keys(transmissionColumns).forEach(transmissionZone => {
-                    Object.keys(transmissionColumns[transmissionZone]).forEach(columnName => {
-                        const gridCol = mainColumns[columnName];
-                        if (gridCol) {
-                            transmissionColumns[transmissionZone][columnName].forEach(nodeName => {
-                                const node = nodes.find(n => n.id === nodeName);
-                                if (node) {
-                                    node.gridCol = gridCol;
-                                    node.gridRow = node.level; // Use existing level system for rows
-                                    node.isInMainColumn = true;
-                                }
-                            });
-                        }
-                    });
-                });
-                
-                // Handle nodes not in main columns (side branches)
-                const sideNodes = nodes.filter(node => !node.isInMainColumn);
-                const parentChildMap = new Map(); // parent -> [children]
-                
-                // Build parent-child relationships
-                links.forEach(link => {
-                    if (!parentChildMap.has(link.source)) {
-                        parentChildMap.set(link.source, []);
-                    }
-                    parentChildMap.get(link.source).push(link.target);
-                });
-                
-                // Assign positions to side branches
-                sideNodes.forEach(node => {
-                    const parentLink = links.find(link => link.target === node.id);
-                    if (parentLink) {
-                        const parent = nodes.find(n => n.id === parentLink.source);
-                        if (parent && typeof parent.gridCol === 'number') {
-                            // Position relative to parent
-                            const siblings = parentChildMap.get(parent.id) || [];
-                            const siblingIndex = siblings.indexOf(node.id);
-                            
-                            // Spread siblings around parent column
-                            if (siblings.length === 1) {
-                                node.gridCol = parent.gridCol + 1; // Single child goes right
-                            } else {
-                                // Multiple children spread left and right
-                                const offset = Math.ceil((siblingIndex + 1) / 2) * (siblingIndex % 2 === 0 ? 1 : -1);
-                                node.gridCol = parent.gridCol + offset;
-                            }
-                            node.gridRow = node.level; // Use existing level system
-                        } else {
-                            // Parent not positioned, use fallback
-                            node.gridCol = 35; // Far right area
-                            node.gridRow = node.level;
-                        }
-                    } else {
-                        // No parent found, orphaned node
-                        node.gridCol = 35; // Far right area  
-                        node.gridRow = node.level;
-                    }
+                    // Use treeX from tree layout algorithm, fallback to center if not set
+                    const xPos = (typeof node.treeX === 'number') ? node.treeX : 20;
+                    // Use timeLayer (level) for vertical positioning
+                    const yPos = node.level;
+                    
+                    node.x = baseX + (xPos * gridWidth);
+                    node.y = baseY + (yPos * gridHeight);
                 });
             }
 
-            // Create links
+            // Create improved links with better edge routing
             const links = g.selectAll('.link')
                 .data(data.links)
                 .enter()
@@ -871,102 +629,42 @@
                     const target = data.nodes.find(n => n.id === d.target);
                     if (!source || !target) return '';
                     
+                    // Improved edge routing - smoother curves, less crossing
                     const path = d3.path();
-                    path.moveTo(source.x, source.y + 30);
-                    path.bezierCurveTo(
-                        source.x, source.y + 60,
-                        target.x, target.y - 60,
-                        target.x, target.y - 30
-                    );
+                    const sourceY = source.y + 25; // Bottom of source node
+                    const targetY = target.y - 25; // Top of target node
+                    const midY = (sourceY + targetY) / 2;
+                    
+                    path.moveTo(source.x, sourceY);
+                    
+                    // Use smoother bezier curves for better visual flow
+                    if (Math.abs(source.x - target.x) < 75) {
+                        // Nodes are close horizontally - simple curve
+                        path.bezierCurveTo(
+                            source.x, sourceY + 20,
+                            target.x, targetY - 20,
+                            target.x, targetY
+                        );
+                    } else {
+                        // Nodes are far apart - more controlled curve
+                        path.bezierCurveTo(
+                            source.x, midY - 15,
+                            target.x, midY + 15,
+                            target.x, targetY
+                        );
+                    }
+                    
                     return path.toString();
                 })
                 .attr('stroke', d => {
                     const sourceNode = data.nodes.find(n => n.id === d.source);
                     return sourceNode ? getTransmissionColor(sourceNode.transmissionMode) : '#E0E0E0';
                 })
-                .attr('stroke-width', 2)
-                .attr('fill', 'none');
+                .attr('stroke-width', 1.5)
+                .attr('fill', 'none')
+                .attr('opacity', 0.8);
 
-            // Create grid-based transmission zone backgrounds
-            const gridWidth = 90;
-            const baseX = 100;
-            const baseY = 100;
-            const zoneColors = {
-                mindToMind: 'rgba(79, 195, 247, 0.1)',
-                symbolic: 'rgba(186, 104, 200, 0.1)', 
-                aural: 'rgba(129, 199, 132, 0.1)'
-            };
-            
-            // Create backgrounds for transmission zones
-            Object.keys(zoneColors).forEach(zoneName => {
-                const zoneNodes = data.nodes.filter(node => {
-                    if (zoneName === 'mindToMind') return node.transmissionMode === 'Mind to Mind';
-                    if (zoneName === 'symbolic') return node.transmissionMode === 'Symbolic';
-                    if (zoneName === 'aural') return node.transmissionMode === 'Aural';
-                    return false;
-                });
-                
-                if (zoneNodes.length > 0) {
-                    const minY = Math.min(...zoneNodes.map(n => n.y)) - 40;
-                    const maxY = Math.max(...zoneNodes.map(n => n.y)) + 80;
-                    
-                    g.append('rect')
-                        .attr('class', 'transmission-zone-background')
-                        .attr('x', baseX)
-                        .attr('y', minY)
-                        .attr('width', 40 * gridWidth) // Cover all 40 grid columns
-                        .attr('height', maxY - minY)
-                        .attr('fill', zoneColors[zoneName])
-                        .attr('stroke', 'rgba(150, 150, 150, 0.2)')
-                        .attr('stroke-width', 1)
-                        .attr('rx', 8);
-                    
-                    // Add zone label
-                    let zoneLabel = '';
-                    if (zoneName === 'mindToMind') zoneLabel = 'Mind-to-Mind Transmission';
-                    if (zoneName === 'symbolic') zoneLabel = 'Symbolic Transmission';
-                    if (zoneName === 'aural') zoneLabel = 'Aural Lineage';
-                    
-                    g.append('text')
-                        .attr('class', 'zone-label')
-                        .attr('x', baseX + 20)
-                        .attr('y', minY + 25)
-                        .attr('font-size', '16px')
-                        .attr('font-weight', 'bold')
-                        .attr('fill', '#444')
-                        .text(zoneLabel);
-                }
-            });
-            
-            // Add main lineage column guides
-            const mainColumns = [10, 20, 30]; // Vimalamitra, Padmasambhava, Vairocana
-            const columnLabels = ['Vimalamitra', 'Padmasambhava', 'Vairocana'];
-            
-            mainColumns.forEach((col, index) => {
-                const x = baseX + (col * gridWidth);
-                
-                // Column guide line
-                g.append('line')
-                    .attr('class', 'column-guide')
-                    .attr('x1', x)
-                    .attr('y1', baseY)
-                    .attr('x2', x)
-                    .attr('y2', height - 100)
-                    .attr('stroke', 'rgba(100, 100, 100, 0.2)')
-                    .attr('stroke-width', 2)
-                    .attr('stroke-dasharray', '5,5');
-                
-                // Column label
-                g.append('text')
-                    .attr('class', 'column-label')
-                    .attr('x', x)
-                    .attr('y', baseY - 10)
-                    .attr('text-anchor', 'middle')
-                    .attr('font-size', '12px')
-                    .attr('font-weight', 'bold')
-                    .attr('fill', '#666')
-                    .text(columnLabels[index] + ' Lineage');
-            });
+            // Simplified rendering - no background zones or guides for now
 
             // Create node groups
             const nodeGroups = g.selectAll('.node-group')
@@ -976,29 +674,32 @@
                 .attr('class', 'node-group')
                 .attr('transform', d => `translate(${d.x}, ${d.y})`);
 
-            // Add node rectangles
+            // Add node rectangles with better sizing
             nodeGroups.append('rect')
                 .attr('class', 'node')
-                .attr('x', -80)
-                .attr('y', -30)
-                .attr('width', 160)
-                .attr('height', 60)
-                .attr('rx', 8)
+                .attr('x', -70) // Slightly smaller nodes
+                .attr('y', -25)
+                .attr('width', 140)
+                .attr('height', 50)
+                .attr('rx', 6)
                 .attr('fill', d => getTransmissionColor(d.transmissionMode))
                 .attr('stroke', '#333')
-                .attr('stroke-width', 1);
+                .attr('stroke-width', 1)
+                .attr('opacity', 0.9);
 
-            // Add node text (name)
+            // Add node text (name) - better text handling
             nodeGroups.append('text')
                 .attr('class', 'node-text')
-                .attr('y', -5)
-                .text(d => d.name.length > 20 ? d.name.substring(0, 18) + '...' : d.name);
+                .attr('y', -3)
+                .attr('font-size', '11px')
+                .text(d => d.name.length > 18 ? d.name.substring(0, 16) + '...' : d.name);
 
-            // Add node text (dates)
+            // Add node text (dates) - smaller dates
             nodeGroups.append('text')
                 .attr('class', 'node-date')
-                .attr('y', 15)
-                .text(d => d.dates);
+                .attr('y', 12)
+                .attr('font-size', '9px')
+                .text(d => d.dates && d.dates !== 'N/A' ? d.dates : '');
 
             // Add interaction events
             nodeGroups
