@@ -855,41 +855,23 @@
                     const target = data.nodes.find(n => n.id === d.target);
                     if (!source || !target) return '';
                     
-                    // Smooth curved edge routing with better visual flow
+                    // Simple, clean curved connections using single cubic Bézier curves
                     const sourceX = source.x;
                     const sourceY = source.y + 25; // Bottom of parent node
                     const targetX = target.x;
                     const targetY = target.y - 25; // Top of child node
                     
-                    const deltaY = targetY - sourceY;
-                    const deltaX = targetX - sourceX;
+                    const deltaY = Math.abs(targetY - sourceY);
+                    const controlOffset = Math.min(deltaY * 0.4, 80); // 40% of vertical distance, max 80px
                     
-                    if (Math.abs(deltaX) < 10) {
-                        // Direct parent-child: smooth vertical curve
-                        const midY = sourceY + deltaY * 0.5;
-                        const controlOffset = Math.min(Math.abs(deltaY) * 0.3, 50);
-                        
-                        return `M${sourceX},${sourceY} 
-                                C${sourceX},${sourceY + controlOffset} 
-                                 ${targetX},${targetY - controlOffset} 
-                                 ${targetX},${targetY}`;
-                    } else {
-                        // Branching: smooth S-curve connection
-                        const midY = sourceY + deltaY * 0.6;
-                        const controlOffset1 = Math.min(Math.abs(deltaY) * 0.25, 40);
-                        const controlOffset2 = Math.min(Math.abs(deltaX) * 0.3, 60);
-                        
-                        return `M${sourceX},${sourceY} 
-                                C${sourceX},${sourceY + controlOffset1} 
-                                 ${sourceX},${midY - controlOffset1} 
-                                 ${sourceX},${midY}
-                                C${sourceX + controlOffset2},${midY} 
-                                 ${targetX - controlOffset2},${midY} 
-                                 ${targetX},${midY}
-                                C${targetX},${midY + controlOffset1} 
-                                 ${targetX},${targetY - controlOffset1} 
-                                 ${targetX},${targetY}`;
-                    }
+                    // Single smooth cubic Bézier curve for all connections
+                    // Control points are directly below source and directly above target
+                    const control1X = sourceX;
+                    const control1Y = sourceY + controlOffset;
+                    const control2X = targetX;
+                    const control2Y = targetY - controlOffset;
+                    
+                    return `M${sourceX},${sourceY} C${control1X},${control1Y} ${control2X},${control2Y} ${targetX},${targetY}`;
                 })
                 .attr('stroke', d => {
                     const sourceNode = data.nodes.find(n => n.id === d.source);
