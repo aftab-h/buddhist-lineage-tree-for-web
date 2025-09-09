@@ -211,6 +211,27 @@
             animation: popupFadeIn 0.2s ease-out;
         }
 
+        /* Connection line from node to popup */
+        .popup-connector {
+            position: absolute;
+            z-index: 1499;
+            pointer-events: none;
+        }
+
+        .popup-connector line {
+            stroke: #333;
+            stroke-width: 2;
+            stroke-dasharray: 4,4;
+            opacity: 0.6;
+        }
+
+        .popup-connector circle {
+            fill: #ff6b35;
+            stroke: white;
+            stroke-width: 2;
+            r: 4;
+        }
+
         @keyframes popupFadeIn {
             from {
                 opacity: 0;
@@ -361,11 +382,13 @@
             .popup-card {
                 max-width: calc(100vw - 20px);
                 margin: 10px;
-                position: fixed !important;
-                left: 10px !important;
-                right: 10px !important;
-                top: 50% !important;
-                transform: translateY(-50%) !important;
+            }
+            
+            /* On mobile, still show connector but adjust popup positioning */
+            @media (max-width: 768px) {
+                .popup-card {
+                    max-width: calc(100vw - 40px);
+                }
             }
         }
 
@@ -448,6 +471,16 @@
                 <div id="popup-description"></div>
             </div>
         </div>
+
+        <!-- SVG for popup connector line -->
+        <svg id="popup-connector" class="popup-connector hidden" width="100%" height="100%" style="position: absolute; top: 0; left: 0; pointer-events: none;">
+            <defs>
+                <marker id="popup-arrow" viewBox="0 -5 10 10" refX="8" refY="0" markerWidth="6" markerHeight="6" orient="auto">
+                    <path d="M0,-5L10,0L0,5" fill="#333" opacity="0.6"/>
+                </marker>
+            </defs>
+            <line id="connector-line" x1="0" y1="0" x2="0" y2="0" marker-end="url(#popup-arrow)"/>
+        </svg>
         
         <svg id="svg"></svg>
     </div>
@@ -1264,17 +1297,30 @@
             .scaleExtent([0.1, 3])
             .on('zoom', (event) => {
                 g.attr('transform', event.transform);
+                // Reposition popup if it's open
+                if (currentPopupNode && !document.getElementById('popup-card').classList.contains('hidden')) {
+                    positionPopupAndConnector();
+                }
             });
 
         svg.call(zoom);
 
+        // Store current popup node for repositioning
+        let currentPopupNode = null;
+        let currentPopupData = null;
+
         // Popup functions
         function showPopup(data, event) {
             const popup = document.getElementById('popup-card');
+            const connector = document.getElementById('popup-connector');
             const title = document.getElementById('popup-title');
             const tibetan = document.getElementById('popup-tibetan');
             const dates = document.getElementById('popup-dates');
             const description = document.getElementById('popup-description');
+            
+            // Store current popup info for repositioning
+            currentPopupData = data;
+            currentPopupNode = event.target.closest('.node-group');
             
             // Set content
             title.textContent = data.name;
@@ -1305,38 +1351,99 @@
                 description.style.display = 'none';
             }
             
-            // Position the popup near the clicked node
-            const nodeRect = event.target.getBoundingClientRect();
+            // Position popup and connector
+            positionPopupAndConnector();
+            
+            popup.classList.remove('hidden');
+            connector.classList.remove('hidden');
+        }
+
+        function positionPopupAndConnector() {
+            if (!currentPopupNode || !currentPopupData) return;
+            
+            const popup = document.getElementById('popup-card');
+            const connector = document.getElementById('popup-connector');
+            const connectorLine = document.getElementById('connector-line');
+            
+            // Get node position in screen coordinates
+            const nodeRect = currentPopupNode.getBoundingClientRect();
             const containerRect = document.getElementById('container').getBoundingClientRect();
             
-            // Calculate position relative to container
-            let left = nodeRect.right - containerRect.left + 10; // 10px gap from node
-            let top = nodeRect.top - containerRect.top;
+            // Calculate node center
+            const nodeCenterX = nodeRect.left + nodeRect.width / 2 - containerRect.left;
+            const nodeCenterY = nodeRect.top + nodeRect.height / 2 - containerRect.top;
             
-            // Adjust if popup would go off-screen
-            const popupWidth = 350; // max-width from CSS
-            const popupHeight = 300; // estimated max height
+            // Position popup with smart placement
+            const popupWidth = 350;
+            const popupHeight = 300; // estimated
+            const offset = 20; // Distance from node
             
-            if (left + popupWidth > window.innerWidth - 20) {
-                left = nodeRect.left - containerRect.left - popupWidth - 10; // Show on left side
+            let popupX, popupY;
+            let connectionPoint = 'right'; // Default connection point
+            
+            // Smart positioning based on available space
+            if (nodeCenterX + popupWidth + offset < window.innerWidth - 40) {
+                // Right side has space
+                popupX = nodeCenterX + (nodeRect.width / 2) + offset;
+                connectionPoint = 'left';
+            } else if (nodeCenterX - popupWidth - offset > 40) {
+                // Left side has space
+                popupX = nodeCenterX - (nodeRect.width / 2) - popupWidth - offset;
+                connectionPoint = 'right';
+            } else {
+                // Center horizontally if no side space
+                popupX = Math.max(20, Math.min(window.innerWidth - popupWidth - 20, nodeCenterX - popupWidth / 2));
+                connectionPoint = 'top';
             }
             
-            if (top + popupHeight > window.innerHeight - 20) {
-                top = window.innerHeight - popupHeight - 20;
+            // Vertical positioning
+            if (connectionPoint === 'top') {
+                popupY = nodeCenterY + (nodeRect.height / 2) + offset;
+            } else {
+                popupY = Math.max(20, Math.min(window.innerHeight - popupHeight - 20, nodeCenterY - popupHeight / 2));
             }
             
-            if (top < 20) {
-                top = 20;
+            // Position popup
+            popup.style.left = popupX + 'px';
+            popup.style.top = popupY + 'px';
+            
+            // Calculate connection line coordinates
+            let lineStartX, lineStartY, lineEndX, lineEndY;
+            
+            if (connectionPoint === 'left') {
+                // Connect to left edge of popup
+                lineStartX = nodeCenterX + (nodeRect.width / 2);
+                lineStartY = nodeCenterY;
+                lineEndX = popupX;
+                lineEndY = popupY + 30; // Roughly popup header height
+            } else if (connectionPoint === 'right') {
+                // Connect to right edge of popup
+                lineStartX = nodeCenterX - (nodeRect.width / 2);
+                lineStartY = nodeCenterY;
+                lineEndX = popupX + popupWidth;
+                lineEndY = popupY + 30;
+            } else {
+                // Connect to top of popup
+                lineStartX = nodeCenterX;
+                lineStartY = nodeCenterY + (nodeRect.height / 2);
+                lineEndX = popupX + popupWidth / 2;
+                lineEndY = popupY;
             }
             
-            popup.style.left = left + 'px';
-            popup.style.top = top + 'px';
-            popup.classList.remove('hidden');
+            // Update connector line
+            connectorLine.setAttribute('x1', lineStartX);
+            connectorLine.setAttribute('y1', lineStartY);
+            connectorLine.setAttribute('x2', lineEndX);
+            connectorLine.setAttribute('y2', lineEndY);
         }
         
         function closePopup() {
             const popup = document.getElementById('popup-card');
+            const connector = document.getElementById('popup-connector');
             popup.classList.add('hidden');
+            connector.classList.add('hidden');
+            currentPopupNode = null;
+            currentPopupData = null;
             clearHighlighting();
         }
         
