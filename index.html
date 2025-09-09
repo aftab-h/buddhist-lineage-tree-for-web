@@ -211,26 +211,6 @@
             animation: popupFadeIn 0.2s ease-out;
         }
 
-        /* Connection line from node to popup */
-        .popup-connector {
-            position: absolute;
-            z-index: 1499;
-            pointer-events: none;
-        }
-
-        .popup-connector line {
-            stroke: #333;
-            stroke-width: 2;
-            stroke-dasharray: 4,4;
-            opacity: 0.6;
-        }
-
-        .popup-connector circle {
-            fill: #ff6b35;
-            stroke: white;
-            stroke-width: 2;
-            r: 4;
-        }
 
         @keyframes popupFadeIn {
             from {
@@ -472,15 +452,6 @@
             </div>
         </div>
 
-        <!-- SVG for popup connector line -->
-        <svg id="popup-connector" class="popup-connector hidden" width="100%" height="100%" style="position: absolute; top: 0; left: 0; pointer-events: none;">
-            <defs>
-                <marker id="popup-arrow" viewBox="0 -5 10 10" refX="8" refY="0" markerWidth="6" markerHeight="6" orient="auto">
-                    <path d="M0,-5L10,0L0,5" fill="#333" opacity="0.6"/>
-                </marker>
-            </defs>
-            <line id="connector-line" x1="0" y1="0" x2="0" y2="0" marker-end="url(#popup-arrow)"/>
-        </svg>
         
         <svg id="svg"></svg>
     </div>
@@ -1299,7 +1270,7 @@
                 g.attr('transform', event.transform);
                 // Reposition popup if it's open
                 if (currentPopupNode && !document.getElementById('popup-card').classList.contains('hidden')) {
-                    positionPopupAndConnector();
+                    positionPopup();
                 }
             });
 
@@ -1312,7 +1283,6 @@
         // Popup functions
         function showPopup(data, event) {
             const popup = document.getElementById('popup-card');
-            const connector = document.getElementById('popup-connector');
             const title = document.getElementById('popup-title');
             const tibetan = document.getElementById('popup-tibetan');
             const dates = document.getElementById('popup-dates');
@@ -1351,19 +1321,16 @@
                 description.style.display = 'none';
             }
             
-            // Position popup and connector
-            positionPopupAndConnector();
+            // Position popup
+            positionPopup();
             
             popup.classList.remove('hidden');
-            connector.classList.remove('hidden');
         }
 
-        function positionPopupAndConnector() {
+        function positionPopup() {
             if (!currentPopupNode || !currentPopupData) return;
             
             const popup = document.getElementById('popup-card');
-            const connector = document.getElementById('popup-connector');
-            const connectorLine = document.getElementById('connector-line');
             
             // Get node position in screen coordinates
             const nodeRect = currentPopupNode.getBoundingClientRect();
@@ -1373,75 +1340,65 @@
             const nodeCenterX = nodeRect.left + nodeRect.width / 2 - containerRect.left;
             const nodeCenterY = nodeRect.top + nodeRect.height / 2 - containerRect.top;
             
-            // Position popup with smart placement
-            const popupWidth = 350;
-            const popupHeight = 300; // estimated
+            // Get actual popup dimensions
+            popup.style.visibility = 'hidden';
+            popup.style.display = 'block';
+            const popupRect = popup.getBoundingClientRect();
+            const popupWidth = Math.max(popupRect.width, 350); // Minimum width
+            const popupHeight = Math.max(popupRect.height, 200); // Minimum height
+            popup.style.display = '';
+            popup.style.visibility = '';
+            
             const offset = 20; // Distance from node
+            const margin = 20; // Margin from viewport edges
             
             let popupX, popupY;
-            let connectionPoint = 'right'; // Default connection point
             
-            // Smart positioning based on available space
-            if (nodeCenterX + popupWidth + offset < window.innerWidth - 40) {
+            // Get viewport dimensions
+            const viewportWidth = window.innerWidth;
+            const viewportHeight = window.innerHeight;
+            
+            // Smart positioning with viewport constraint checking
+            // Try right side first
+            if (nodeCenterX + (nodeRect.width / 2) + offset + popupWidth + margin < viewportWidth) {
                 // Right side has space
                 popupX = nodeCenterX + (nodeRect.width / 2) + offset;
-                connectionPoint = 'left';
-            } else if (nodeCenterX - popupWidth - offset > 40) {
+            } 
+            // Try left side
+            else if (nodeCenterX - (nodeRect.width / 2) - offset - popupWidth > margin) {
                 // Left side has space
                 popupX = nodeCenterX - (nodeRect.width / 2) - popupWidth - offset;
-                connectionPoint = 'right';
-            } else {
-                // Center horizontally if no side space
-                popupX = Math.max(20, Math.min(window.innerWidth - popupWidth - 20, nodeCenterX - popupWidth / 2));
-                connectionPoint = 'top';
+            } 
+            // Try bottom
+            else if (nodeCenterY + (nodeRect.height / 2) + offset + popupHeight + margin < viewportHeight) {
+                // Bottom has space - center horizontally with viewport constraints
+                popupX = Math.max(margin, Math.min(viewportWidth - popupWidth - margin, nodeCenterX - popupWidth / 2));
+            }
+            // Try top
+            else if (nodeCenterY - (nodeRect.height / 2) - offset - popupHeight > margin) {
+                // Top has space - center horizontally with viewport constraints
+                popupX = Math.max(margin, Math.min(viewportWidth - popupWidth - margin, nodeCenterX - popupWidth / 2));
+            }
+            // Fallback: force fit on right with adjustment
+            else {
+                popupX = Math.max(margin, Math.min(viewportWidth - popupWidth - margin, nodeCenterX + (nodeRect.width / 2) + offset));
             }
             
-            // Vertical positioning
-            if (connectionPoint === 'top') {
-                popupY = nodeCenterY + (nodeRect.height / 2) + offset;
-            } else {
-                popupY = Math.max(20, Math.min(window.innerHeight - popupHeight - 20, nodeCenterY - popupHeight / 2));
-            }
+            // Vertical positioning - center vertically with viewport constraints
+            popupY = Math.max(margin, Math.min(viewportHeight - popupHeight - margin, nodeCenterY - popupHeight / 2));
+            
+            // Final viewport boundary enforcement
+            popupX = Math.max(margin, Math.min(viewportWidth - popupWidth - margin, popupX));
+            popupY = Math.max(margin, Math.min(viewportHeight - popupHeight - margin, popupY));
             
             // Position popup
             popup.style.left = popupX + 'px';
             popup.style.top = popupY + 'px';
-            
-            // Calculate connection line coordinates
-            let lineStartX, lineStartY, lineEndX, lineEndY;
-            
-            if (connectionPoint === 'left') {
-                // Connect to left edge of popup
-                lineStartX = nodeCenterX + (nodeRect.width / 2);
-                lineStartY = nodeCenterY;
-                lineEndX = popupX;
-                lineEndY = popupY + 30; // Roughly popup header height
-            } else if (connectionPoint === 'right') {
-                // Connect to right edge of popup
-                lineStartX = nodeCenterX - (nodeRect.width / 2);
-                lineStartY = nodeCenterY;
-                lineEndX = popupX + popupWidth;
-                lineEndY = popupY + 30;
-            } else {
-                // Connect to top of popup
-                lineStartX = nodeCenterX;
-                lineStartY = nodeCenterY + (nodeRect.height / 2);
-                lineEndX = popupX + popupWidth / 2;
-                lineEndY = popupY;
-            }
-            
-            // Update connector line
-            connectorLine.setAttribute('x1', lineStartX);
-            connectorLine.setAttribute('y1', lineStartY);
-            connectorLine.setAttribute('x2', lineEndX);
-            connectorLine.setAttribute('y2', lineEndY);
         }
         
         function closePopup() {
             const popup = document.getElementById('popup-card');
-            const connector = document.getElementById('popup-connector');
             popup.classList.add('hidden');
-            connector.classList.add('hidden');
             currentPopupNode = null;
             currentPopupData = null;
             clearHighlighting();
