@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Padmasambhava Lineage Test</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+        }
+        
+        .node {
+            stroke: #333;
+            stroke-width: 2px;
+            opacity: 0.9;
+        }
+        
+        .node-text {
+            text-anchor: middle;
+            pointer-events: none;
+            fill: #333;
+            font-size: 11px;
+        }
+        
+        .node-date {
+            text-anchor: middle;
+            pointer-events: none;
+            fill: #666;
+            font-size: 9px;
+        }
+        
+        .link {
+            stroke: #BA68C8;
+            stroke-width: 2;
+            fill: none;
+            opacity: 0.8;
+        }
+        
+        .debug-info {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            max-width: 300px;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Padmasambhava Lineage Debug Test</h1>
+    <div class="debug-info" id="debug">
+        <h3>Debug Info:</h3>
+        <div id="debug-content"></div>
+    </div>
+    <svg id="svg"></svg>
+
+    <script>
+        // Padmasambhava lineage nodes extracted from CSV
+        const padmasambhavaNodes = [
+            {
+                id: "Padmasambhava",
+                name: "Padmasambhava", 
+                date: "8th century",
+                positionDate: 800,
+                transmissionMode: "Symbolic",
+                receivedFrom: "Śrī Siṃha",
+                gaveTo: "Yeshe Tsogyel; Princess Lhacam Pema Sel; King Trisong Detsen"
+            },
+            {
+                id: "Yeshe Tsogyel",
+                name: "Yeshe Tsogyel",
+                date: "8th century", 
+                positionDate: 850,
+                transmissionMode: "Aural",
+                receivedFrom: "Padmasambhava",
+                gaveTo: ""
+            },
+            {
+                id: "Princess Lhacam Pema Sel",
+                name: "Princess Lhacam Pema Sel",
+                date: "8th century",
+                positionDate: 875, 
+                transmissionMode: "Aural",
+                receivedFrom: "Padmasambhava",
+                gaveTo: "Pema Ledreltsel/Tsultrim Dorje"
+            },
+            {
+                id: "King Trisong Detsen", 
+                name: "King Trisong Detsen",
+                date: "8th century",
+                positionDate: 850,
+                transmissionMode: "Aural", 
+                receivedFrom: "Vimalamitra; Padmasambhava",
+                gaveTo: ""
+            },
+            {
+                id: "Pema Ledreltsel/Tsultrim Dorje",
+                name: "Pema Ledreltsel/Tsultrim Dorje", 
+                date: "1291-1315/1319",
+                positionDate: 1290,
+                transmissionMode: "Aural",
+                receivedFrom: "Princess Lhacam Pema Sel",
+                gaveTo: "Tulku Legden/Gyalse Legpa"
+            },
+            {
+                id: "Tulku Legden/Gyalse Legpa",
+                name: "Tulku Legden/Gyalse Legpa",
+                date: "1290-1366", 
+                positionDate: 1325,
+                transmissionMode: "Aural",
+                receivedFrom: "Pema Ledreltsel/Tsultrim Dorje",
+                gaveTo: "Meban Rinchen Lingpa; Jadralwa Zöpa; Karmapa Rangjung Dorje"
+            },
+            {
+                id: "Karmapa Rangjung Dorje",
+                name: "Karmapa Rangjung Dorje",
+                date: "1284-1339",
+                positionDate: 1284,
+                transmissionMode: "Aural", 
+                receivedFrom: "Tulku Legden/Gyalse Legpa; Padmasambhava",
+                gaveTo: "Gyalwa Yungtön Dorje"
+            },
+            {
+                id: "Gyalwa Yungtön Dorje", 
+                name: "Gyalwa Yungtön Dorje",
+                date: "1284-1365",
+                positionDate: 1290,
+                transmissionMode: "Aural",
+                receivedFrom: "Karmapa Rangjung Dorje", 
+                gaveTo: ""
+            },
+            {
+                id: "Meban Rinchen Lingpa",
+                name: "Meban Rinchen Lingpa",
+                date: "1289-1368",
+                positionDate: 1350,
+                transmissionMode: "Aural",
+                receivedFrom: "Tulku Legden/Gyalse Legpa",
+                gaveTo: "Rigzin Gödem; Jadralwa Zöpa"
+            },
+            {
+                id: "Rigzin Gödem",
+                name: "Rigzin Gödem", 
+                date: "1337-1409",
+                positionDate: 1337,
+                transmissionMode: "Aural",
+                receivedFrom: "Meban Rinchen Lingpa; Longchenpa Drime Özer (via visions)",
+                gaveTo: ""
+            },
+            {
+                id: "Jadralwa Zöpa",
+                name: "Jadralwa Zöpa",
+                date: "14th to 15th centuries",
+                positionDate: 1400, 
+                transmissionMode: "Aural",
+                receivedFrom: "Longchenpa Drime Özer; Meban Rinchen Lingpa; Tulku Legden/Gyalse Legpa",
+                gaveTo: ""
+            }
+        ];
+
+        // Create connections based on receivedFrom/gaveTo relationships
+        const connections = [];
+        padmasambhavaNodes.forEach(node => {
+            if (node.receivedFrom) {
+                const teachers = node.receivedFrom.split(';').map(t => t.trim());
+                teachers.forEach(teacher => {
+                    const teacherNode = padmasambhavaNodes.find(n => n.id === teacher);
+                    if (teacherNode) {
+                        connections.push({
+                            source: teacher,
+                            target: node.id
+                        });
+                    }
+                });
+            }
+        });
+
+        console.log("Padmasambhava Nodes:", padmasambhavaNodes);
+        console.log("Connections:", connections);
+
+        // Set up SVG
+        const svg = d3.select('#svg');
+        const width = 1200;
+        const height = 800;
+        svg.attr('width', width).attr('height', height);
+
+        const g = svg.append('g');
+
+        // Simple positioning based on Position_Date (chronological)
+        const minDate = d3.min(padmasambhavaNodes, d => d.positionDate);
+        const maxDate = d3.max(padmasambhavaNodes, d => d.positionDate);
+        const timeScale = d3.scaleLinear()
+            .domain([minDate, maxDate])
+            .range([100, height - 100]);
+
+        // Strategic positioning for clean lineage flow
+        padmasambhavaNodes.forEach(node => {
+            node.y = timeScale(node.positionDate);
+            
+            // Strategic horizontal positioning to minimize crossings
+            switch(node.id) {
+                case "Padmasambhava":
+                    node.x = width / 2; // Center top
+                    break;
+                case "Yeshe Tsogyel":
+                    node.x = 200; // Left branch
+                    break;
+                case "Princess Lhacam Pema Sel":
+                    node.x = width / 2; // Center branch
+                    break;
+                case "King Trisong Detsen":
+                    node.x = width - 200; // Right branch
+                    break;
+                case "Pema Ledreltsel/Tsultrim Dorje":
+                    node.x = width / 2; // Continue center
+                    break;
+                case "Tulku Legden/Gyalse Legpa":
+                    node.x = width / 2; // Center hub
+                    break;
+                case "Meban Rinchen Lingpa":
+                    node.x = 300; // Left sub-branch
+                    break;
+                case "Karmapa Rangjung Dorje":
+                    node.x = width / 2; // Center sub-branch  
+                    break;
+                case "Jadralwa Zöpa":
+                    node.x = width - 300; // Right sub-branch
+                    break;
+                case "Rigzin Gödem":
+                    node.x = 300; // Under Meban
+                    break;
+                case "Gyalwa Yungtön Dorje":
+                    node.x = width / 2; // Under Karmapa
+                    break;
+                default:
+                    node.x = width / 2;
+            }
+        });
+
+        // Draw connections
+        const links = g.selectAll('.link')
+            .data(connections)
+            .enter()
+            .append('path')
+            .attr('class', 'link')
+            .attr('d', d => {
+                const source = padmasambhavaNodes.find(n => n.id === d.source);
+                const target = padmasambhavaNodes.find(n => n.id === d.target);
+                
+                const dx = target.x - source.x;
+                const dy = target.y - source.y;
+                const controlY = source.y + dy / 2;
+                
+                return `M ${source.x} ${source.y} C ${source.x} ${controlY} ${target.x} ${controlY} ${target.x} ${target.y}`;
+            });
+
+        // Draw nodes
+        const nodeGroups = g.selectAll('.node-group')
+            .data(padmasambhavaNodes)
+            .enter()
+            .append('g')
+            .attr('class', 'node-group')
+            .attr('transform', d => `translate(${d.x}, ${d.y})`);
+
+        // Node rectangles
+        nodeGroups.append('rect')
+            .attr('class', 'node')
+            .attr('x', -80)
+            .attr('y', -25)
+            .attr('width', 160)
+            .attr('height', 50)
+            .attr('rx', 8)
+            .attr('fill', d => d.transmissionMode === 'Symbolic' ? '#BA68C8' : '#81C784')
+            .on('click', function(event, d) {
+                updateDebugInfo(d);
+            });
+
+        // Node text (name)
+        nodeGroups.append('text')
+            .attr('class', 'node-text')
+            .attr('y', -3)
+            .text(d => d.name.length > 22 ? d.name.substring(0, 20) + '...' : d.name);
+
+        // Node text (date)
+        nodeGroups.append('text')
+            .attr('class', 'node-date')
+            .attr('y', 12)
+            .text(d => d.date);
+
+        function updateDebugInfo(node) {
+            const debugContent = document.getElementById('debug-content');
+            debugContent.innerHTML = `
+                <strong>${node.name}</strong><br>
+                Date: ${node.date}<br>
+                Position_Date: ${node.positionDate}<br>
+                Transmission: ${node.transmissionMode}<br>
+                Received From: ${node.receivedFrom}<br>
+                Gave To: ${node.gaveTo}<br>
+                X: ${node.x}, Y: ${node.y}
+            `;
+        }
+
+        // Show initial debug info
+        updateDebugInfo(padmasambhavaNodes[0]);
+    </script>
+</body>
+</html>
