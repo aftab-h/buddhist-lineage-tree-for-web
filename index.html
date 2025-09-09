@@ -246,8 +246,8 @@
                 <button class="filter-btn" data-filter="Vairocana">Vairocana</button>
             </div>
             <div style="font-size: 11px; color: #666; margin-top: 10px;">
-                <div>Click node: View details</div>
-                <div>Shift+Click: Highlight lineage</div>
+                <div>Click node: View details & highlight lineage</div>
+                <div>Click elsewhere: Close popup</div>
             </div>
         </div>
 
@@ -1168,6 +1168,22 @@
         function closePopup() {
             const popup = document.getElementById('popup-card');
             popup.classList.add('hidden');
+            clearHighlighting();
+        }
+        
+        function clearHighlighting() {
+            // Reset all highlighting
+            g.selectAll('.node').classed('highlighted', false);
+            g.selectAll('.link').classed('highlighted', false);
+            
+            // Reset all markers to their normal state
+            g.selectAll('.link').each(function(d) {
+                const sourceNode = graphData.nodes.find(n => n.id === d.source);
+                if (sourceNode) {
+                    const normalMarker = getArrowheadMarker(sourceNode.transmissionMode);
+                    d3.select(this).attr('marker-end', normalMarker);
+                }
+            });
         }
         
         // Close popup with escape key
@@ -1816,29 +1832,16 @@
             // Add interaction events
             nodeGroups
                 .on('click', function(event, d) {
-                    // Check if shift key is held for lineage highlighting
-                    if (event.shiftKey) {
-                        highlightLineage(d);
-                    } else {
-                        showPopup(d, event);
-                    }
+                    // Show popup and highlight trajectory together
+                    showPopup(d, event);
+                    highlightLineage(d);
                 })
                 .style('cursor', 'pointer');
         }
 
         function highlightLineage(node) {
             // Reset all highlighting first
-            g.selectAll('.node').classed('highlighted', false);
-            g.selectAll('.link').classed('highlighted', false);
-            
-            // Reset all markers to their normal state first
-            g.selectAll('.link').each(function(d) {
-                const sourceNode = graphData.nodes.find(n => n.id === d.source);
-                if (sourceNode) {
-                    const normalMarker = getArrowheadMarker(sourceNode.transmissionMode);
-                    d3.select(this).attr('marker-end', normalMarker);
-                }
-            });
+            clearHighlighting();
 
             // Highlight only the learning trajectory (upward lineage path)
             const connectedNodes = new Set([node.id]);
