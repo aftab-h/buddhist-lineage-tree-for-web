@@ -149,14 +149,14 @@
         #legend {
             position: fixed;
             top: 10px;
-            right: 10px;
+            right: 10px; /* Back to original position */
             z-index: 1000;
             background: rgba(255, 255, 255, 0.95);
             padding: 12px;
             border-radius: 8px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             backdrop-filter: blur(10px);
-            max-width: calc(50vw - 15px);
+            max-width: calc(50vw - 15px); /* Back to original width */
             box-sizing: border-box;
         }
 
@@ -183,6 +183,41 @@
 
         .legend-content {
             display: block;
+        }
+
+        /* Recenter button styles */
+        .recenter-btn {
+            position: fixed;
+            top: 150px; /* Position below the legend */
+            right: 10px;
+            z-index: 1001;
+            background: rgba(255, 255, 255, 0.95);
+            border: 2px solid #4CAF50;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .recenter-btn:hover {
+            background: #4CAF50;
+            transform: scale(1.05);
+        }
+
+        .recenter-btn:hover svg {
+            filter: invert(1);
+        }
+
+        .recenter-btn svg {
+            width: 24px;
+            height: 24px;
+            transition: filter 0.3s ease;
         }
 
         .legend-item {
@@ -340,6 +375,19 @@
                 background: rgba(255, 255, 255, 0.98);
             }
 
+            .recenter-btn {
+                top: auto;
+                bottom: 80px; /* Position above legend on mobile */
+                right: 5px;
+                width: 44px;
+                height: 44px;
+            }
+
+            .recenter-btn svg {
+                width: 20px;
+                height: 20px;
+            }
+
             .legend-toggle {
                 display: inline-block;
             }
@@ -452,6 +500,13 @@
             </div>
         </div>
 
+        <!-- Recenter button -->
+        <button class="recenter-btn" onclick="recenterView()" title="Recenter view">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2l-2 2h4l-2-2zm0 20l2-2h-4l2 2zm10-10l-2-2v4l2-2zm-20 0l2 2v-4l-2 2z" fill="currentColor"/>
+                <circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.5"/>
+            </svg>
+        </button>
         
         <svg id="svg"></svg>
     </div>
@@ -1533,6 +1588,9 @@
             });
         }
 
+        // Store initial transform for recenter functionality
+        let initialTransform = null;
+
         // Center the view on blue nodes (Mind to Mind transmission)
         function centerViewOnBlueNodes() {
             if (!graphData || !graphData.nodes) return;
@@ -1544,8 +1602,9 @@
             
             if (blueNodes.length === 0) {
                 console.log('No blue nodes found, using default zoom');
-                const initialTransform = d3.zoomIdentity.translate(0, 0).scale(0.5);
-                svg.call(zoom.transform, initialTransform);
+                const transform = d3.zoomIdentity.translate(0, 0).scale(0.5);
+                initialTransform = transform; // Store for recenter
+                svg.call(zoom.transform, transform);
                 return;
             }
             
@@ -1557,8 +1616,9 @@
             
             if (xPositions.length === 0 || yPositions.length === 0) {
                 console.log('Blue nodes have invalid positions, using default zoom');
-                const initialTransform = d3.zoomIdentity.translate(0, 0).scale(0.5);
-                svg.call(zoom.transform, initialTransform);
+                const transform = d3.zoomIdentity.translate(0, 0).scale(0.5);
+                initialTransform = transform; // Store for recenter
+                svg.call(zoom.transform, transform);
                 return;
             }
             
@@ -1585,11 +1645,24 @@
             const transform = d3.zoomIdentity
                 .translate(translateX, translateY)
                 .scale(scale);
-                
+            
+            initialTransform = transform; // Store for recenter functionality
             svg.call(zoom.transform, transform);
             
             console.log(`Centered on blue nodes: scale=${scale.toFixed(2)}, translate=(${translateX.toFixed(0)}, ${translateY.toFixed(0)})`);
             console.log(`Blue node bounds: x[${minX.toFixed(0)}, ${maxX.toFixed(0)}], y[${minY.toFixed(0)}, ${maxY.toFixed(0)}]`);
+        }
+
+        // Recenter view function
+        function recenterView() {
+            if (initialTransform) {
+                svg.transition()
+                    .duration(750)
+                    .call(zoom.transform, initialTransform);
+            } else {
+                // Fallback: recalculate initial view
+                centerViewOnBlueNodes();
+            }
         }
 
         // Initialize the application
