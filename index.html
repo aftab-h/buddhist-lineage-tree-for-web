@@ -371,6 +371,66 @@
             }
         }
 
+        // Calculate optimal connection points between two nodes
+        function getOptimalConnectionPoints(sourceNode, targetNode) {
+            // Node dimensions (from the rect creation code)
+            const nodeWidth = 180;
+            const nodeHeight = 50;
+            const halfWidth = nodeWidth / 2;  // 90
+            const halfHeight = nodeHeight / 2; // 25
+            
+            // Constrained connection range - only use middle 60% of top/bottom edges
+            const connectionRange = nodeWidth * 0.3; // 30% on each side of center = 60% total
+            
+            // Define connection points for each node (relative to node center)
+            // ONLY top/bottom connections - no side connections allowed
+            const connectionPoints = [
+                // Top edge connections (center and slightly offset)
+                { x: 0, y: -halfHeight, name: 'top' },                    // top center
+                { x: -connectionRange/2, y: -halfHeight, name: 'top-left-center' },  // top left-of-center
+                { x: connectionRange/2, y: -halfHeight, name: 'top-right-center' },  // top right-of-center
+                
+                // Bottom edge connections (center and slightly offset)  
+                { x: 0, y: halfHeight, name: 'bottom' },                  // bottom center
+                { x: -connectionRange/2, y: halfHeight, name: 'bottom-left-center' }, // bottom left-of-center
+                { x: connectionRange/2, y: halfHeight, name: 'bottom-right-center' }  // bottom right-of-center
+                
+                // NO side connections - removed entirely
+            ];
+            
+            let shortestDistance = Infinity;
+            let bestSourcePoint = null;
+            let bestTargetPoint = null;
+            
+            // Test all combinations of source and target connection points
+            for (const sourcePoint of connectionPoints) {
+                for (const targetPoint of connectionPoints) {
+                    const sourceX = sourceNode.x + sourcePoint.x;
+                    const sourceY = sourceNode.y + sourcePoint.y;
+                    const targetX = targetNode.x + targetPoint.x;
+                    const targetY = targetNode.y + targetPoint.y;
+                    
+                    // Calculate Euclidean distance
+                    const distance = Math.sqrt(
+                        Math.pow(targetX - sourceX, 2) + Math.pow(targetY - sourceY, 2)
+                    );
+                    
+                    // Simple shortest distance - no preference bonus needed since we only have top/bottom
+                    if (distance < shortestDistance) {
+                        shortestDistance = distance;
+                        bestSourcePoint = { x: sourceX, y: sourceY, side: sourcePoint.name };
+                        bestTargetPoint = { x: targetX, y: targetY, side: targetPoint.name };
+                    }
+                }
+            }
+            
+            return {
+                source: bestSourcePoint,
+                target: bestTargetPoint,
+                distance: shortestDistance
+            };
+        }
+
         // Parse Position_Date and map to fine-grained layer levels for better vertical resolution
         function parsePositionDate(positionDate) {
             if (!positionDate || positionDate === 'N/A' || positionDate === '') {
@@ -1024,7 +1084,7 @@
                 .attr('opacity', 0.8)
                 .text(d => d.label);
 
-            // Create smooth curved links with arrowheads
+            // Create smooth curved links with arrowheads using optimal connection points
             const links = g.selectAll('.link')
                 .data(data.links)
                 .enter()
@@ -1035,21 +1095,47 @@
                     const target = data.nodes.find(n => n.id === d.target);
                     if (!source || !target) return '';
                     
-                    // Simple, clean curved connections using single cubic Bézier curves
-                    const sourceX = source.x;
-                    const sourceY = source.y + 25; // Bottom of parent node
-                    const targetX = target.x;
-                    const targetY = target.y - 25; // Top of child node
+                    // Calculate optimal connection points instead of fixed bottom/top
+                    const connectionPoints = getOptimalConnectionPoints(source, target);
+                    const sourceX = connectionPoints.source.x;
+                    const sourceY = connectionPoints.source.y;
+                    const targetX = connectionPoints.target.x;
+                    const targetY = connectionPoints.target.y;
                     
-                    const deltaY = Math.abs(targetY - sourceY);
-                    const controlOffset = Math.min(deltaY * 0.4, 80); // 40% of vertical distance, max 80px
+                    // Calculate adaptive control points based on connection direction
+                    const deltaX = targetX - sourceX;
+                    const deltaY = targetY - sourceY;
+                    const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
                     
-                    // Single smooth cubic Bézier curve for all connections
-                    // Control points are directly below source and directly above target
-                    const control1X = sourceX;
-                    const control1Y = sourceY + controlOffset;
-                    const control2X = targetX;
-                    const control2Y = targetY - controlOffset;
+                    // Adaptive control offset based on distance and direction
+                    let controlOffset = Math.min(distance * 0.3, 60); // 30% of distance, max 60px
+                    
+                    // Determine control point direction based on which sides are connected
+                    const sourceSide = connectionPoints.source.side;
+                    const targetSide = connectionPoints.target.side;
+                    
+                    let control1X, control1Y, control2X, control2Y;
+                    
+                    // Smart control point placement based on connection sides
+                    if (sourceSide.includes('top') || sourceSide.includes('bottom')) {
+                        // Vertical exit: control point moves vertically from source
+                        control1X = sourceX;
+                        control1Y = sourceSide.includes('bottom') ? sourceY + controlOffset : sourceY - controlOffset;
+                    } else {
+                        // Horizontal exit: control point moves horizontally from source  
+                        control1X = sourceSide.includes('right') ? sourceX + controlOffset : sourceX - controlOffset;
+                        control1Y = sourceY;
+                    }
+                    
+                    if (targetSide.includes('top') || targetSide.includes('bottom')) {
+                        // Vertical entry: control point moves vertically from target
+                        control2X = targetX;
+                        control2Y = targetSide.includes('top') ? targetY - controlOffset : targetY + controlOffset;
+                    } else {
+                        // Horizontal entry: control point moves horizontally from target
+                        control2X = targetSide.includes('left') ? targetX - controlOffset : targetX + controlOffset;
+                        control2Y = targetY;
+                    }
                     
                     return `M${sourceX},${sourceY} C${control1X},${control1Y} ${control2X},${control2Y} ${targetX},${targetY}`;
                 })
