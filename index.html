@@ -1672,34 +1672,79 @@
             const viewportWidth = window.innerWidth;
             const viewportHeight = window.innerHeight;
             
-            // Smart positioning with viewport constraint checking
-            // Try right side first
-            if (nodeCenterX + (nodeRect.width / 2) + offset + popupWidth + margin < viewportWidth) {
-                // Right side has space
-                popupX = nodeCenterX + (nodeRect.width / 2) + offset;
-            } 
-            // Try left side
-            else if (nodeCenterX - (nodeRect.width / 2) - offset - popupWidth > margin) {
-                // Left side has space
-                popupX = nodeCenterX - (nodeRect.width / 2) - popupWidth - offset;
-            } 
-            // Try bottom
-            else if (nodeCenterY + (nodeRect.height / 2) + offset + popupHeight + margin < viewportHeight) {
-                // Bottom has space - center horizontally with viewport constraints
-                popupX = Math.max(margin, Math.min(viewportWidth - popupWidth - margin, nodeCenterX - popupWidth / 2));
-            }
-            // Try top
-            else if (nodeCenterY - (nodeRect.height / 2) - offset - popupHeight > margin) {
-                // Top has space - center horizontally with viewport constraints
-                popupX = Math.max(margin, Math.min(viewportWidth - popupWidth - margin, nodeCenterX - popupWidth / 2));
-            }
-            // Fallback: force fit on right with adjustment
-            else {
-                popupX = Math.max(margin, Math.min(viewportWidth - popupWidth - margin, nodeCenterX + (nodeRect.width / 2) + offset));
-            }
+            // Check if mobile/small screen
+            const isMobile = window.innerWidth <= 768;
             
-            // Vertical positioning - center vertically with viewport constraints
-            popupY = Math.max(margin, Math.min(viewportHeight - popupHeight - margin, nodeCenterY - popupHeight / 2));
+            if (isMobile) {
+                // Mobile-specific positioning: avoid covering the node
+                const nodeTop = nodeRect.top;
+                const nodeBottom = nodeRect.bottom;
+                const nodeLeft = nodeRect.left;
+                const nodeRight = nodeRect.right;
+                
+                // Try positioning below the node first (most common case)
+                if (nodeBottom + offset + popupHeight + margin < viewportHeight) {
+                    // Position below node
+                    popupY = nodeBottom + offset - containerRect.top;
+                    popupX = Math.max(margin, Math.min(viewportWidth - popupWidth - margin, nodeCenterX - popupWidth / 2));
+                }
+                // Try positioning above the node
+                else if (nodeTop - offset - popupHeight > margin) {
+                    // Position above node
+                    popupY = nodeTop - offset - popupHeight - containerRect.top;
+                    popupX = Math.max(margin, Math.min(viewportWidth - popupWidth - margin, nodeCenterX - popupWidth / 2));
+                }
+                // Try positioning to the right (if node is on left side)
+                else if (nodeCenterX < viewportWidth / 2 && nodeRight + offset + popupWidth + margin < viewportWidth) {
+                    // Position to the right of node
+                    popupX = nodeRight + offset - containerRect.left;
+                    popupY = Math.max(margin, Math.min(viewportHeight - popupHeight - margin, nodeCenterY - popupHeight / 2));
+                }
+                // Try positioning to the left (if node is on right side)
+                else if (nodeCenterX >= viewportWidth / 2 && nodeLeft - offset - popupWidth > margin) {
+                    // Position to the left of node
+                    popupX = nodeLeft - offset - popupWidth - containerRect.left;
+                    popupY = Math.max(margin, Math.min(viewportHeight - popupHeight - margin, nodeCenterY - popupHeight / 2));
+                }
+                // Fallback: position at bottom of screen, leaving node visible at top
+                else {
+                    popupX = margin;
+                    popupY = Math.max(nodeBottom + offset - containerRect.top, viewportHeight - popupHeight - margin);
+                    // Make popup narrower if needed to fit
+                    popup.style.maxWidth = (viewportWidth - 2 * margin) + 'px';
+                }
+            } else {
+                // Desktop positioning (original logic)
+                // Try right side first
+                if (nodeCenterX + (nodeRect.width / 2) + offset + popupWidth + margin < viewportWidth) {
+                    // Right side has space
+                    popupX = nodeCenterX + (nodeRect.width / 2) + offset;
+                    popupY = Math.max(margin, Math.min(viewportHeight - popupHeight - margin, nodeCenterY - popupHeight / 2));
+                } 
+                // Try left side
+                else if (nodeCenterX - (nodeRect.width / 2) - offset - popupWidth > margin) {
+                    // Left side has space
+                    popupX = nodeCenterX - (nodeRect.width / 2) - popupWidth - offset;
+                    popupY = Math.max(margin, Math.min(viewportHeight - popupHeight - margin, nodeCenterY - popupHeight / 2));
+                } 
+                // Try bottom
+                else if (nodeCenterY + (nodeRect.height / 2) + offset + popupHeight + margin < viewportHeight) {
+                    // Bottom has space - center horizontally with viewport constraints
+                    popupX = Math.max(margin, Math.min(viewportWidth - popupWidth - margin, nodeCenterX - popupWidth / 2));
+                    popupY = nodeCenterY + (nodeRect.height / 2) + offset;
+                }
+                // Try top
+                else if (nodeCenterY - (nodeRect.height / 2) - offset - popupHeight > margin) {
+                    // Top has space - center horizontally with viewport constraints
+                    popupX = Math.max(margin, Math.min(viewportWidth - popupWidth - margin, nodeCenterX - popupWidth / 2));
+                    popupY = nodeCenterY - (nodeRect.height / 2) - offset - popupHeight;
+                }
+                // Fallback: force fit on right with adjustment
+                else {
+                    popupX = Math.max(margin, Math.min(viewportWidth - popupWidth - margin, nodeCenterX + (nodeRect.width / 2) + offset));
+                    popupY = Math.max(margin, Math.min(viewportHeight - popupHeight - margin, nodeCenterY - popupHeight / 2));
+                }
+            }
             
             // Final viewport boundary enforcement
             popupX = Math.max(margin, Math.min(viewportWidth - popupWidth - margin, popupX));
