@@ -989,6 +989,65 @@
 
         svg.call(zoom);
 
+        // Center the view on blue nodes (Mind to Mind transmission)
+        function centerViewOnBlueNodes() {
+            if (!graphData || !graphData.nodes) return;
+            
+            // Find blue nodes (Mind to Mind transmission)
+            const blueNodes = graphData.nodes.filter(node => 
+                node.transmissionMode === 'Mind to Mind'
+            );
+            
+            if (blueNodes.length === 0) {
+                console.log('No blue nodes found, using default zoom');
+                const initialTransform = d3.zoomIdentity.translate(0, 0).scale(0.5);
+                svg.call(zoom.transform, initialTransform);
+                return;
+            }
+            
+            console.log(`Found ${blueNodes.length} blue nodes, calculating bounding box`);
+            
+            // Calculate bounding box of blue nodes
+            const xPositions = blueNodes.map(n => n.x).filter(x => x !== undefined && !isNaN(x));
+            const yPositions = blueNodes.map(n => n.y).filter(y => y !== undefined && !isNaN(y));
+            
+            if (xPositions.length === 0 || yPositions.length === 0) {
+                console.log('Blue nodes have invalid positions, using default zoom');
+                const initialTransform = d3.zoomIdentity.translate(0, 0).scale(0.5);
+                svg.call(zoom.transform, initialTransform);
+                return;
+            }
+            
+            const minX = Math.min(...xPositions) - 100; // Add padding
+            const maxX = Math.max(...xPositions) + 100;
+            const minY = Math.min(...yPositions) - 50;
+            const maxY = Math.max(...yPositions) + 50;
+            
+            const centerX = (minX + maxX) / 2;
+            const centerY = (minY + maxY) / 2;
+            const contentWidth = maxX - minX;
+            const contentHeight = maxY - minY;
+            
+            // Calculate scale to fit blue nodes in viewport with some margin
+            const scaleX = (width * 0.8) / contentWidth;
+            const scaleY = (height * 0.8) / contentHeight;
+            const scale = Math.min(scaleX, scaleY, 1.5); // Cap at 1.5x zoom for readability
+            
+            // Calculate translation to center the blue nodes
+            const translateX = width / 2 - centerX * scale;
+            const translateY = height / 2 - centerY * scale;
+            
+            // Apply the transform
+            const transform = d3.zoomIdentity
+                .translate(translateX, translateY)
+                .scale(scale);
+                
+            svg.call(zoom.transform, transform);
+            
+            console.log(`Centered on blue nodes: scale=${scale.toFixed(2)}, translate=(${translateX.toFixed(0)}, ${translateY.toFixed(0)})`);
+            console.log(`Blue node bounds: x[${minX.toFixed(0)}, ${maxX.toFixed(0)}], y[${minY.toFixed(0)}, ${maxY.toFixed(0)}]`);
+        }
+
         // Initialize the application
         async function initializeApp() {
             const csvData = await loadCSVData();
@@ -1033,14 +1092,10 @@
             // Initial render
             renderVisualization(graphData);
 
-            // Reset zoom to show all content - start simple
-            console.log('Resetting zoom...');
+            // Center view on blue nodes (Mind to Mind transmission)
+            centerViewOnBlueNodes();
             
-            // Simple zoom reset - no fancy centering until we see the nodes
-            const initialTransform = d3.zoomIdentity.translate(0, 0).scale(0.5);
-            svg.call(zoom.transform, initialTransform);
-            
-            console.log('Zoom reset complete');
+            console.log('Initial view centering complete');
         }
 
         function filterData(filter) {
