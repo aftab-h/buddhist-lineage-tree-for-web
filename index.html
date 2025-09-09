@@ -371,6 +371,20 @@
             }
         }
 
+        // Get highlighted arrowhead marker based on transmission mode
+        function getHighlightedArrowheadMarker(transmissionMode) {
+            switch (transmissionMode) {
+                case 'Mind to Mind':
+                    return 'url(#arrowhead-mind-highlighted)';
+                case 'Symbolic':
+                    return 'url(#arrowhead-symbolic-highlighted)';
+                case 'Aural':
+                    return 'url(#arrowhead-aural-highlighted)';
+                default:
+                    return 'url(#arrowhead-default-highlighted)';
+            }
+        }
+
         // Calculate optimal connection points between two nodes
         function getOptimalConnectionPoints(sourceNode, targetNode) {
             // Node dimensions (from the rect creation code)
@@ -910,6 +924,59 @@
             .attr('fill', '#666')
             .attr('opacity', 0.8);
 
+        // Highlighted versions of each transmission type arrowhead
+        defs.append('marker')
+            .attr('id', 'arrowhead-mind-highlighted')
+            .attr('viewBox', '0 -5 10 10')
+            .attr('refX', 8)
+            .attr('refY', 0)
+            .attr('markerWidth', 8)
+            .attr('markerHeight', 8)
+            .attr('orient', 'auto')
+            .append('path')
+            .attr('d', 'M0,-5L10,0L0,5')
+            .attr('fill', '#ff6b35')
+            .attr('opacity', 1);
+
+        defs.append('marker')
+            .attr('id', 'arrowhead-symbolic-highlighted')
+            .attr('viewBox', '0 -5 10 10')
+            .attr('refX', 8)
+            .attr('refY', 0)
+            .attr('markerWidth', 8)
+            .attr('markerHeight', 8)
+            .attr('orient', 'auto')
+            .append('path')
+            .attr('d', 'M0,-5L10,0L0,5')
+            .attr('fill', '#ff6b35')
+            .attr('opacity', 1);
+
+        defs.append('marker')
+            .attr('id', 'arrowhead-aural-highlighted')
+            .attr('viewBox', '0 -5 10 10')
+            .attr('refX', 8)
+            .attr('refY', 0)
+            .attr('markerWidth', 8)
+            .attr('markerHeight', 8)
+            .attr('orient', 'auto')
+            .append('path')
+            .attr('d', 'M0,-5L10,0L0,5')
+            .attr('fill', '#ff6b35')
+            .attr('opacity', 1);
+
+        defs.append('marker')
+            .attr('id', 'arrowhead-default-highlighted')
+            .attr('viewBox', '0 -5 10 10')
+            .attr('refX', 8)
+            .attr('refY', 0)
+            .attr('markerWidth', 8)
+            .attr('markerHeight', 8)
+            .attr('orient', 'auto')
+            .append('path')
+            .attr('d', 'M0,-5L10,0L0,5')
+            .attr('fill', '#ff6b35')
+            .attr('opacity', 1);
+
         // Zoom behavior
         const zoom = d3.zoom()
             .scaleExtent([0.1, 3])
@@ -1216,13 +1283,23 @@
         }
 
         function highlightLineage(node) {
+            // Reset all highlighting first
             g.selectAll('.node').classed('highlighted', false);
             g.selectAll('.link').classed('highlighted', false);
+            
+            // Reset all markers to their normal state first
+            g.selectAll('.link').each(function(d) {
+                const sourceNode = graphData.nodes.find(n => n.id === d.source);
+                if (sourceNode) {
+                    const normalMarker = getArrowheadMarker(sourceNode.transmissionMode);
+                    d3.select(this).attr('marker-end', normalMarker);
+                }
+            });
 
-            // Highlight connected nodes and links
+            // Highlight only the learning trajectory (upward lineage path)
             const connectedNodes = new Set([node.id]);
             
-            // Find all ancestors
+            // Find only ancestors - trace upward learning trajectory to Samantabhadra/Samantabhadri
             function findAncestors(nodeId) {
                 graphData.links.forEach(link => {
                     if (link.target === nodeId) {
@@ -1232,18 +1309,8 @@
                 });
             }
 
-            // Find all descendants
-            function findDescendants(nodeId) {
-                graphData.links.forEach(link => {
-                    if (link.source === nodeId) {
-                        connectedNodes.add(link.target);
-                        findDescendants(link.target);
-                    }
-                });
-            }
-
+            // Only trace upward - no descendants highlighting
             findAncestors(node.id);
-            findDescendants(node.id);
 
             // Highlight nodes
             g.selectAll('.node-group').each(function(d) {
@@ -1252,10 +1319,18 @@
                 }
             });
 
-            // Highlight links
+            // Highlight links and explicitly switch arrow markers
             g.selectAll('.link').each(function(d) {
+                const linkElement = d3.select(this);
                 if (connectedNodes.has(d.source) && connectedNodes.has(d.target)) {
-                    d3.select(this).classed('highlighted', true);
+                    // Highlight the link
+                    linkElement.classed('highlighted', true);
+                    // Switch to highlighted arrow marker
+                    const sourceNode = graphData.nodes.find(n => n.id === d.source);
+                    if (sourceNode) {
+                        const highlightedMarker = getHighlightedArrowheadMarker(sourceNode.transmissionMode);
+                        linkElement.attr('marker-end', highlightedMarker);
+                    }
                 }
             });
         }
