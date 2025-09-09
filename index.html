@@ -368,7 +368,7 @@
                 position: fixed;
                 top: auto;
                 bottom: 5px;
-                right: 5px;
+                right: 5px; /* Back to full width */
                 left: 5px;
                 max-width: none;
                 padding: 8px;
@@ -377,10 +377,11 @@
 
             .recenter-btn {
                 top: auto;
-                bottom: 80px; /* Position above legend on mobile */
-                right: 5px;
+                bottom: 120px; /* Position well above the legend to avoid overlap */
+                right: 15px; /* Aligned to the right */
                 width: 44px;
                 height: 44px;
+                z-index: 1002;
             }
 
             .recenter-btn svg {
