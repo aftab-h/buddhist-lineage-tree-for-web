@@ -379,47 +379,49 @@
             
             const rawDate = parseInt(positionDate);
             
-            // Enhanced granular mapping - much finer time resolution (30+ layers)
+            // Keep placeholder years 0-100 as special layers
             if (rawDate === 0) return 0;
             if (rawDate === 1) return 1;
             if (rawDate === 2) return 2;
             if (rawDate === 3) return 3;
             
-            // Pre-historical period - finer granularity
-            if (rawDate >= 500 && rawDate < 550) return 4; // Early Garab Dorje period
-            if (rawDate >= 550 && rawDate < 600) return 5; // Late pre-historical
-            if (rawDate >= 600 && rawDate < 650) return 6; // Śākyamuni Buddha period
-            if (rawDate >= 650 && rawDate < 680) return 7; // Post-Buddha early period
-            if (rawDate >= 680 && rawDate < 700) return 8; // Mañjuśrimitra period
-            if (rawDate >= 700 && rawDate < 720) return 9; // Early Śrī Siṃha period
-            if (rawDate >= 720 && rawDate < 750) return 10; // Late Śrī Siṃha period
+            // For historical dates (600 CE onwards), use linear spacing for equidistant centuries
+            if (rawDate >= 600) {
+                // Linear calculation: 50 years per layer starting from layer 6
+                // This gives equidistant spacing regardless of transmission mode
+                return 6 + ((rawDate - 600) / 50);
+            }
             
-            // Critical 8th century - very fine granularity due to many figures
-            if (rawDate >= 750 && rawDate < 770) return 11; // Early Padmasambhava/Jñānasūtra
-            if (rawDate >= 770 && rawDate < 790) return 12; // Mid 8th century
-            if (rawDate >= 790 && rawDate < 810) return 13; // Late 8th century (Vimalamitra/Vairocana)
-            if (rawDate >= 810 && rawDate < 830) return 14; // Early 9th century transition
-            if (rawDate >= 830 && rawDate < 850) return 15; // Mid 9th century
-            if (rawDate >= 850 && rawDate < 875) return 16; // Late 9th century
-            if (rawDate >= 875 && rawDate < 900) return 17; // End 9th century
+            // For dates between 100-599 (rare edge cases), use intermediate mapping
+            if (rawDate >= 500 && rawDate < 600) return 5; // Pre-historical period
             
-            // 10th-11th centuries - moderate granularity
-            if (rawDate >= 900 && rawDate < 950) return 18; // Early 10th century
-            if (rawDate >= 950 && rawDate < 1000) return 19; // Late 10th century
-            if (rawDate >= 1000 && rawDate < 1050) return 20; // Early 11th century
-            if (rawDate >= 1050 && rawDate < 1100) return 21; // Mid 11th century
-            if (rawDate >= 1100 && rawDate < 1150) return 22; // Late 11th century
-            if (rawDate >= 1150 && rawDate < 1200) return 23; // Early 12th century
+            return 20; // fallback for any other cases
+        }
+
+        // Calculate century line positions using the same system as nodes
+        function calculateCenturyLines(nodes) {
+            // Show centuries for all historical dates (600+ CE) regardless of transmission mode
+            // This covers the full range of historical Buddhist lineage figures
             
-            // Later periods - reasonable granularity
-            if (rawDate >= 1200 && rawDate < 1250) return 24; // Early 13th century
-            if (rawDate >= 1250 && rawDate < 1300) return 25; // Mid 13th century
-            if (rawDate >= 1300 && rawDate < 1350) return 26; // Early 14th century
-            if (rawDate >= 1350 && rawDate < 1400) return 27; // Mid 14th century
-            if (rawDate >= 1400 && rawDate < 1450) return 28; // 15th century
-            if (rawDate >= 1450) return 29; // Later periods
+            const centuries = [
+                { century: '7th Century', year: 650 },  // Mid-7th century
+                { century: '8th Century', year: 750 },  // Mid-8th century  
+                { century: '9th Century', year: 850 },  // Mid-9th century
+                { century: '10th Century', year: 950 }, // Mid-10th century
+                { century: '11th Century', year: 1050 },// Mid-11th century
+                { century: '12th Century', year: 1150 },// Mid-12th century
+                { century: '13th Century', year: 1250 },// Mid-13th century
+                { century: '14th Century', year: 1350 },// Mid-14th century
+                { century: '15th Century', year: 1450 } // Mid-15th century
+            ];
             
-            return 20; // fallback
+            return centuries.map(c => ({
+                label: c.century,
+                year: c.year,
+                timeLayer: parsePositionDate(c.year),
+                // Use exact same positioning calculation as nodes: baseY + (timeLayer * gridHeight)
+                yPosition: 50 + (parsePositionDate(c.year) * 160) // baseY=50, gridHeight=160
+            }));
         }
 
         // Assign vertical positions using Position_Date from CSV
@@ -987,6 +989,38 @@
                     }
                 });
             }
+
+            // Create century lines for time reference (only for linear time sections)
+            const centuryLines = calculateCenturyLines(data.nodes);
+            const centuryGroup = g.append('g').attr('class', 'century-lines');
+            
+            // Add horizontal century lines
+            centuryGroup.selectAll('.century-line')
+                .data(centuryLines)
+                .enter()
+                .append('line')
+                .attr('class', 'century-line')
+                .attr('x1', 50)
+                .attr('x2', width - 50)
+                .attr('y1', d => d.yPosition) // Use exact same positioning as nodes
+                .attr('y2', d => d.yPosition)
+                .attr('stroke', '#ddd')
+                .attr('stroke-width', 1)
+                .attr('opacity', 0.6);
+            
+            // Add century labels
+            centuryGroup.selectAll('.century-label')
+                .data(centuryLines)
+                .enter()
+                .append('text')
+                .attr('class', 'century-label')
+                .attr('x', 20)
+                .attr('y', d => d.yPosition + 5) // Slightly below the line
+                .attr('font-size', '12px')
+                .attr('font-family', 'Arial, sans-serif')
+                .attr('fill', '#999')
+                .attr('opacity', 0.8)
+                .text(d => d.label);
 
             // Create smooth curved links with arrowheads
             const links = g.selectAll('.link')
