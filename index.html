@@ -468,6 +468,189 @@
             }
         }
 
+        /* Flash Card Styles */
+        .flashcard-mode {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            z-index: 2000;
+            width: 90vw;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow: hidden;
+            animation: flashcardFadeIn 0.3s ease-out;
+        }
+
+        @keyframes flashcardFadeIn {
+            from {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1);
+            }
+        }
+
+        .flashcard-header {
+            background: #4CAF50;
+            color: white;
+            padding: 16px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .flashcard-header h3 {
+            margin: 0;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            transition: background 0.2s ease;
+        }
+
+        .close-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .flashcard-content {
+            padding: 24px;
+        }
+
+        .score-display {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            font-weight: bold;
+            color: #555;
+        }
+
+        .question-container {
+            margin-bottom: 24px;
+        }
+
+        .question-text {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+            line-height: 1.4;
+        }
+
+        .answer-choices {
+            display: grid;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .answer-choice {
+            padding: 16px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            background: #f9f9f9;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: left;
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .answer-choice:hover {
+            border-color: #4CAF50;
+            background: #f0f8f0;
+            transform: translateY(-1px);
+        }
+
+        .answer-choice.selected {
+            border-color: #4CAF50;
+            background: #e8f5e8;
+        }
+
+        .answer-choice.correct {
+            border-color: #4CAF50;
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .answer-choice.incorrect {
+            border-color: #dc3545;
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .answer-choice.disabled {
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        .flashcard-footer {
+            text-align: center;
+        }
+
+        .next-btn, .restart-btn {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: background 0.2s ease;
+        }
+
+        .next-btn:hover, .restart-btn:hover {
+            background: #45a049;
+        }
+
+        .restart-btn {
+            background: #2196F3;
+        }
+
+        .restart-btn:hover {
+            background: #1976D2;
+        }
+
+        /* Mobile adjustments for flash cards */
+        @media (max-width: 768px) {
+            .flashcard-mode {
+                width: 95vw;
+                max-height: 85vh;
+            }
+
+            .flashcard-content {
+                padding: 16px;
+            }
+
+            .question-text {
+                font-size: 16px;
+            }
+
+            .answer-choice {
+                padding: 12px 16px;
+                font-size: 14px;
+            }
+        }
+
         @media (max-width: 480px) {
             .filter-btn {
                 padding: 6px 8px;
@@ -506,6 +689,9 @@
                     <button class="filter-btn" data-filter="Vimalamitra">Vimalamitra</button>
                     <button class="filter-btn" data-filter="Padmasambhava">Padmasambhava</button>
                     <button class="filter-btn" data-filter="Vairocana">Vairocana</button>
+                </div>
+                <div style="margin-top: 10px;">
+                    <button id="quiz-mode-btn" class="filter-btn" style="background: #2196F3; color: white;">Start Quiz Mode</button>
                 </div>
                 <div style="font-size: 11px; color: #666; margin-top: 10px;">
                     <div>Click node: View details & highlight lineage</div>
@@ -555,6 +741,30 @@
                 <circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.5"/>
             </svg>
         </button>
+
+        <!-- Flash Card Mode -->
+        <div id="flashcard-mode" class="flashcard-mode hidden">
+            <div class="flashcard-header">
+                <h3>Buddhist Lineage Quiz</h3>
+                <div class="flashcard-controls">
+                    <button id="close-flashcard" class="close-btn">&times;</button>
+                </div>
+            </div>
+            <div class="flashcard-content">
+                <div class="score-display">
+                    <span id="current-score">Score: 0/0</span>
+                    <span id="streak-display">Streak: 0</span>
+                </div>
+                <div class="question-container">
+                    <div id="question-text" class="question-text"></div>
+                    <div id="answer-choices" class="answer-choices"></div>
+                </div>
+                <div class="flashcard-footer">
+                    <button id="next-question" class="next-btn hidden">Next Question</button>
+                    <button id="restart-quiz" class="restart-btn hidden">Restart Quiz</button>
+                </div>
+            </div>
+        </div>
         
         <svg id="svg"></svg>
     </div>
@@ -2313,6 +2523,245 @@
             currentFilter = this.dataset.filter;
             const filteredData = filterData(currentFilter);
             renderVisualization(filteredData);
+        });
+
+        // Flash Card Quiz System
+        class FlashCardQuiz {
+            constructor() {
+                this.questions = [];
+                this.currentQuestionIndex = 0;
+                this.score = 0;
+                this.streak = 0;
+                this.totalQuestions = 0;
+                this.isQuizActive = false;
+            }
+
+            // Generate quiz questions from the graph data
+            generateQuestions() {
+                const questions = [];
+                
+                // Get all nodes with relationships
+                const nodesWithTeachers = graphData.nodes.filter(node => 
+                    node.id !== 'Samantabhadra / Samantabhadrī' && 
+                    graphData.links.some(link => link.target === node.id)
+                );
+                
+                const nodesWithStudents = graphData.nodes.filter(node => 
+                    graphData.links.some(link => link.source === node.id)
+                );
+
+                // Generate "Who taught X?" questions
+                nodesWithTeachers.forEach(student => {
+                    const teachers = graphData.links
+                        .filter(link => link.target === student.id)
+                        .map(link => link.source);
+                    
+                    if (teachers.length > 0) {
+                        // Get 3 wrong answers
+                        const wrongAnswers = this.getRandomWrongAnswers(teachers[0], 3);
+                        if (wrongAnswers.length >= 3) {
+                            questions.push({
+                                type: 'teacher',
+                                question: `Who taught ${student.name}?`,
+                                correctAnswer: teachers[0],
+                                wrongAnswers: wrongAnswers,
+                                studentName: student.name
+                            });
+                        }
+                    }
+                });
+
+                // Generate "Who did X teach?" questions  
+                nodesWithStudents.forEach(teacher => {
+                    const students = graphData.links
+                        .filter(link => link.source === teacher.id)
+                        .map(link => link.target);
+                    
+                    if (students.length > 0) {
+                        // Pick a random student as the correct answer
+                        const correctStudent = students[Math.floor(Math.random() * students.length)];
+                        const wrongAnswers = this.getRandomWrongAnswers(correctStudent, 3);
+                        
+                        if (wrongAnswers.length >= 3) {
+                            questions.push({
+                                type: 'student',
+                                question: `Who did ${teacher.name} teach?`,
+                                correctAnswer: correctStudent,
+                                wrongAnswers: wrongAnswers,
+                                teacherName: teacher.name
+                            });
+                        }
+                    }
+                });
+
+                // Shuffle questions and limit to reasonable number
+                return this.shuffleArray(questions).slice(0, 20);
+            }
+
+            // Get random wrong answers excluding the correct one
+            getRandomWrongAnswers(correctAnswer, count) {
+                const allNames = graphData.nodes
+                    .map(node => node.id)
+                    .filter(name => name !== correctAnswer && name !== 'Samantabhadra / Samantabhadrī');
+                
+                return this.shuffleArray(allNames).slice(0, count);
+            }
+
+            // Shuffle array utility
+            shuffleArray(array) {
+                const shuffled = [...array];
+                for (let i = shuffled.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+                }
+                return shuffled;
+            }
+
+            // Start the quiz
+            startQuiz() {
+                this.questions = this.generateQuestions();
+                this.currentQuestionIndex = 0;
+                this.score = 0;
+                this.streak = 0;
+                this.totalQuestions = this.questions.length;
+                this.isQuizActive = true;
+
+                document.getElementById('flashcard-mode').classList.remove('hidden');
+                this.showQuestion();
+            }
+
+            // Show current question
+            showQuestion() {
+                if (this.currentQuestionIndex >= this.questions.length) {
+                    this.showResults();
+                    return;
+                }
+
+                const question = this.questions[this.currentQuestionIndex];
+                document.getElementById('question-text').textContent = question.question;
+                
+                // Create answer choices
+                const choices = [question.correctAnswer, ...question.wrongAnswers];
+                const shuffledChoices = this.shuffleArray(choices);
+                
+                const choicesContainer = document.getElementById('answer-choices');
+                choicesContainer.innerHTML = '';
+
+                shuffledChoices.forEach((choice, index) => {
+                    const choiceElement = document.createElement('div');
+                    choiceElement.className = 'answer-choice';
+                    choiceElement.textContent = choice;
+                    choiceElement.onclick = () => this.selectAnswer(choice, choiceElement);
+                    choicesContainer.appendChild(choiceElement);
+                });
+
+                // Update score display
+                document.getElementById('current-score').textContent = `Score: ${this.score}/${this.currentQuestionIndex}`;
+                document.getElementById('streak-display').textContent = `Streak: ${this.streak}`;
+
+                // Hide next button
+                document.getElementById('next-question').classList.add('hidden');
+                document.getElementById('restart-quiz').classList.add('hidden');
+            }
+
+            // Handle answer selection
+            selectAnswer(selectedAnswer, selectedElement) {
+                const question = this.questions[this.currentQuestionIndex];
+                const isCorrect = selectedAnswer === question.correctAnswer;
+                
+                // Disable all choices
+                const allChoices = document.querySelectorAll('.answer-choice');
+                allChoices.forEach(choice => {
+                    choice.classList.add('disabled');
+                    choice.onclick = null;
+                    
+                    if (choice.textContent === question.correctAnswer) {
+                        choice.classList.add('correct');
+                    } else if (choice === selectedElement && !isCorrect) {
+                        choice.classList.add('incorrect');
+                    }
+                });
+
+                // Update score
+                if (isCorrect) {
+                    this.score++;
+                    this.streak++;
+                } else {
+                    this.streak = 0;
+                }
+
+                this.currentQuestionIndex++;
+                
+                // Update score display
+                document.getElementById('current-score').textContent = `Score: ${this.score}/${this.currentQuestionIndex}`;
+                document.getElementById('streak-display').textContent = `Streak: ${this.streak}`;
+
+                // Show next button or results
+                if (this.currentQuestionIndex < this.questions.length) {
+                    document.getElementById('next-question').classList.remove('hidden');
+                } else {
+                    setTimeout(() => this.showResults(), 1500);
+                }
+            }
+
+            // Show next question
+            nextQuestion() {
+                this.showQuestion();
+            }
+
+            // Show final results
+            showResults() {
+                const percentage = Math.round((this.score / this.totalQuestions) * 100);
+                let message = `Quiz Complete!\n\nFinal Score: ${this.score}/${this.totalQuestions} (${percentage}%)`;
+                
+                if (percentage >= 90) message += '\n🏆 Excellent! You know your Buddhist lineage very well!';
+                else if (percentage >= 70) message += '\n🎉 Great job! You have a good grasp of the relationships!';
+                else if (percentage >= 50) message += '\n👍 Not bad! Keep studying the lineage connections!';
+                else message += '\n📚 Keep learning! The Buddhist lineage is complex and takes time to master.';
+
+                document.getElementById('question-text').innerHTML = message.replace(/\n/g, '<br>');
+                document.getElementById('answer-choices').innerHTML = '';
+                document.getElementById('next-question').classList.add('hidden');
+                document.getElementById('restart-quiz').classList.remove('hidden');
+            }
+
+            // Close quiz
+            closeQuiz() {
+                document.getElementById('flashcard-mode').classList.add('hidden');
+                this.isQuizActive = false;
+            }
+
+            // Restart quiz
+            restartQuiz() {
+                this.startQuiz();
+            }
+        }
+
+        // Initialize quiz system
+        const flashCardQuiz = new FlashCardQuiz();
+
+        // Quiz event listeners
+        document.getElementById('quiz-mode-btn').addEventListener('click', () => {
+            flashCardQuiz.startQuiz();
+        });
+
+        document.getElementById('close-flashcard').addEventListener('click', () => {
+            flashCardQuiz.closeQuiz();
+        });
+
+        document.getElementById('next-question').addEventListener('click', () => {
+            flashCardQuiz.nextQuestion();
+        });
+
+        document.getElementById('restart-quiz').addEventListener('click', () => {
+            flashCardQuiz.restartQuiz();
+        });
+
+        // Close quiz with escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && flashCardQuiz.isQuizActive) {
+                flashCardQuiz.closeQuiz();
+            }
         });
 
         // Start the application
