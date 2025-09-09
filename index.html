@@ -1005,7 +1005,7 @@
                 .attr('y1', d => d.yPosition) // Use exact same positioning as nodes
                 .attr('y2', d => d.yPosition)
                 .attr('stroke', '#ddd')
-                .attr('stroke-width', 1)
+                .attr('stroke-width', 3)
                 .attr('opacity', 0.6);
             
             // Add century labels
@@ -1015,9 +1015,10 @@
                 .append('text')
                 .attr('class', 'century-label')
                 .attr('x', 20)
-                .attr('y', d => d.yPosition + 5) // Slightly below the line
-                .attr('font-size', '12px')
+                .attr('y', d => d.yPosition + 8) // Slightly below the line
+                .attr('font-size', '18px')
                 .attr('font-family', 'Arial, sans-serif')
+                .attr('font-weight', 'bold')
                 .attr('fill', '#999')
                 .attr('opacity', 0.8)
                 .text(d => d.label);
