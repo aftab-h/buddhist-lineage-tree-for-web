@@ -589,24 +589,11 @@
             const layerOffsets = new Map();
             
             layerGroups.forEach(([timeLayer, layerNodes]) => {
-                if (layerNodes.length === 1) {
-                    // Single node - use exact layer position
-                    layerOffsets.set(layerNodes[0].id, 0);
-                } else {
-                    // Multiple nodes - spread them vertically within the layer
-                    const verticalSpacing = 25; // 25px between nodes in same layer
-                    const totalHeight = (layerNodes.length - 1) * verticalSpacing;
-                    const startOffset = -totalHeight / 2; // Center the spread around the layer
-                    
-                    // Sort nodes by X position for consistent ordering
-                    layerNodes.sort((a, b) => (a.lineageX || 0) - (b.lineageX || 0));
-                    
-                    layerNodes.forEach((node, index) => {
-                        const offset = startOffset + (index * verticalSpacing);
-                        layerOffsets.set(node.id, offset);
-                        console.log(`Layer ${timeLayer} sub-positioning: ${node.name} gets Y offset ${offset}`);
-                    });
-                }
+                // All nodes in the same time layer get no vertical offset - they align horizontally
+                layerNodes.forEach(node => {
+                    layerOffsets.set(node.id, 0);
+                    console.log(`Layer ${timeLayer}: ${node.name} gets Y offset 0 (no staggering)`);
+                });
             });
             
             // Apply final positioning
