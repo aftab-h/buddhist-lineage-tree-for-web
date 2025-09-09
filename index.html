@@ -22,14 +22,41 @@
 
         #controls {
             position: fixed;
-            top: 20px;
-            left: 20px;
+            top: 10px;
+            left: 10px;
             z-index: 1000;
-            background: rgba(255, 255, 255, 0.9);
-            padding: 15px;
-            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 12px;
+            border-radius: 8px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             backdrop-filter: blur(10px);
+            max-width: calc(100vw - 20px);
+            box-sizing: border-box;
+        }
+
+        .controls-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .toggle-btn {
+            display: none;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            min-height: 36px;
+            box-sizing: border-box;
+            touch-action: manipulation;
+        }
+
+        .controls-content {
+            display: block;
         }
 
         #search {
@@ -37,17 +64,22 @@
             border: 1px solid #ddd;
             border-radius: 5px;
             margin-bottom: 10px;
-            width: 200px;
+            width: 100%;
+            max-width: 200px;
+            box-sizing: border-box;
         }
 
         .filter-btn {
-            padding: 6px 12px;
+            padding: 8px 12px;
             margin: 2px;
             border: 1px solid #ddd;
             background: white;
             border-radius: 4px;
             cursor: pointer;
             font-size: 12px;
+            min-height: 36px;
+            box-sizing: border-box;
+            touch-action: manipulation;
         }
 
         .filter-btn:hover {
@@ -116,14 +148,41 @@
 
         #legend {
             position: fixed;
-            top: 20px;
-            right: 20px;
+            top: 10px;
+            right: 10px;
             z-index: 1000;
-            background: rgba(255, 255, 255, 0.9);
-            padding: 15px;
-            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 12px;
+            border-radius: 8px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             backdrop-filter: blur(10px);
+            max-width: calc(50vw - 15px);
+            box-sizing: border-box;
+        }
+
+        .legend-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .legend-toggle {
+            display: none;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+            min-height: 36px;
+            box-sizing: border-box;
+            touch-action: manipulation;
+        }
+
+        .legend-content {
+            display: block;
         }
 
         .legend-item {
@@ -233,37 +292,147 @@
             border-top: 1px solid #f0f0f0;
             color: #555;
         }
+
+        /* Mobile responsive styles */
+        @media (max-width: 768px) {
+            #controls {
+                position: fixed;
+                top: 5px;
+                left: 5px;
+                right: 5px;
+                width: auto;
+                max-width: none;
+                padding: 8px;
+                background: rgba(255, 255, 255, 0.98);
+            }
+
+            .toggle-btn {
+                display: inline-block;
+            }
+
+            .controls-content.collapsed {
+                display: none;
+            }
+
+            #search {
+                max-width: none;
+                width: 100%;
+                margin-bottom: 8px;
+            }
+
+            .filter-btn {
+                padding: 8px 10px;
+                margin: 2px 1px;
+                font-size: 11px;
+                min-height: 44px;
+                box-sizing: border-box;
+            }
+
+            #legend {
+                position: fixed;
+                top: auto;
+                bottom: 5px;
+                right: 5px;
+                left: 5px;
+                max-width: none;
+                padding: 8px;
+                background: rgba(255, 255, 255, 0.98);
+            }
+
+            .legend-toggle {
+                display: inline-block;
+            }
+
+            .legend-content.collapsed {
+                display: none;
+            }
+
+            .legend-item {
+                font-size: 11px;
+                margin-bottom: 6px;
+            }
+
+            .legend-color {
+                width: 16px;
+                height: 12px;
+                margin-right: 6px;
+            }
+
+            .popup-card {
+                max-width: calc(100vw - 20px);
+                margin: 10px;
+                position: fixed !important;
+                left: 10px !important;
+                right: 10px !important;
+                top: 50% !important;
+                transform: translateY(-50%) !important;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .filter-btn {
+                padding: 6px 8px;
+                font-size: 10px;
+                margin: 1px;
+            }
+            
+            #legend h4 {
+                font-size: 14px;
+                margin: 0 0 8px 0;
+            }
+
+            .legend-item {
+                font-size: 10px;
+                margin-bottom: 4px;
+            }
+
+            .controls-content div:last-child {
+                font-size: 10px;
+                margin-top: 8px;
+            }
+        }
     </style>
 </head>
 <body>
     <div id="container">
         <div id="controls">
-            <input type="text" id="search" placeholder="Search for a teacher...">
-            <div>
-                <button class="filter-btn active" data-filter="all">All Lineages</button>
-                <button class="filter-btn" data-filter="Vimalamitra">Vimalamitra</button>
-                <button class="filter-btn" data-filter="Padmasambhava">Padmasambhava</button>
-                <button class="filter-btn" data-filter="Vairocana">Vairocana</button>
+            <div class="controls-header">
+                <span style="font-weight: bold; font-size: 14px;">Controls</span>
+                <button class="toggle-btn" onclick="toggleControls()">Hide</button>
             </div>
-            <div style="font-size: 11px; color: #666; margin-top: 10px;">
-                <div>Click node: View details & highlight lineage</div>
-                <div>Click elsewhere: Close popup</div>
+            <div class="controls-content" id="controls-content">
+                <input type="text" id="search" placeholder="Search for a teacher...">
+                <div>
+                    <button class="filter-btn active" data-filter="all">All Lineages</button>
+                    <button class="filter-btn" data-filter="Vimalamitra">Vimalamitra</button>
+                    <button class="filter-btn" data-filter="Padmasambhava">Padmasambhava</button>
+                    <button class="filter-btn" data-filter="Vairocana">Vairocana</button>
+                </div>
+                <div style="font-size: 11px; color: #666; margin-top: 10px;">
+                    <div>Click node: View details & highlight lineage</div>
+                    <div>Click elsewhere: Close popup</div>
+                </div>
             </div>
         </div>
 
         <div id="legend">
-            <h4 style="margin-top: 0;">Transmission Types</h4>
-            <div class="legend-item">
-                <div class="legend-color" style="background: #4FC3F7;"></div>
-                <span>Mind-Mind (Primordial)</span>
+            <div class="legend-header">
+                <h4 style="margin: 0;">Transmission Types</h4>
+                <button class="legend-toggle" onclick="toggleLegend()">Hide</button>
             </div>
-            <div class="legend-item">
-                <div class="legend-color" style="background: #BA68C8;"></div>
-                <span>Symbolic Transmission</span>
-            </div>
-            <div class="legend-item">
-                <div class="legend-color" style="background: #81C784;"></div>
-                <span>Aural Lineage</span>
+            <div class="legend-content" id="legend-content">
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #4FC3F7;"></div>
+                    <span>Mind-Mind (Primordial)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #BA68C8;"></div>
+                    <span>Symbolic Transmission</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #81C784;"></div>
+                    <span>Aural Lineage</span>
+                </div>
             </div>
         </div>
 
@@ -1169,6 +1338,33 @@
             const popup = document.getElementById('popup-card');
             popup.classList.add('hidden');
             clearHighlighting();
+        }
+        
+        // Toggle functions for mobile collapsible controls
+        function toggleControls() {
+            const content = document.getElementById('controls-content');
+            const button = document.querySelector('.toggle-btn');
+            
+            if (content.classList.contains('collapsed')) {
+                content.classList.remove('collapsed');
+                button.textContent = 'Hide';
+            } else {
+                content.classList.add('collapsed');
+                button.textContent = 'Show';
+            }
+        }
+        
+        function toggleLegend() {
+            const content = document.getElementById('legend-content');
+            const button = document.querySelector('.legend-toggle');
+            
+            if (content.classList.contains('collapsed')) {
+                content.classList.remove('collapsed');
+                button.textContent = 'Hide';
+            } else {
+                content.classList.add('collapsed');
+                button.textContent = 'Show';
+            }
         }
         
         function clearHighlighting() {
