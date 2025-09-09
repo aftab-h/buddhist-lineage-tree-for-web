@@ -206,11 +206,17 @@
         }
 
         .recenter-btn:hover {
-            background: #4CAF50;
             transform: scale(1.05);
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
         }
 
-        .recenter-btn:hover svg {
+        .recenter-btn:active {
+            background: #4CAF50;
+            transform: scale(0.95);
+            transition: all 0.1s ease;
+        }
+
+        .recenter-btn:active svg {
             filter: invert(1);
         }
 
