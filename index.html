@@ -1633,6 +1633,7 @@
         let currentPopupNode = null;
         let currentPopupData = null;
         let selectedNode = null; // Track currently selected node
+        let activeRippleTimeouts = []; // Track active animation timeouts
 
         // Popup functions
         function showPopup(data, event) {
@@ -1871,30 +1872,29 @@
         }
         
         function clearHighlighting() {
-            // Reset all node highlighting and colors
-            g.selectAll('.node').each(function(d) {
-                const nodeElement = d3.select(this);
-                nodeElement.classed('highlighted', false);
-                // Only reset color if not selected
-                if (!nodeElement.classed('selected')) {
-                    nodeElement
-                        .attr('fill', getOriginalNodeColor(d))
-                        .attr('stroke', '#333')
-                        .attr('stroke-width', 2);
-                }
-            });
+            // Clear all active ripple timeouts
+            activeRippleTimeouts.forEach(timeoutId => clearTimeout(timeoutId));
+            activeRippleTimeouts = [];
             
-            // Reset all link highlighting
-            g.selectAll('.link').classed('highlighted', false);
+            // Immediately stop all transitions and animations
+            g.selectAll('.node')
+                .interrupt() // Stop any D3 transitions
+                .classed('trajectory-ripple main-node-ripple highlighted', false)
+                .attr('fill', function(d) { return getOriginalNodeColor(d); })
+                .attr('stroke', '#333')
+                .attr('stroke-width', 2);
             
-            // Reset all markers to their normal state
-            g.selectAll('.link').each(function(d) {
-                const sourceNode = graphData.nodes.find(n => n.id === d.source);
-                if (sourceNode) {
-                    const normalMarker = getArrowheadMarker(sourceNode.transmissionMode);
-                    d3.select(this).attr('marker-end', normalMarker);
-                }
-            });
+            // Reset all link highlighting immediately
+            g.selectAll('.link')
+                .interrupt() // Stop any D3 transitions
+                .classed('highlighted', false)
+                .each(function(d) {
+                    const sourceNode = graphData.nodes.find(n => n.id === d.source);
+                    if (sourceNode) {
+                        const normalMarker = getArrowheadMarker(sourceNode.transmissionMode);
+                        d3.select(this).attr('marker-end', normalMarker);
+                    }
+                });
         }
 
         function selectNode(nodeData, nodeElement) {
@@ -2658,6 +2658,10 @@
         }
 
         function createRippleCascade(trajectoryNodes, clickedNodeId) {
+            // Clear any existing ripple timeouts first
+            activeRippleTimeouts.forEach(timeoutId => clearTimeout(timeoutId));
+            activeRippleTimeouts = [];
+            
             // Sort nodes by distance for proper cascade order
             const sortedNodes = Array.from(trajectoryNodes.entries())
                 .sort(([,a], [,b]) => a.distance - b.distance);
@@ -2667,7 +2671,7 @@
                 const delay = index * 120; // 120ms delay between each node for better visibility
                 const isMainNode = nodeId === clickedNodeId;
                 
-                setTimeout(() => {
+                const timeoutId = setTimeout(() => {
                     // Find the node element and apply node highlighting
                     g.selectAll('.node-group').each(function(d) {
                         if (d.id === nodeId) {
@@ -2705,9 +2709,10 @@
                             }
                             
                             // Remove animation class after animation completes
-                            setTimeout(() => {
+                            const cleanupTimeoutId = setTimeout(() => {
                                 nodeRect.classed('trajectory-ripple main-node-ripple', false);
                             }, 600); // Match animation duration
+                            activeRippleTimeouts.push(cleanupTimeoutId);
                         }
                     });
 
@@ -2741,6 +2746,9 @@
                         });
                     }, 50); // Small delay so link follows the node
                 }, delay);
+                
+                // Store timeout ID so we can cancel it if needed
+                activeRippleTimeouts.push(timeoutId);
             });
         }
 
