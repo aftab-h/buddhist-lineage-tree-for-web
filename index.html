@@ -176,6 +176,50 @@
             }
         }
 
+        /* Ripple animation for trajectory nodes */
+        .trajectory-ripple {
+            animation: trajectoryRipple 0.6s ease-out;
+        }
+
+        @keyframes trajectoryRipple {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            30% {
+                transform: scale(1.08);
+                opacity: 0.9;
+            }
+            60% {
+                transform: scale(1.02);
+                opacity: 0.95;
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        /* Main clicked node gets a more pronounced ripple */
+        .main-node-ripple {
+            animation: mainNodeRipple 0.5s ease-out;
+        }
+
+        @keyframes mainNodeRipple {
+            0% {
+                transform: scale(1);
+                box-shadow: 0 0 0 rgba(255, 215, 0, 0);
+            }
+            50% {
+                transform: scale(1.12);
+                box-shadow: 0 0 30px rgba(255, 215, 0, 0.8);
+            }
+            100% {
+                transform: scale(1);
+                box-shadow: 0 0 15px rgba(255, 215, 0, 0.6);
+            }
+        }
+
         .transmission-label {
             font-size: 16px;
             font-weight: bold;
@@ -2564,47 +2608,37 @@
             // Reset all highlighting first
             clearHighlighting();
 
-            // Highlight only the learning trajectory (upward lineage path)
-            const connectedNodes = new Set([node.id]);
+            // Build trajectory with distance information for ripple cascade
+            const trajectoryNodes = new Map();
+            trajectoryNodes.set(node.id, { distance: 0, node: node });
             
             // Find only ancestors - trace upward learning trajectory to Samantabhadra/Samantabhadri
-            function findAncestors(nodeId) {
+            function findAncestors(nodeId, distance) {
                 graphData.links.forEach(link => {
-                    if (link.target === nodeId) {
-                        connectedNodes.add(link.source);
-                        findAncestors(link.source);
+                    if (link.target === nodeId && !trajectoryNodes.has(link.source)) {
+                        const ancestorNode = graphData.nodes.find(n => n.id === link.source);
+                        if (ancestorNode) {
+                            trajectoryNodes.set(link.source, { distance: distance + 1, node: ancestorNode });
+                            findAncestors(link.source, distance + 1);
+                        }
                     }
                 });
             }
 
             // Only trace upward - no descendants highlighting
-            findAncestors(node.id);
+            findAncestors(node.id, 0);
 
-            // Highlight nodes with different brightness levels (Safari compatible)
+            // Convert to set for compatibility with existing code
+            const connectedNodes = new Set(trajectoryNodes.keys());
+
+            // Reset all nodes to normal first
             g.selectAll('.node-group').each(function(d) {
                 const nodeElement = d3.select(this).select('.node');
-                if (connectedNodes.has(d.id)) {
-                    const originalColor = getOriginalNodeColor(d);
-                    // Make the clicked node brightest, trajectory nodes moderately bright
-                    const isClickedNode = d.id === node.id;
-                    const brightnessFactor = isClickedNode ? 1.5 : 1.2; // Clicked node much brighter
-                    const strokeColor = isClickedNode ? '#FFD700' : '#ff6b35'; // Gold for clicked, orange for trajectory
-                    const strokeWidth = isClickedNode ? 4 : 3; // Thicker stroke for clicked node
-                    
-                    const brightColor = brightenColor(originalColor, brightnessFactor);
-                    nodeElement
-                        .classed('highlighted', true)
-                        .attr('fill', brightColor)
-                        .attr('stroke', strokeColor)
-                        .attr('stroke-width', strokeWidth);
-                } else {
-                    // Restore original colors for non-highlighted nodes
-                    nodeElement
-                        .classed('highlighted', false)
-                        .attr('fill', getOriginalNodeColor(d))
-                        .attr('stroke', '#333')
-                        .attr('stroke-width', 2);
-                }
+                nodeElement
+                    .classed('highlighted', false)
+                    .attr('fill', getOriginalNodeColor(d))
+                    .attr('stroke', '#333')
+                    .attr('stroke-width', 2);
             });
 
             // Highlight links and explicitly switch arrow markers (Safari-compatible)
@@ -2627,6 +2661,66 @@
                         }
                     }
                 }
+            });
+
+            // Create ripple cascade effect
+            createRippleCascade(trajectoryNodes, node.id);
+        }
+
+        function createRippleCascade(trajectoryNodes, clickedNodeId) {
+            // Sort nodes by distance for proper cascade order
+            const sortedNodes = Array.from(trajectoryNodes.entries())
+                .sort(([,a], [,b]) => a.distance - b.distance);
+
+            // Apply animations and highlighting with staggered timing
+            sortedNodes.forEach(([nodeId, nodeInfo], index) => {
+                const delay = index * 120; // 120ms delay between each node for better visibility
+                const isMainNode = nodeId === clickedNodeId;
+                
+                setTimeout(() => {
+                    // Find the node element
+                    g.selectAll('.node-group').each(function(d) {
+                        if (d.id === nodeId) {
+                            const nodeGroup = d3.select(this);
+                            const nodeRect = nodeGroup.select('.node');
+                            
+                            // Apply highlighting effects with animation
+                            const originalColor = getOriginalNodeColor(d);
+                            const brightnessFactor = isMainNode ? 1.5 : 1.2;
+                            const strokeColor = isMainNode ? '#FFD700' : '#ff6b35';
+                            const strokeWidth = isMainNode ? 4 : 3;
+                            
+                            const brightColor = brightenColor(originalColor, brightnessFactor);
+                            
+                            // Apply highlighting
+                            nodeRect
+                                .classed('highlighted', true)
+                                .transition()
+                                .duration(200)
+                                .attr('fill', brightColor)
+                                .attr('stroke', strokeColor)
+                                .attr('stroke-width', strokeWidth);
+                            
+                            // Remove any existing animation classes
+                            nodeRect.classed('trajectory-ripple main-node-ripple', false);
+                            
+                            // Force reflow to ensure class removal takes effect
+                            nodeRect.node().offsetHeight;
+                            
+                            // Add appropriate animation class
+                            if (isMainNode) {
+                                nodeRect.classed('main-node-ripple', true);
+                            } else {
+                                nodeRect.classed('trajectory-ripple', true);
+                            }
+                            
+                            // Remove animation class after animation completes
+                            setTimeout(() => {
+                                nodeRect.classed('trajectory-ripple main-node-ripple', false);
+                            }, 600); // Match animation duration
+                        }
+                    });
+                }, delay);
             });
         }
 
