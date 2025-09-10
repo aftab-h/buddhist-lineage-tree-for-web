@@ -143,7 +143,6 @@
         .selected {
             stroke-width: 3px !important;
             stroke: #FFD700 !important; /* Gold outline */
-            filter: brightness(1.3) saturate(1.2);
             box-shadow: 0 0 15px rgba(255, 215, 0, 0.6);
             animation: nodeSelect 0.3s ease-out;
         }
@@ -151,17 +150,14 @@
         @keyframes nodeSelect {
             0% {
                 transform: scale(1);
-                filter: brightness(1) saturate(1);
                 box-shadow: 0 0 0 rgba(255, 215, 0, 0);
             }
             50% {
                 transform: scale(1.1);
-                filter: brightness(1.5) saturate(1.4);
                 box-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
             }
             100% {
                 transform: scale(1);
-                filter: brightness(1.3) saturate(1.2);
                 box-shadow: 0 0 15px rgba(255, 215, 0, 0.6);
             }
         }
@@ -1766,9 +1762,41 @@
 
         function clearSelection() {
             if (selectedNode) {
-                g.selectAll('.node').classed('selected', false);
+                g.selectAll('.node').each(function(d) {
+                    const nodeElement = d3.select(this);
+                    nodeElement.classed('selected', false);
+                    // Restore original color if not highlighted
+                    if (!nodeElement.classed('highlighted')) {
+                        nodeElement
+                            .attr('fill', getOriginalNodeColor(d))
+                            .attr('stroke', '#333')
+                            .attr('stroke-width', 2);
+                    }
+                });
                 selectedNode = null;
             }
+        }
+
+        // Safari-compatible color utilities
+        function brightenColor(color, factor = 1.3) {
+            // Convert hex color to RGB
+            const hex = color.replace('#', '');
+            const r = parseInt(hex.substr(0, 2), 16);
+            const g = parseInt(hex.substr(2, 2), 16);
+            const b = parseInt(hex.substr(4, 2), 16);
+            
+            // Brighten each component
+            const newR = Math.min(255, Math.round(r * factor));
+            const newG = Math.min(255, Math.round(g * factor));
+            const newB = Math.min(255, Math.round(b * factor));
+            
+            // Convert back to hex
+            return '#' + ((1 << 24) + (newR << 16) + (newG << 8) + newB).toString(16).slice(1);
+        }
+
+        function getOriginalNodeColor(node) {
+            // Return the original transmission color for this node
+            return getTransmissionColor(node.transmissionMode);
         }
         
         // Toggle functions for mobile collapsible controls
@@ -1799,8 +1827,20 @@
         }
         
         function clearHighlighting() {
-            // Reset all highlighting
-            g.selectAll('.node').classed('highlighted', false);
+            // Reset all node highlighting and colors
+            g.selectAll('.node').each(function(d) {
+                const nodeElement = d3.select(this);
+                nodeElement.classed('highlighted', false);
+                // Only reset color if not selected
+                if (!nodeElement.classed('selected')) {
+                    nodeElement
+                        .attr('fill', getOriginalNodeColor(d))
+                        .attr('stroke', '#333')
+                        .attr('stroke-width', 2);
+                }
+            });
+            
+            // Reset all link highlighting
             g.selectAll('.link').classed('highlighted', false);
             
             // Reset all markers to their normal state
@@ -1816,12 +1856,26 @@
         function selectNode(nodeData, nodeElement) {
             // Clear previous selection
             if (selectedNode) {
-                g.selectAll('.node').classed('selected', false);
+                g.selectAll('.node').each(function(d) {
+                    const node = d3.select(this);
+                    node.classed('selected', false);
+                    // Restore original color if not highlighted
+                    if (!node.classed('highlighted')) {
+                        node.attr('fill', getOriginalNodeColor(d))
+                            .attr('stroke', '#333')
+                            .attr('stroke-width', 2);
+                    }
+                });
             }
             
-            // Set new selection
+            // Set new selection with direct color changes (Safari compatible)
             selectedNode = nodeData;
-            d3.select(nodeElement).classed('selected', true);
+            const selectedElement = d3.select(nodeElement);
+            selectedElement
+                .classed('selected', true)
+                .attr('fill', brightenColor(getOriginalNodeColor(nodeData), 1.2))
+                .attr('stroke', '#FFD700')
+                .attr('stroke-width', 3);
         }
         
         // Close popup with escape key
@@ -1844,8 +1898,9 @@
                     closePopup();
                 }
             } else if (popup.classList.contains('hidden') && !clickedOnNode) {
-                // If popup is already hidden but we have selection, clear it when clicking elsewhere
+                // If popup is already hidden but we have selection, clear everything when clicking elsewhere
                 clearSelection();
+                clearHighlighting(); // Also clear trajectory highlighting
             }
         });
 
@@ -2525,24 +2580,51 @@
             // Only trace upward - no descendants highlighting
             findAncestors(node.id);
 
-            // Highlight nodes
+            // Highlight nodes with different brightness levels (Safari compatible)
             g.selectAll('.node-group').each(function(d) {
+                const nodeElement = d3.select(this).select('.node');
                 if (connectedNodes.has(d.id)) {
-                    d3.select(this).select('.node').classed('highlighted', true);
+                    const originalColor = getOriginalNodeColor(d);
+                    // Make the clicked node brightest, trajectory nodes moderately bright
+                    const isClickedNode = d.id === node.id;
+                    const brightnessFactor = isClickedNode ? 1.5 : 1.2; // Clicked node much brighter
+                    const strokeColor = isClickedNode ? '#FFD700' : '#ff6b35'; // Gold for clicked, orange for trajectory
+                    const strokeWidth = isClickedNode ? 4 : 3; // Thicker stroke for clicked node
+                    
+                    const brightColor = brightenColor(originalColor, brightnessFactor);
+                    nodeElement
+                        .classed('highlighted', true)
+                        .attr('fill', brightColor)
+                        .attr('stroke', strokeColor)
+                        .attr('stroke-width', strokeWidth);
+                } else {
+                    // Restore original colors for non-highlighted nodes
+                    nodeElement
+                        .classed('highlighted', false)
+                        .attr('fill', getOriginalNodeColor(d))
+                        .attr('stroke', '#333')
+                        .attr('stroke-width', 2);
                 }
             });
 
-            // Highlight links and explicitly switch arrow markers
+            // Highlight links and explicitly switch arrow markers (Safari-compatible)
             g.selectAll('.link').each(function(d) {
                 const linkElement = d3.select(this);
                 if (connectedNodes.has(d.source) && connectedNodes.has(d.target)) {
                     // Highlight the link
                     linkElement.classed('highlighted', true);
-                    // Switch to highlighted arrow marker
+                    // Switch to highlighted arrow marker with Safari force-redraw
                     const sourceNode = graphData.nodes.find(n => n.id === d.source);
                     if (sourceNode) {
                         const highlightedMarker = getHighlightedArrowheadMarker(sourceNode.transmissionMode);
                         linkElement.attr('marker-end', highlightedMarker);
+                        // Force Safari to redraw the marker
+                        const node = linkElement.node();
+                        if (node) {
+                            node.style.display = 'none';
+                            node.offsetHeight; // Force reflow
+                            node.style.display = '';
+                        }
                     }
                 }
             });
