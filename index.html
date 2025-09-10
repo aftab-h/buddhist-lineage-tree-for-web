@@ -2641,25 +2641,15 @@
                     .attr('stroke-width', 2);
             });
 
-            // Highlight links and explicitly switch arrow markers (Safari-compatible)
+            // Reset all links to normal first
             g.selectAll('.link').each(function(d) {
                 const linkElement = d3.select(this);
-                if (connectedNodes.has(d.source) && connectedNodes.has(d.target)) {
-                    // Highlight the link
-                    linkElement.classed('highlighted', true);
-                    // Switch to highlighted arrow marker with Safari force-redraw
-                    const sourceNode = graphData.nodes.find(n => n.id === d.source);
-                    if (sourceNode) {
-                        const highlightedMarker = getHighlightedArrowheadMarker(sourceNode.transmissionMode);
-                        linkElement.attr('marker-end', highlightedMarker);
-                        // Force Safari to redraw the marker
-                        const node = linkElement.node();
-                        if (node) {
-                            node.style.display = 'none';
-                            node.offsetHeight; // Force reflow
-                            node.style.display = '';
-                        }
-                    }
+                linkElement.classed('highlighted', false);
+                // Reset to normal arrow markers
+                const sourceNode = graphData.nodes.find(n => n.id === d.source);
+                if (sourceNode) {
+                    const normalMarker = getArrowheadMarker(sourceNode.transmissionMode);
+                    linkElement.attr('marker-end', normalMarker);
                 }
             });
 
@@ -2678,7 +2668,7 @@
                 const isMainNode = nodeId === clickedNodeId;
                 
                 setTimeout(() => {
-                    // Find the node element
+                    // Find the node element and apply node highlighting
                     g.selectAll('.node-group').each(function(d) {
                         if (d.id === nodeId) {
                             const nodeGroup = d3.select(this);
@@ -2720,6 +2710,36 @@
                             }, 600); // Match animation duration
                         }
                     });
+
+                    // Highlight the incoming link (from teacher to this student) with slight delay for flow effect
+                    setTimeout(() => {
+                        g.selectAll('.link').each(function(linkData) {
+                            if (linkData.target === nodeId) {
+                                const linkElement = d3.select(this);
+                                
+                                // Highlight the link
+                                linkElement.classed('highlighted', true);
+                                
+                                // Switch to highlighted arrow marker with Safari force-redraw
+                                const sourceNode = graphData.nodes.find(n => n.id === linkData.source);
+                                if (sourceNode) {
+                                    const highlightedMarker = getHighlightedArrowheadMarker(sourceNode.transmissionMode);
+                                    linkElement
+                                        .transition()
+                                        .duration(150)
+                                        .attr('marker-end', highlightedMarker);
+                                    
+                                    // Force Safari to redraw the marker
+                                    const linkNode = linkElement.node();
+                                    if (linkNode) {
+                                        linkNode.style.display = 'none';
+                                        linkNode.offsetHeight; // Force reflow
+                                        linkNode.style.display = '';
+                                    }
+                                }
+                            }
+                        });
+                    }, 50); // Small delay so link follows the node
                 }, delay);
             });
         }
