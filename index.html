@@ -6,12 +6,24 @@
     <title>Dzogchen Lineage Tree - Interactive Visualization</title>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Tibetan:wght@400;600&family=Noto+Sans+SC:wght@400;600&display=swap');
+
         body {
             margin: 0;
             padding: 0;
-            font-family: 'Arial', sans-serif;
+            font-family: 'Arial', 'Noto Sans Tibetan', 'Noto Sans SC', sans-serif;
             background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
             overflow: hidden;
+        }
+
+        .tibetan-text {
+            font-family: 'Noto Sans Tibetan', serif;
+            font-weight: 400;
+        }
+
+        .chinese-text {
+            font-family: 'Noto Sans SC', sans-serif;
+            font-weight: 400;
         }
 
         #container {
@@ -39,6 +51,24 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 10px;
+        }
+
+        .language-selector {
+            margin-right: 10px;
+        }
+
+        .language-selector select {
+            padding: 4px 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 12px;
+            background: white;
+            cursor: pointer;
+        }
+
+        .language-selector select:focus {
+            outline: none;
+            border-color: #007bff;
         }
 
         .toggle-btn {
@@ -805,7 +835,16 @@
     <div id="container">
         <div id="controls">
             <div class="controls-header">
-                <span style="font-weight: bold; font-size: 14px;">Controls</span>
+                <div style="display: flex; align-items: center;">
+                    <span style="font-weight: bold; font-size: 14px;">Controls</span>
+                    <div class="language-selector">
+                        <select id="language-select" onchange="changeLanguage(this.value)">
+                            <option value="en">English</option>
+                            <option value="bo">བོད་ཡིག</option>
+                            <option value="zh">中文</option>
+                        </select>
+                    </div>
+                </div>
                 <button class="toggle-btn" onclick="toggleControls()">Hide</button>
             </div>
             <div class="controls-content" id="controls-content">
@@ -1029,8 +1068,12 @@
                         id: person.Name_English,
                         name: person.Name_English,
                         tibetan: person.Name_Wylie_Tibetan,
+                        nameTibetan: person.Name_Tibetan || person.Name_English, // Fallback to English
+                        nameChinese: person.Name_Chinese || person.Name_English, // Fallback to English
                         dates: person.Dates,
                         description: person.Description_English,
+                        descriptionTibetan: person.Description_Tibetan || person.Description_English, // Fallback to English
+                        descriptionChinese: person.Description_Chinese || person.Description_English, // Fallback to English
                         transmissionMode: person.Transmission_Mode,
                         lineage: person.Lineage,
                         positionDate: person.Position_Date, // Key addition!
@@ -1735,8 +1778,8 @@
             currentPopupData = data;
             currentPopupNode = event.target.closest('.node-group');
             
-            // Set content
-            title.textContent = data.name;
+            // Set content with language support
+            title.textContent = getDisplayName(data);
             
             // Clear and hide images container initially
             imagesContainer.innerHTML = '';
@@ -1766,16 +1809,19 @@
             
             // Dates they existed
             if (data.dates && data.dates !== 'N/A' && data.dates.trim()) {
-                dates.innerHTML = `<strong>Dates:</strong> ${data.dates}`;
+                const translations = uiTranslations[currentLanguage];
+                dates.innerHTML = `<strong>${translations.dates}:</strong> ${data.dates}`;
                 dates.style.display = 'block';
             } else {
                 dates.style.display = 'none';
             }
             
-            // Description
-            if (data.description && data.description.trim()) {
-                description.innerHTML = data.description;
-                description.className = 'popup-description';
+            // Description with language support
+            const currentDescription = getDisplayDescription(data);
+            if (currentDescription && currentDescription.trim()) {
+                description.innerHTML = currentDescription;
+                description.className = currentLanguage === 'bo' ? 'popup-description tibetan-text' : 
+                                       currentLanguage === 'zh' ? 'popup-description chinese-text' : 'popup-description';
                 description.style.display = 'block';
             } else {
                 description.style.display = 'none';
@@ -2055,7 +2101,19 @@
 
         // Text wrapping function for node names
         function wrapText(selection, text, width, fontSize) {
-            const words = text.split(/\s+/);
+            // Handle different text types - Tibetan doesn't use spaces like English
+            let words;
+            if (text.match(/[\u0F00-\u0FFF]/)) {
+                // Tibetan text - break more carefully
+                words = text.split(/[\s་།]+/).filter(w => w.trim());
+            } else if (text.match(/[\u4E00-\u9FFF]/)) {
+                // Chinese text - can break between characters if needed
+                words = text.split(/\s+/);
+            } else {
+                // English/Latin text
+                words = text.split(/\s+/);
+            }
+            
             const lineHeight = fontSize * 1.2; // Better line spacing for readability
             let line = [];
             let lineNumber = 0;
@@ -2085,7 +2143,8 @@
                 tspan.text(line.join(' '));
                 
                 // Check if line is too wide
-                if (tspan.node().getComputedTextLength() > width) {
+                const textLength = tspan.node() ? tspan.node().getComputedTextLength() : 0;
+                if (textLength > width && line.length > 1) {
                     // Remove the last word and create new line
                     line.pop();
                     tspan.text(line.join(' '));
@@ -2097,6 +2156,17 @@
                             .attr('x', 0)
                             .text(word);
                         tspans.push(tspan);
+                        
+                        // Check if even the single word is too long
+                        const singleWordLength = tspan.node() ? tspan.node().getComputedTextLength() : 0;
+                        if (singleWordLength > width) {
+                            // Truncate the word itself
+                            let truncatedWord = word;
+                            while (truncatedWord.length > 3 && tspan.node().getComputedTextLength() > width) {
+                                truncatedWord = truncatedWord.substring(0, truncatedWord.length - 1);
+                                tspan.text(truncatedWord + '...');
+                            }
+                        }
                     } else {
                         // Truncate with ellipsis if we exceed max lines
                         const currentText = tspan.text();
@@ -2104,6 +2174,13 @@
                             tspan.text(currentText.substring(0, currentText.length - 3) + '...');
                         }
                         break;
+                    }
+                } else if (textLength > width && line.length === 1) {
+                    // Single word is too long, truncate it
+                    let truncatedText = line[0];
+                    while (truncatedText.length > 3 && tspan.node().getComputedTextLength() > width) {
+                        truncatedText = truncatedText.substring(0, truncatedText.length - 1);
+                        tspan.text(truncatedText + '...');
                     }
                 }
             }
@@ -2201,15 +2278,16 @@
 
         // Initialize the application
         async function initializeApp() {
-            const csvData = await loadCSVData();
-            if (!csvData) {
-                console.error('Failed to load CSV data');
-                return;
-            }
+            try {
+                const csvData = await loadCSVData();
+                if (!csvData) {
+                    console.error('Failed to load CSV data');
+                    return;
+                }
 
-            // Parse data and build graph
-            const rawData = parseCSV(csvData);
-            graphData = buildGraphData(rawData);
+                // Parse data and build graph
+                const rawData = parseCSV(csvData);
+                graphData = buildGraphData(rawData);
             
             // Apply lineage-based layout with chronological constraints
             assignVerticalPositions(graphData.nodes, graphData.links);
@@ -2247,6 +2325,9 @@
             centerViewOnBlueNodes();
             
             console.log('Initial view centering complete');
+            } catch (error) {
+                console.error('Error initializing app:', error);
+            }
         }
 
         function filterData(filter) {
@@ -2684,7 +2765,18 @@
             // Add node text (name) with proper wrapping
             nodeGroups.each(function(d) {
                 const group = d3.select(this);
-                wrapText(group, d.name, 170, 11); // 170px width, 11px font size
+                const displayName = getDisplayName ? getDisplayName(d) : d.name;
+                wrapText(group, displayName, 170, 11); // 170px width, 11px font size
+                
+                // Apply appropriate font class for Tibetan/Chinese
+                if (typeof currentLanguage !== 'undefined') {
+                    const textElements = group.selectAll('.node-text');
+                    if (currentLanguage === 'bo') {
+                        textElements.classed('tibetan-text', true);
+                    } else if (currentLanguage === 'zh') {
+                        textElements.classed('chinese-text', true);
+                    }
+                }
             });
 
             // Add node text (dates) - smaller dates, positioned at bottom with proper spacing
@@ -3026,8 +3118,14 @@
             g.selectAll('.node-group').each(function(d) {
                 const normalizedName = normalizeText(d.name);
                 const normalizedTibetan = normalizeText(d.tibetan);
+                const normalizedNameTibetan = normalizeText(d.nameTibetan);
+                const normalizedNameChinese = normalizeText(d.nameChinese);
+                
                 const isMatch = normalizedName.includes(searchTerm) || 
-                               normalizedTibetan.includes(searchTerm);
+                               normalizedTibetan.includes(searchTerm) ||
+                               normalizedNameTibetan.includes(searchTerm) ||
+                               normalizedNameChinese.includes(searchTerm);
+                               
                 d3.select(this).style('opacity', searchTerm === '' || isMatch ? 1 : 0.2);
             });
         });
@@ -3281,8 +3379,158 @@
             }
         });
 
+        // Language management
+        let currentLanguage = 'en';
+
+        // UI translations
+        const uiTranslations = {
+            en: {
+                controls: 'Controls',
+                hide: 'Hide',
+                show: 'Show',
+                searchPlaceholder: 'Search for a teacher...',
+                allLineages: 'All Lineages',
+                startQuiz: 'Start Quiz',
+                recenterView: 'Recenter view',
+                transmissionTypes: 'Transmission Types',
+                mindToMind: 'Mind to Mind',
+                symbolic: 'Symbolic',
+                aural: 'Aural',
+                dates: 'Dates',
+                close: 'Close'
+            },
+            bo: {
+                controls: 'ཚོད་འཛིན།',
+                hide: 'སྦ།',
+                show: 'སྟོན།', 
+                searchPlaceholder: 'སློབ་དཔོན་འཚོལ་ཞིབ་བྱེད།',
+                allLineages: 'བརྒྱུད་པ་ཚང་མ།',
+                startQuiz: 'བརྟག་དཔྱད་འགོ་ཚུགས།',
+                recenterView: 'དཀྱིལ་དུ་སླར་གཞི་འདེགས།',
+                transmissionTypes: 'བརྒྱུད་པའི་རིགས།',
+                mindToMind: 'སེམས་ནས་སེམས།',
+                symbolic: 'བརྡ་སྟོན།',
+                aural: 'རྣ་བའི་བརྒྱུད་པ།',
+                dates: 'ལོ་ཚིགས།',
+                close: 'རྒྱག'
+            },
+            zh: {
+                controls: '控制',
+                hide: '隐藏',
+                show: '显示',
+                searchPlaceholder: '搜索上师...',
+                allLineages: '所有传承',
+                startQuiz: '开始测验',
+                recenterView: '重新居中',
+                transmissionTypes: '传承类型',
+                mindToMind: '心传心',
+                symbolic: '象征传承',
+                aural: '耳传承',
+                dates: '日期',
+                close: '关闭'
+            }
+        };
+
+        // Initialize language from localStorage or default to English
+        function initializeLanguage() {
+            const saved = localStorage.getItem('dzogchen-language');
+            if (saved && ['en', 'bo', 'zh'].includes(saved)) {
+                currentLanguage = saved;
+                document.getElementById('language-select').value = saved;
+            }
+            updateLanguage();
+        }
+
+        // Change language function
+        function changeLanguage(lang) {
+            currentLanguage = lang;
+            localStorage.setItem('dzogchen-language', lang);
+            updateLanguage();
+        }
+
+        // Update all UI elements with selected language
+        function updateLanguage() {
+            const translations = uiTranslations[currentLanguage];
+            
+            // Update UI elements
+            document.querySelector('.controls-header span').textContent = translations.controls;
+            document.getElementById('search').placeholder = translations.searchPlaceholder;
+            
+            // Update filter buttons
+            document.querySelector('[data-filter="all"]').textContent = translations.allLineages;
+            document.getElementById('quiz-mode-btn').textContent = translations.startQuiz;
+            
+            // Update legend
+            document.querySelector('#legend h4').textContent = translations.transmissionTypes;
+            
+            // Update toggle buttons
+            const toggleBtns = document.querySelectorAll('.toggle-btn, .legend-toggle');
+            toggleBtns.forEach(btn => {
+                if (btn.textContent === 'Hide' || btn.textContent === 'སྦ།' || btn.textContent === '隐藏') {
+                    btn.textContent = translations.hide;
+                } else {
+                    btn.textContent = translations.show;
+                }
+            });
+
+            // Update nodes and refresh display if data is loaded
+            if (typeof graphData !== 'undefined' && graphData.nodes) {
+                updateNodeDisplay();
+                refreshVisualization();
+            }
+        }
+
+        // Get display name based on current language
+        function getDisplayName(nodeData) {
+            switch (currentLanguage) {
+                case 'bo': return nodeData.nameTibetan || nodeData.name;
+                case 'zh': return nodeData.nameChinese || nodeData.name;
+                default: return nodeData.name;
+            }
+        }
+
+        // Get display description based on current language
+        function getDisplayDescription(nodeData) {
+            switch (currentLanguage) {
+                case 'bo': return nodeData.descriptionTibetan || nodeData.description;
+                case 'zh': return nodeData.descriptionChinese || nodeData.description;
+                default: return nodeData.description;
+            }
+        }
+
+        // Update node display for current language
+        function updateNodeDisplay() {
+            if (!graphData || !graphData.nodes) return;
+            
+            // Re-wrap text for all nodes with the current language
+            g.selectAll('.node-group').each(function(d) {
+                const group = d3.select(this);
+                const displayName = getDisplayName(d);
+                
+                // Remove existing text and re-wrap
+                group.selectAll('.node-text').remove();
+                wrapText(group, displayName, 170, 11);
+                
+                // Apply appropriate font class for Tibetan/Chinese
+                const textElements = group.selectAll('.node-text');
+                textElements.classed('tibetan-text', currentLanguage === 'bo');
+                textElements.classed('chinese-text', currentLanguage === 'zh');
+            });
+        }
+
+        // Refresh the entire visualization
+        function refreshVisualization() {
+            if (!graphData || !graphData.nodes) return;
+            
+            // Update node display with proper wrapping
+            updateNodeDisplay();
+        }
+
         // Start the application
-        initializeApp();
+        initializeApp().then(() => {
+            // Initialize language after data is loaded
+            initializeLanguage();
+        });
     </script>
 </body>
 </html>
