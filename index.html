@@ -2752,14 +2752,45 @@
             });
         }
 
+        // Normalization function for diacritical marks and special characters
+        function normalizeText(text) {
+            return text
+                .toLowerCase()
+                // Sanskrit/Tibetan diacritical marks
+                .replace(/[āàáâãäå]/g, 'a')
+                .replace(/[èéêë]/g, 'e')
+                .replace(/[ìíîï]/g, 'i')
+                .replace(/[òóôõö]/g, 'o')
+                .replace(/[ùúûü]/g, 'u')
+                .replace(/[ýÿ]/g, 'y')
+                .replace(/[ñń]/g, 'n')
+                .replace(/[ç]/g, 'c')
+                .replace(/[ś]/g, 's')
+                .replace(/[ṭ]/g, 't')
+                .replace(/[ḍ]/g, 'd')
+                .replace(/[ṇ]/g, 'n')
+                .replace(/[ṁṃ]/g, 'm')
+                .replace(/[ṛ]/g, 'r')
+                .replace(/[ḷ]/g, 'l')
+                .replace(/[ḥ]/g, 'h')
+                // Additional common transliteration characters
+                .replace(/[ī]/g, 'i')
+                .replace(/[ū]/g, 'u')
+                .replace(/[ṅ]/g, 'n')
+                .replace(/[ś]/g, 's')
+                .replace(/[ḻ]/g, 'l');
+        }
+
         // Search functionality
         const searchInput = d3.select('#search');
         searchInput.on('input', function() {
-            const searchTerm = this.value.toLowerCase();
+            const searchTerm = normalizeText(this.value);
             
             g.selectAll('.node-group').each(function(d) {
-                const isMatch = d.name.toLowerCase().includes(searchTerm) || 
-                               d.tibetan.toLowerCase().includes(searchTerm);
+                const normalizedName = normalizeText(d.name);
+                const normalizedTibetan = normalizeText(d.tibetan);
+                const isMatch = normalizedName.includes(searchTerm) || 
+                               normalizedTibetan.includes(searchTerm);
                 d3.select(this).style('opacity', searchTerm === '' || isMatch ? 1 : 0.2);
             });
         });
