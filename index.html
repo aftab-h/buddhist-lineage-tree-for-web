@@ -328,9 +328,95 @@
             border-radius: 8px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
             max-width: 350px;
+            max-height: 80vh;
+            overflow-y: auto;
             z-index: 1500;
             border: 1px solid #e0e0e0;
             animation: popupFadeIn 0.2s ease-out;
+        }
+
+        /* Image carousel styles */
+        .popup-images {
+            margin-bottom: 15px;
+        }
+
+        .image-carousel {
+            position: relative;
+            width: 100%;
+            border-radius: 6px;
+            background: #f5f5f5;
+            overflow: hidden;
+        }
+
+        .carousel-container {
+            display: flex;
+            transition: transform 0.3s ease;
+            min-height: 200px;
+        }
+
+        .carousel-image {
+            width: 100%;
+            max-width: 100%;
+            height: auto;
+            max-height: 300px;
+            object-fit: contain;
+            flex-shrink: 0;
+            display: block;
+            margin: auto 0;
+        }
+
+        .carousel-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: none;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            transition: opacity 0.2s;
+        }
+
+        .carousel-nav:hover {
+            background: rgba(0, 0, 0, 0.7);
+        }
+
+        .carousel-prev {
+            left: 10px;
+        }
+
+        .carousel-next {
+            right: 10px;
+        }
+
+        .carousel-dots {
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+            margin-top: 8px;
+        }
+
+        .carousel-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #ddd;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .carousel-dot.active {
+            background: #007bff;
+        }
+
+        .carousel-dot:hover {
+            background: #0056b3;
         }
 
 
@@ -768,6 +854,7 @@
                 <button class="popup-close" onclick="closePopup()">&times;</button>
             </div>
             <div class="popup-body">
+                <div id="popup-images" class="popup-images"></div>
                 <div id="popup-tibetan"></div>
                 <div id="popup-dates"></div>
                 <div id="popup-description"></div>
@@ -1639,6 +1726,7 @@
         function showPopup(data, event) {
             const popup = document.getElementById('popup-card');
             const title = document.getElementById('popup-title');
+            const imagesContainer = document.getElementById('popup-images');
             const tibetan = document.getElementById('popup-tibetan');
             const dates = document.getElementById('popup-dates');
             const description = document.getElementById('popup-description');
@@ -1649,6 +1737,23 @@
             
             // Set content
             title.textContent = data.name;
+            
+            // Clear and hide images container initially
+            imagesContainer.innerHTML = '';
+            imagesContainer.style.display = 'none';
+            
+            // Load and display images asynchronously
+            loadNodeImages(data.name).then(images => {
+                if (images.length > 0) {
+                    displayImageCarousel(imagesContainer, images);
+                } else {
+                    // Keep container hidden if no images found
+                    imagesContainer.style.display = 'none';
+                }
+            }).catch(error => {
+                console.log('Error loading images:', error);
+                imagesContainer.style.display = 'none';
+            });
             
             // Tibetan Wylie name
             if (data.tibetan && data.tibetan !== 'N/A' && data.tibetan.trim()) {
@@ -2778,7 +2883,139 @@
                 .replace(/[ū]/g, 'u')
                 .replace(/[ṅ]/g, 'n')
                 .replace(/[ś]/g, 's')
-                .replace(/[ḻ]/g, 'l');
+                .replace(/[ḻ]/g, 'l')
+                // Remove special characters and convert to filename-safe format
+                .replace(/[^\w\s-]/g, '')  // Remove special chars except word chars, spaces, hyphens
+                .replace(/\s+/g, '-')      // Replace spaces with hyphens
+                .replace(/-+/g, '-')       // Collapse multiple hyphens
+                .replace(/^-|-$/g, '');    // Remove leading/trailing hyphens
+        }
+
+        // Image loading system
+        async function loadNodeImages(nodeName) {
+            const normalizedName = normalizeText(nodeName);
+            const images = [];
+            const extensions = ['jpg', 'jpeg', 'png', 'gif'];
+            
+            // Check for images one by one, stopping at first gap
+            for (let imageIndex = 1; imageIndex <= 10; imageIndex++) {
+                let foundImage = null;
+                
+                // Try each extension for this index
+                for (const ext of extensions) {
+                    const imagePath = `images/${normalizedName}-${imageIndex}.${ext}`;
+                    
+                    try {
+                        const response = await fetch(imagePath, { method: 'HEAD' });
+                        if (response.ok) {
+                            // Double-check by trying to load the actual image
+                            const testImg = new Image();
+                            const imageExists = await new Promise((resolve) => {
+                                testImg.onload = () => resolve(true);
+                                testImg.onerror = () => resolve(false);
+                                testImg.src = imagePath;
+                            });
+                            
+                            if (imageExists) {
+                                foundImage = imagePath;
+                                break;
+                            }
+                        }
+                    } catch (error) {
+                        // Continue to next extension
+                        continue;
+                    }
+                }
+                
+                if (foundImage) {
+                    images.push(foundImage);
+                } else {
+                    // No image found for this index, stop looking
+                    break;
+                }
+            }
+            
+            return images;
+        }
+
+        // Image carousel display function
+        function displayImageCarousel(container, images) {
+            // Clear container first to prevent flashing
+            container.innerHTML = '';
+            
+            if (images.length === 0) {
+                container.style.display = 'none';
+                return;
+            }
+
+            container.style.display = 'block';
+            
+            if (images.length === 1) {
+                // Single image - simple display, no dots
+                container.innerHTML = `
+                    <div class="image-carousel">
+                        <img src="${images[0]}" alt="Node image" class="carousel-image" 
+                             onload="this.style.opacity='1'" 
+                             onerror="this.parentElement.parentElement.style.display='none'"
+                             style="opacity:0; transition: opacity 0.3s ease;">
+                    </div>
+                `;
+            } else {
+                // Multiple images - full carousel with dots
+                let carouselHTML = `
+                    <div class="image-carousel">
+                        <div class="carousel-container">
+                            ${images.map((img, index) => `
+                                <img src="${img}" alt="Node image" class="carousel-image" 
+                                     onload="this.style.opacity='1'" 
+                                     onerror="this.style.display='none'"
+                                     style="opacity:0; transition: opacity 0.3s ease;">
+                            `).join('')}
+                        </div>
+                        <button class="carousel-nav carousel-prev" onclick="prevImage()">&lt;</button>
+                        <button class="carousel-nav carousel-next" onclick="nextImage()">&gt;</button>
+                    </div>
+                    <div class="carousel-dots">
+                        ${images.map((_, index) => `<span class="carousel-dot ${index === 0 ? 'active' : ''}" onclick="goToImage(${index})"></span>`).join('')}
+                    </div>
+                `;
+                container.innerHTML = carouselHTML;
+                
+                // Initialize carousel state
+                window.currentImageIndex = 0;
+                window.totalImages = images.length;
+            }
+        }
+
+        // Carousel navigation functions
+        function prevImage() {
+            if (window.totalImages <= 1) return;
+            window.currentImageIndex = (window.currentImageIndex - 1 + window.totalImages) % window.totalImages;
+            updateCarousel();
+        }
+
+        function nextImage() {
+            if (window.totalImages <= 1) return;
+            window.currentImageIndex = (window.currentImageIndex + 1) % window.totalImages;
+            updateCarousel();
+        }
+
+        function goToImage(index) {
+            window.currentImageIndex = index;
+            updateCarousel();
+        }
+
+        function updateCarousel() {
+            const container = document.querySelector('.carousel-container');
+            const dots = document.querySelectorAll('.carousel-dot');
+            
+            if (container) {
+                container.style.transform = `translateX(-${window.currentImageIndex * 100}%)`;
+            }
+            
+            dots.forEach((dot, index) => {
+                dot.classList.toggle('active', index === window.currentImageIndex);
+            });
         }
 
         // Search functionality
