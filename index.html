@@ -215,8 +215,18 @@
 
         .link {
             fill: none;
-            stroke-width: 2px;
-            stroke-opacity: 0.7;
+            stroke-width: 4px;
+            stroke-opacity: 0.8;
+        }
+        
+        /* Dotted style for emanation connections */
+        .link.emanation {
+            stroke-dasharray: 5,5;
+        }
+
+        /* Fade effect for century lines */
+        .century-line {
+            mask: linear-gradient(to right, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 60%, rgba(0,0,0,0) 100%);
         }
 
         .tooltip {
@@ -1178,6 +1188,22 @@
                         }
                     });
                 }
+                
+                // Process emanation relationships from "Eminated as" column
+                if (person.Eminated_as) {
+                    const emanations = person.Eminated_as.split(';').map(e => e.trim());
+                    emanations.forEach(emanation => {
+                        if (emanation && nodes.has(emanation) && nodes.has(person.Name_English)) {
+                            links.push({
+                                source: person.Name_English,
+                                target: emanation,
+                                lineage: person.Lineage,
+                                type: 'emanation'  // Mark as emanation link
+                            });
+                            nodes.get(person.Name_English).children.push(emanation);
+                        }
+                    });
+                }
             });
 
             // Convert to array and mark lineages
@@ -1736,6 +1762,32 @@
 
         // Define arrowhead markers for different transmission types
         const defs = svg.append('defs');
+        
+        // Gradient for century lines - fading from center to edges
+        const gradient = defs.append('linearGradient')
+            .attr('id', 'century-line-gradient')
+            .attr('x1', '0%').attr('y1', '0%')
+            .attr('x2', '100%').attr('y2', '0%');
+        
+        gradient.append('stop')
+            .attr('offset', '0%')
+            .attr('stop-color', '#999')
+            .attr('stop-opacity', 0);
+        
+        gradient.append('stop')
+            .attr('offset', '15%')
+            .attr('stop-color', '#999')
+            .attr('stop-opacity', 0.6);
+        
+        gradient.append('stop')
+            .attr('offset', '85%')
+            .attr('stop-color', '#999')
+            .attr('stop-opacity', 0.6);
+        
+        gradient.append('stop')
+            .attr('offset', '100%')
+            .attr('stop-color', '#999')
+            .attr('stop-opacity', 0);
         
         // Mind-to-Mind transmission arrowhead (blue)
         defs.append('marker')
@@ -2796,19 +2848,33 @@
             const centuryLines = calculateCenturyLines(data.nodes);
             const centuryGroup = g.append('g').attr('class', 'century-lines');
             
-            // Add horizontal century lines
-            centuryGroup.selectAll('.century-line')
-                .data(centuryLines)
-                .enter()
-                .append('line')
-                .attr('class', 'century-line')
-                .attr('x1', 50)
-                .attr('x2', width - 50)
-                .attr('y1', d => d.yPosition) // Use exact same positioning as nodes
-                .attr('y2', d => d.yPosition)
-                .attr('stroke', '#ddd')
-                .attr('stroke-width', 3)
-                .attr('opacity', 0.6);
+            // Add horizontal century lines with manual fade effect
+            centuryLines.forEach(line => {
+                const startX = 250;
+                const endX = width * 2.2;
+                const totalWidth = endX - startX;
+                const segments = 20; // Number of segments for smooth fade effect
+                
+                for (let i = 0; i < segments; i++) {
+                    const segmentWidth = totalWidth / segments;
+                    const x1 = startX + (i * segmentWidth);
+                    const x2 = startX + ((i + 1) * segmentWidth);
+                    const fadeProgress = i / (segments - 1); // 0 to 1
+                    const opacity = 0.6 * (1 - fadeProgress); // Fade from 0.6 to 0
+                    
+                    if (opacity > 0.02) { // Only draw segments with meaningful opacity
+                        centuryGroup.append('line')
+                            .attr('class', 'century-line-segment')
+                            .attr('x1', x1)
+                            .attr('x2', x2)
+                            .attr('y1', line.yPosition)
+                            .attr('y2', line.yPosition)
+                            .attr('stroke', '#999')
+                            .attr('stroke-width', 2)
+                            .attr('opacity', opacity);
+                    }
+                }
+            });
             
             // Add century labels
             centuryGroup.selectAll('.century-label')
@@ -2818,11 +2884,11 @@
                 .attr('class', 'century-label')
                 .attr('x', 20)
                 .attr('y', d => d.yPosition + 8) // Slightly below the line
-                .attr('font-size', '18px')
+                .attr('font-size', '32px')
                 .attr('font-family', 'Arial, sans-serif')
                 .attr('font-weight', 'bold')
-                .attr('fill', '#999')
-                .attr('opacity', 0.8)
+                .attr('fill', '#666')
+                .attr('opacity', 1)
                 .text(d => d.label);
 
             // Create smooth curved links with arrowheads using optimal connection points
@@ -2830,7 +2896,7 @@
                 .data(data.links)
                 .enter()
                 .append('path')
-                .attr('class', 'link')
+                .attr('class', d => d.type === 'emanation' ? 'link emanation' : 'link')
                 .attr('d', d => {
                     const source = data.nodes.find(n => n.id === d.source);
                     const target = data.nodes.find(n => n.id === d.target);
