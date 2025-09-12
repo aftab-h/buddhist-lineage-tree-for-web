@@ -938,9 +938,9 @@
                 <div style="margin-top: 10px;">
                     <button id="quiz-mode-btn" class="filter-btn" style="background: #2196F3; color: white;">Start Quiz</button>
                 </div>
-                <div style="font-size: 11px; color: #666; margin-top: 10px;">
-                    <div>Click node: View details & highlight lineage</div>
-                    <div>Click elsewhere: Close popup</div>
+                <div id="usage-instructions" style="font-size: 11px; color: #666; margin-top: 10px;">
+                    <div id="click-node-text">Click node: View details & highlight lineage</div>
+                    <div id="click-elsewhere-text">Click elsewhere: Close popup</div>
                 </div>
             </div>
         </div>
@@ -1294,32 +1294,52 @@
             };
         }
 
+        // Create compressed layer mapping for ordinal positions
+        function createOrdinalLayerMapping(nodes) {
+            // Get all unique ordinal positions (0-100) that actually exist
+            const usedOrdinalPositions = nodes
+                .map(node => parseInt(node.positionDate))
+                .filter(pos => pos >= 0 && pos <= 100)
+                .sort((a, b) => a - b);
+            
+            // Remove duplicates
+            const uniquePositions = [...new Set(usedOrdinalPositions)];
+            
+            // Create mapping from position to compressed layer
+            const mapping = {};
+            uniquePositions.forEach((pos, index) => {
+                mapping[pos] = index;
+            });
+            
+            return mapping;
+        }
+        
+        let ordinalLayerMapping = null; // Will be initialized when nodes are loaded
+
         // Parse Position_Date and map to fine-grained layer levels for better vertical resolution
         function parsePositionDate(positionDate) {
             if (!positionDate || positionDate === 'N/A' || positionDate === '') {
-                return 20; // Put undated entities at layer 20
+                return 100; // Put undated entities after ordinal layers
             }
             
             const rawDate = parseInt(positionDate);
             
-            // Keep placeholder years 0-100 as special layers
-            if (rawDate === 0) return 0;
-            if (rawDate === 1) return 1;
-            if (rawDate === 2) return 2;
-            if (rawDate === 3) return 3;
-            if (rawDate === 4) return 4;
-            
-            // For historical dates (600 CE onwards), use linear spacing for equidistant centuries
-            if (rawDate >= 600) {
-                // Linear calculation: 50 years per layer starting from layer 6
-                // This gives equidistant spacing regardless of transmission mode
-                return 6 + ((rawDate - 600) / 50);
+            // Keep placeholder years 0-100 as special ordinal layers (but compressed)
+            if (rawDate >= 0 && rawDate <= 100) {
+                if (ordinalLayerMapping && ordinalLayerMapping[rawDate] !== undefined) {
+                    return ordinalLayerMapping[rawDate];
+                }
+                return rawDate; // fallback to raw position if mapping not ready
             }
             
-            // For dates between 100-599 (rare edge cases), use intermediate mapping
-            if (rawDate >= 500 && rawDate < 600) return 5; // Pre-historical period
+            // For historical/chronological dates (350 CE onwards), use linear spacing after compressed ordinal layers
+            if (rawDate >= 350) {
+                const maxOrdinalLayer = ordinalLayerMapping ? Math.max(...Object.values(ordinalLayerMapping)) : 15;
+                // Linear calculation: 50 years per layer starting after max ordinal layer + small gap
+                return maxOrdinalLayer + 2 + ((rawDate - 350) / 50);
+            }
             
-            return 20; // fallback for any other cases
+            return 200; // fallback for any other cases (well beyond normal range)
         }
 
         // Calculate century line positions using the same system as nodes
@@ -2368,6 +2388,10 @@
                 // Parse data and build graph
                 const rawData = parseCSV(csvData);
                 graphData = buildGraphData(rawData);
+                
+                // Initialize compressed ordinal layer mapping
+                ordinalLayerMapping = createOrdinalLayerMapping(graphData.nodes);
+                console.log('Ordinal layer mapping created:', ordinalLayerMapping);
             
             // Apply lineage-based layout with chronological constraints
             assignVerticalPositions(graphData.nodes, graphData.links);
@@ -3653,7 +3677,9 @@
                 symbolic: 'Symbolic',
                 aural: 'Aural',
                 dates: 'Dates',
-                close: 'Close'
+                close: 'Close',
+                clickNode: 'Click node: View details & highlight lineage',
+                clickElsewhere: 'Click elsewhere: Close popup'
             },
             bo: {
                 controls: 'ཚོད་འཛིན།',
@@ -3669,7 +3695,9 @@
                 symbolic: 'བརྡ་སྟོན།',
                 aural: 'རྣ་བའི་བརྒྱུད་པ།',
                 dates: 'ལོ་ཚིགས།',
-                close: 'རྒྱག'
+                close: 'རྒྱག',
+                clickNode: 'སྐྱེ་བོ་ལ་མནན་ན། རྒྱས་བཤད་དང་བརྒྱུད་པ་གསལ་བཤད།',
+                clickElsewhere: 'གཞན་དུ་མནན་ན། སྒོ་རྒྱག'
             },
             zh: {
                 controls: '控制',
@@ -3685,7 +3713,9 @@
                 symbolic: '象征传承',
                 aural: '耳传承',
                 dates: '日期',
-                close: '关闭'
+                close: '关闭',
+                clickNode: '点击节点：查看详情和高亮传承',
+                clickElsewhere: '点击其他地方：关闭弹窗'
             }
         };
 
@@ -3731,6 +3761,10 @@
                     btn.textContent = translations.show;
                 }
             });
+            
+            // Update usage instructions
+            document.getElementById('click-node-text').textContent = translations.clickNode;
+            document.getElementById('click-elsewhere-text').textContent = translations.clickElsewhere;
 
             // Update nodes and refresh display if data is loaded
             if (typeof graphData !== 'undefined' && graphData.nodes) {
