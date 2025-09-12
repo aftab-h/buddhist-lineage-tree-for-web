@@ -402,13 +402,23 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 10px;
+            margin-bottom: 0;
+            cursor: pointer;
+        }
+        
+        .legend-chevron {
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            width: 18px;
+            height: 18px;
+            transform: rotate(90deg);
+        }
+        
+        .legend-chevron.collapsed {
+            transform: rotate(0deg);
         }
 
         .legend-toggle {
             display: none;
-            background: #4CAF50;
-            color: white;
             border: none;
             padding: 8px 12px;
             border-radius: 4px;
@@ -420,48 +430,55 @@
         }
 
         .legend-content {
-            display: block;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            opacity: 1;
+            transform: scaleY(1);
+            transform-origin: top;
+            margin-top: 10px;
+        }
+        
+        .legend-content.collapsed {
+            opacity: 0;
+            transform: scaleY(0);
+            margin-top: 0;
         }
 
         /* Recenter button styles */
         .recenter-btn {
             position: fixed;
-            top: 150px; /* Position below the legend */
-            right: 10px;
+            bottom: 20px;
+            right: 20px;
             z-index: 1001;
+            width: 40px;
+            height: 40px;
             background: rgba(255, 255, 255, 0.95);
-            border: 2px solid #4CAF50;
+            border: none;
             border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
             backdrop-filter: blur(10px);
             transition: all 0.3s ease;
         }
 
         .recenter-btn:hover {
+            background: rgba(255, 255, 255, 1);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
             transform: scale(1.05);
-            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
-        }
-
-        .recenter-btn:active {
-            background: #4CAF50;
-            transform: scale(0.95);
-            transition: all 0.1s ease;
-        }
-
-        .recenter-btn:active svg {
-            filter: invert(1);
         }
 
         .recenter-btn svg {
-            width: 24px;
-            height: 24px;
-            transition: filter 0.3s ease;
+            width: 20px;
+            height: 20px;
+            fill: #555;
+            transition: fill 0.2s ease;
+        }
+
+        .recenter-btn:hover svg {
+            fill: #333;
         }
 
         .legend-item {
@@ -703,32 +720,20 @@
 
             #legend {
                 position: fixed;
-                top: auto;
-                bottom: 5px;
-                right: 5px; /* Back to full width */
-                left: 5px;
-                max-width: none;
-                padding: 8px;
+                top: 10px;
+                right: 10px;
+                max-width: calc(100vw - 80px);
+                padding: 10px;
                 background: rgba(255, 255, 255, 0.98);
             }
 
             .recenter-btn {
-                top: auto;
-                bottom: 120px; /* Position well above the legend to avoid overlap */
-                right: 15px; /* Aligned to the right */
+                bottom: 15px;
+                right: 15px;
                 width: 44px;
                 height: 44px;
-                z-index: 1002;
             }
 
-            .recenter-btn svg {
-                width: 20px;
-                height: 20px;
-            }
-
-            .legend-toggle {
-                display: inline-block;
-            }
 
             .legend-content.collapsed {
                 display: none;
@@ -1018,9 +1023,11 @@
         </div>
 
         <div id="legend">
-            <div class="legend-header">
-                <h4 style="margin: 0;">Transmission Types</h4>
-                <button class="legend-toggle" onclick="toggleLegend()">Hide</button>
+            <div class="legend-header" onclick="toggleLegend()">
+                <h4 style="margin: 0;">Legend</h4>
+                <svg class="legend-chevron" viewBox="0 0 24 24">
+                    <path d="M8.5 6l7 6-7 6" stroke="#666" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                </svg>
             </div>
             <div class="legend-content" id="legend-content">
                 <div class="legend-item">
@@ -1034,6 +1041,30 @@
                 <div class="legend-item">
                     <div class="legend-color" style="background: #81C784;"></div>
                     <span>Aural Lineage</span>
+                </div>
+                
+                <div class="legend-item">
+                    <svg width="30" height="12" style="margin-right: 8px;">
+                        <defs>
+                            <marker id="legend-arrow-solid" viewBox="0 -5 10 10" refX="8" refY="0" markerWidth="4" markerHeight="4" orient="auto">
+                                <path d="M0,-5L10,0L0,5" fill="#666" opacity="0.8"/>
+                            </marker>
+                        </defs>
+                        <path d="M2,6 L24,6" stroke="#666" stroke-width="2" fill="none" marker-end="url(#legend-arrow-solid)" opacity="0.8"/>
+                    </svg>
+                    <span>Teaching Transmission</span>
+                </div>
+                
+                <div class="legend-item">
+                    <svg width="30" height="12" style="margin-right: 8px;">
+                        <defs>
+                            <marker id="legend-arrow-dotted" viewBox="0 -5 10 10" refX="8" refY="0" markerWidth="4" markerHeight="4" orient="auto">
+                                <path d="M0,-5L10,0L0,5" fill="#666" opacity="0.8"/>
+                            </marker>
+                        </defs>
+                        <path d="M2,6 L24,6" stroke="#666" stroke-width="2" stroke-dasharray="5,5" fill="none" marker-end="url(#legend-arrow-dotted)" opacity="0.8"/>
+                    </svg>
+                    <span>Emanation Relationship</span>
                 </div>
             </div>
         </div>
@@ -2295,14 +2326,14 @@
         
         function toggleLegend() {
             const content = document.getElementById('legend-content');
-            const button = document.querySelector('.legend-toggle');
+            const chevron = document.querySelector('.legend-chevron');
             
             if (content.classList.contains('collapsed')) {
                 content.classList.remove('collapsed');
-                button.textContent = 'Hide';
+                chevron.classList.remove('collapsed');
             } else {
                 content.classList.add('collapsed');
-                button.textContent = 'Show';
+                chevron.classList.add('collapsed');
             }
         }
         
@@ -3870,7 +3901,7 @@
                 allLineages: 'All Lineages',
                 startQuiz: 'Start Quiz',
                 recenterView: 'Recenter view',
-                transmissionTypes: 'Transmission Types',
+                legend: 'Legend',
                 mindToMind: 'Mind to Mind',
                 symbolic: 'Symbolic',
                 aural: 'Aural',
@@ -3888,7 +3919,7 @@
                 allLineages: 'བརྒྱུད་པ་ཚང་མ།',
                 startQuiz: 'བརྟག་དཔྱད་འགོ་ཚུགས།',
                 recenterView: 'དཀྱིལ་དུ་སླར་གཞི་འདེགས།',
-                transmissionTypes: 'བརྒྱུད་པའི་རིགས།',
+                legend: 'དེབ་འདེམས།',
                 mindToMind: 'སེམས་ནས་སེམས།',
                 symbolic: 'བརྡ་སྟོན།',
                 aural: 'རྣ་བའི་བརྒྱུད་པ།',
@@ -3906,7 +3937,7 @@
                 allLineages: '所有传承',
                 startQuiz: '开始测验',
                 recenterView: '重新居中',
-                transmissionTypes: '传承类型',
+                legend: '图例',
                 mindToMind: '心传心',
                 symbolic: '象征传承',
                 aural: '耳传承',
@@ -3948,10 +3979,10 @@
             document.getElementById('quiz-mode-btn').textContent = translations.startQuiz;
             
             // Update legend
-            document.querySelector('#legend h4').textContent = translations.transmissionTypes;
+            document.querySelector('#legend h4').textContent = translations.legend;
             
             // Update toggle buttons
-            const toggleBtns = document.querySelectorAll('.toggle-btn, .legend-toggle');
+            const toggleBtns = document.querySelectorAll('.toggle-btn');
             toggleBtns.forEach(btn => {
                 if (btn.textContent === 'Hide' || btn.textContent === 'སྦ།' || btn.textContent === '隐藏') {
                     btn.textContent = translations.hide;
