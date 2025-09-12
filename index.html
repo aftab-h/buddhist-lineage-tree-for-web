@@ -3195,15 +3195,20 @@
         let currentSearchIndex = -1;
         let searchHighlightClass = 'search-highlight';
 
-        // Add search highlight styles
+        // Add search highlight styles with flash animation
         const searchStyles = `
+            @keyframes flash-highlight {
+                0% { stroke: #ff6b35; stroke-width: 3px; opacity: 1; }
+                50% { stroke: #ff0000; stroke-width: 5px; opacity: 1; }
+                100% { stroke: inherit; stroke-width: inherit; opacity: 1; }
+            }
+            .search-flash .node {
+                animation: flash-highlight 0.8s ease-in-out;
+            }
             .search-highlight .node {
                 stroke: #ff6b35 !important;
                 stroke-width: 3px !important;
-            }
-            .search-current-highlight .node {
-                stroke: #ff0000 !important;
-                stroke-width: 4px !important;
+                opacity: 1 !important;
             }
         `;
         if (!document.getElementById('search-styles')) {
@@ -3296,17 +3301,23 @@
         function clearSearchHighlights() {
             g.selectAll('.node-group')
                 .classed('search-highlight', false)
-                .classed('search-current-highlight', false)
+                .classed('search-flash', false)
                 .style('opacity', 1);
         }
 
         function highlightCurrentResult() {
-            // Clear previous current highlight
-            g.selectAll('.search-current-highlight').classed('search-current-highlight', false);
+            // Clear previous flash animations
+            g.selectAll('.search-flash').classed('search-flash', false);
             
-            // Highlight current result
+            // Flash animate current result
             if (currentSearchIndex >= 0 && currentSearchIndex < searchResults.length) {
-                d3.select(searchResults[currentSearchIndex].element).classed('search-current-highlight', true);
+                const element = d3.select(searchResults[currentSearchIndex].element);
+                element.classed('search-flash', true);
+                
+                // Remove flash class after animation completes
+                setTimeout(() => {
+                    element.classed('search-flash', false);
+                }, 800);
             }
         }
 
