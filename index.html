@@ -54,16 +54,26 @@
         }
 
         .language-selector {
-            margin-right: 10px;
+            margin-left: 15px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .language-selector .language-label {
+            font-size: 11px;
+            color: #666;
+            font-weight: normal;
         }
 
         .language-selector select {
             padding: 4px 8px;
-            border: 1px solid #ddd;
+            border: 1px solid #ccc;
             border-radius: 4px;
             font-size: 12px;
             background: white;
             cursor: pointer;
+            min-width: 80px;
         }
 
         .language-selector select:focus {
@@ -838,6 +848,7 @@
                 <div style="display: flex; align-items: center;">
                     <span style="font-weight: bold; font-size: 14px;">Controls</span>
                     <div class="language-selector">
+                        <span class="language-label">Language:</span>
                         <select id="language-select" onchange="changeLanguage(this.value)">
                             <option value="en">English</option>
                             <option value="bo">བོད་ཡིག</option>
@@ -3386,6 +3397,7 @@
         const uiTranslations = {
             en: {
                 controls: 'Controls',
+                language: 'Language:',
                 hide: 'Hide',
                 show: 'Show',
                 searchPlaceholder: 'Search for a teacher...',
@@ -3401,6 +3413,7 @@
             },
             bo: {
                 controls: 'ཚོད་འཛིན།',
+                language: 'སྐད་ཡིག་:',
                 hide: 'སྦ།',
                 show: 'སྟོན།', 
                 searchPlaceholder: 'སློབ་དཔོན་འཚོལ་ཞིབ་བྱེད།',
@@ -3416,6 +3429,7 @@
             },
             zh: {
                 controls: '控制',
+                language: '语言:',
                 hide: '隐藏',
                 show: '显示',
                 searchPlaceholder: '搜索上师...',
@@ -3454,6 +3468,7 @@
             
             // Update UI elements
             document.querySelector('.controls-header span').textContent = translations.controls;
+            document.querySelector('.language-label').textContent = translations.language;
             document.getElementById('search').placeholder = translations.searchPlaceholder;
             
             // Update filter buttons
