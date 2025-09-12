@@ -6,12 +6,16 @@
   "scripts": {
     "dev": "vite --open",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "optimize-images": "node optimize-images.js"
   },
   "homepage": "https://aftab-h.github.io/buddhist-lineage-tree-for-web",
   "keywords": ["dzogchen", "buddhist", "lineage", "visualization", "d3js"],
   "author": "",
   "license": "MIT",
+  "dependencies": {
+    "sharp": "^0.33.0"
+  },
   "devDependencies": {
     "vite": "^5.0.0"
   }

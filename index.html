@@ -3327,30 +3327,39 @@
             for (let imageIndex = 1; imageIndex <= 10; imageIndex++) {
                 let foundImage = null;
                 
-                // Try each extension for this index
+                // Try each extension for this index  
                 for (const ext of extensions) {
-                    const imagePath = `images/${normalizedName}-${imageIndex}.${ext}`;
+                    // Try optimized folder first, then original folder
+                    const folders = ['images/optimized', 'images'];
                     
-                    try {
-                        const response = await fetch(imagePath, { method: 'HEAD' });
-                        if (response.ok) {
-                            // Double-check by trying to load the actual image
-                            const testImg = new Image();
-                            const imageExists = await new Promise((resolve) => {
-                                testImg.onload = () => resolve(true);
-                                testImg.onerror = () => resolve(false);
-                                testImg.src = imagePath;
-                            });
-                            
-                            if (imageExists) {
-                                foundImage = imagePath;
-                                break;
+                    for (const folder of folders) {
+                        const imagePath = `${folder}/${normalizedName}-${imageIndex}.${ext}`;
+                        
+                        try {
+                            const response = await fetch(imagePath, { method: 'HEAD' });
+                            if (response.ok) {
+                                // Double-check by trying to load the actual image
+                                const testImg = new Image();
+                                const imageExists = await new Promise((resolve) => {
+                                    testImg.onload = () => resolve(true);
+                                    testImg.onerror = () => resolve(false);
+                                    testImg.src = imagePath;
+                                });
+                                
+                                if (imageExists) {
+                                    foundImage = imagePath;
+                                    break;
+                                }
                             }
+                        } catch (error) {
+                            // Continue to next extension
+                            continue;
                         }
-                    } catch (error) {
-                        // Continue to next extension
-                        continue;
+                        
+                        if (foundImage) break; // Exit folder loop if found
                     }
+                    
+                    if (foundImage) break; // Exit extension loop if found
                 }
                 
                 if (foundImage) {
