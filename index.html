@@ -32,18 +32,63 @@
             position: relative;
         }
 
+        #settings-icon {
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            z-index: 1001;
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        #settings-icon:hover {
+            background: rgba(255, 255, 255, 1);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            transform: scale(1.05);
+        }
+
+        #settings-icon svg {
+            width: 20px;
+            height: 20px;
+            fill: #555;
+            transition: fill 0.2s ease;
+        }
+
+        #settings-icon:hover svg {
+            fill: #333;
+        }
+
         #controls {
             position: fixed;
-            top: 10px;
+            top: 70px;
             left: 10px;
             z-index: 1000;
             background: rgba(255, 255, 255, 0.95);
-            padding: 12px;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 16px;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
             backdrop-filter: blur(10px);
             max-width: calc(100vw - 20px);
             box-sizing: border-box;
+            transform: translateX(-100%);
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        #controls.show {
+            transform: translateX(0);
+            opacity: 1;
+            visibility: visible;
         }
 
         .controls-header {
@@ -199,7 +244,7 @@
         }
 
         .node-text {
-            font-size: 12px;
+            font-size: 14px;
             font-weight: bold;
             text-anchor: middle;
             pointer-events: none;
@@ -616,14 +661,21 @@
 
         /* Mobile responsive styles */
         @media (max-width: 768px) {
+            #settings-icon {
+                top: 10px;
+                left: 10px;
+                width: 44px;
+                height: 44px;
+            }
+            
             #controls {
                 position: fixed;
-                top: 5px;
+                top: 65px;
                 left: 5px;
                 right: 5px;
                 width: auto;
                 max-width: none;
-                padding: 8px;
+                padding: 12px;
                 background: rgba(255, 255, 255, 0.98);
             }
 
@@ -915,23 +967,29 @@
 </head>
 <body>
     <div id="container">
+        <div id="settings-icon" onclick="toggleSettings()">
+            <svg viewBox="0 0 24 24">
+                <path d="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11.03L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.66 15.5,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.5,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.05 4.34,5.27L2.34,8.73C2.22,8.95 2.27,9.22 2.46,9.37L4.57,11.03C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.22,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.03 4.95,18.95L7.44,17.94C7.96,18.34 8.5,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.5,18.68 16.04,18.34 16.56,17.94L19.05,18.95C19.27,19.03 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z"/>
+            </svg>
+        </div>
+        
         <div id="controls">
             <div class="controls-header">
                 <div style="display: flex; align-items: center;">
-                    <span style="font-weight: bold; font-size: 14px;">Controls</span>
-                    <div class="language-selector">
-                        <span class="language-label">Language:</span>
-                        <select id="language-select" onchange="changeLanguage(this.value)">
-                            <option value="en">English</option>
-                            <option value="bo">བོད་ཡིག</option>
-                            <option value="zh">中文</option>
-                        </select>
-                    </div>
+                    <span style="font-weight: bold; font-size: 16px;">Settings</span>
                 </div>
-                <button class="toggle-btn" onclick="toggleControls()">Hide</button>
+            </div>
+            
+            <div class="language-selector" style="margin-left: 0; margin-bottom: 16px;">
+                <span class="language-label">Language:</span>
+                <select id="language-select" onchange="changeLanguage(this.value)">
+                    <option value="en">English</option>
+                    <option value="bo">བོད་ཡིག</option>
+                    <option value="zh">中文</option>
+                </select>
             </div>
             <div class="controls-content" id="controls-content">
-                <div class="search-container">
+                <div class="search-container" style="margin-bottom: 16px;">
                     <input type="text" id="search" placeholder="Search for a teacher...">
                     <div class="search-navigation" id="search-navigation" style="display: none;">
                         <button id="search-prev" class="search-nav-btn" onclick="previousSearchResult()">‹</button>
@@ -939,18 +997,22 @@
                         <button id="search-next" class="search-nav-btn" onclick="nextSearchResult()">›</button>
                     </div>
                 </div>
-                <div>
-                    <button class="filter-btn active" data-filter="all">All Lineages</button>
-                    <button class="filter-btn" data-filter="Vimalamitra">Vimalamitra</button>
-                    <button class="filter-btn" data-filter="Padmasambhava">Padmasambhava</button>
-                    <button class="filter-btn" data-filter="Vairocana">Vairocana</button>
+                <div style="margin-bottom: 16px;">
+                    <div style="margin-bottom: 10px; font-weight: bold; font-size: 13px;">Filter by Lineage:</div>
+                    <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                        <button class="filter-btn active" data-filter="all">All</button>
+                        <button class="filter-btn" data-filter="Vimalamitra">Vimalamitra</button>
+                        <button class="filter-btn" data-filter="Padmasambhava">Padmasambhava</button>
+                        <button class="filter-btn" data-filter="Vairocana">Vairocana</button>
+                    </div>
                 </div>
-                <div style="margin-top: 10px;">
-                    <button id="quiz-mode-btn" class="filter-btn" style="background: #2196F3; color: white;">Start Quiz</button>
+                
+                <div style="margin-bottom: 16px;">
+                    <button id="quiz-mode-btn" class="filter-btn" style="background: #2196F3; color: white; width: 100%; font-weight: bold;">Start Quiz</button>
                 </div>
                 <div id="usage-instructions" style="font-size: 11px; color: #666; margin-top: 10px;">
-                    <div id="click-node-text">Click node: View details & highlight lineage</div>
-                    <div id="click-elsewhere-text">Click elsewhere: Close popup</div>
+                    <!-- <div id="click-node-text">Click node: View details & highlight lineage</div>
+                    <div id="click-elsewhere-text">Click elsewhere: Close popup</div> -->
                 </div>
             </div>
         </div>
@@ -2208,18 +2270,10 @@
             return getTransmissionColor(node.transmissionMode);
         }
         
-        // Toggle functions for mobile collapsible controls
-        function toggleControls() {
-            const content = document.getElementById('controls-content');
-            const button = document.querySelector('.toggle-btn');
-            
-            if (content.classList.contains('collapsed')) {
-                content.classList.remove('collapsed');
-                button.textContent = 'Hide';
-            } else {
-                content.classList.add('collapsed');
-                button.textContent = 'Show';
-            }
+        // Toggle function for settings panel
+        function toggleSettings() {
+            const controls = document.getElementById('controls');
+            controls.classList.toggle('show');
         }
         
         function toggleLegend() {
@@ -2997,7 +3051,7 @@
             nodeGroups.each(function(d) {
                 const group = d3.select(this);
                 const displayName = getDisplayName ? getDisplayName(d) : d.name;
-                wrapText(group, displayName, 170, 11); // 170px width, 11px font size
+                wrapText(group, displayName, 170, 13); // 170px width, 13px font size
                 
                 // Apply appropriate font class for Tibetan/Chinese
                 if (typeof currentLanguage !== 'undefined') {
@@ -3929,7 +3983,7 @@
                 
                 // Remove existing text and re-wrap
                 group.selectAll('.node-text').remove();
-                wrapText(group, displayName, 170, 11);
+                wrapText(group, displayName, 170, 13);
                 
                 // Apply appropriate font class for Tibetan/Chinese
                 const textElements = group.selectAll('.node-text');
