@@ -1235,25 +1235,42 @@
                 }
             });
 
-            // Create links
+            // First, collect all emanation relationships
+            const emanationPairs = new Set();
+            data.forEach(person => {
+                if (person["Eminated as"]) {
+                    const emanations = person["Eminated as"].split(';').map(e => e.trim());
+                    emanations.forEach(emanation => {
+                        if (emanation && nodes.has(emanation) && nodes.has(person.Name_English)) {
+                            emanationPairs.add(`${person.Name_English}->${emanation}`);
+                        }
+                    });
+                }
+            });
+
+            // Create teaching links, but skip if emanation relationship exists
             data.forEach(person => {
                 if (person.Received_Teachings_From) {
                     const teachers = person.Received_Teachings_From.split(';').map(t => t.trim());
                     teachers.forEach(teacher => {
                         if (teacher && nodes.has(teacher) && nodes.has(person.Name_English)) {
-                            links.push({
-                                source: teacher,
-                                target: person.Name_English,
-                                lineage: person.Lineage
-                            });
-                            nodes.get(teacher).children.push(person.Name_English);
+                            // Skip if this is an emanation relationship
+                            const emanationKey = `${teacher}->${person.Name_English}`;
+                            if (!emanationPairs.has(emanationKey)) {
+                                links.push({
+                                    source: teacher,
+                                    target: person.Name_English,
+                                    lineage: person.Lineage
+                                });
+                                nodes.get(teacher).children.push(person.Name_English);
+                            }
                         }
                     });
                 }
                 
                 // Process emanation relationships from "Eminated as" column
-                if (person.Eminated_as) {
-                    const emanations = person.Eminated_as.split(';').map(e => e.trim());
+                if (person["Eminated as"]) {
+                    const emanations = person["Eminated as"].split(';').map(e => e.trim());
                     emanations.forEach(emanation => {
                         if (emanation && nodes.has(emanation) && nodes.has(person.Name_English)) {
                             links.push({
