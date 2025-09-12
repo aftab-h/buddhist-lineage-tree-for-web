@@ -1332,11 +1332,11 @@
                 return rawDate; // fallback to raw position if mapping not ready
             }
             
-            // For historical/chronological dates (350 CE onwards), use linear spacing after compressed ordinal layers
+            // For historical/chronological dates (350 CE onwards), use linear spacing with 25-year equivalent gap after ordinal layers
             if (rawDate >= 350) {
                 const maxOrdinalLayer = ordinalLayerMapping ? Math.max(...Object.values(ordinalLayerMapping)) : 15;
-                // Linear calculation: 50 years per layer starting after max ordinal layer + small gap
-                return maxOrdinalLayer + 2 + ((rawDate - 350) / 50);
+                // Linear calculation: 50 years per layer starting with 0.5 layer gap (equivalent to 25-year chronological spacing)
+                return maxOrdinalLayer + 0.5 + ((rawDate - 350) / 50);
             }
             
             return 200; // fallback for any other cases (well beyond normal range)
