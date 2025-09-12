@@ -81,6 +81,68 @@
             border-color: #007bff;
         }
 
+        .search-container {
+            position: relative;
+            margin-bottom: 10px;
+        }
+
+        .search-navigation {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            background: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+
+        .search-nav-btn {
+            background: none;
+            border: none;
+            font-size: 16px;
+            font-weight: bold;
+            color: #666;
+            cursor: pointer;
+            padding: 2px 6px;
+            border-radius: 2px;
+            line-height: 1;
+        }
+
+        .search-nav-btn:hover {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .search-nav-btn:disabled {
+            color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .search-counter {
+            font-size: 11px;
+            color: #666;
+            min-width: 30px;
+            text-align: center;
+        }
+
+        #search {
+            width: 100%;
+            padding: 8px 100px 8px 10px; /* Make space for navigation controls */
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+
+        #search:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+
         .toggle-btn {
             display: none;
             background: #4CAF50;
@@ -859,7 +921,14 @@
                 <button class="toggle-btn" onclick="toggleControls()">Hide</button>
             </div>
             <div class="controls-content" id="controls-content">
-                <input type="text" id="search" placeholder="Search for a teacher...">
+                <div class="search-container">
+                    <input type="text" id="search" placeholder="Search for a teacher...">
+                    <div class="search-navigation" id="search-navigation" style="display: none;">
+                        <button id="search-prev" class="search-nav-btn" onclick="previousSearchResult()">‹</button>
+                        <span id="search-counter" class="search-counter">0 / 0</span>
+                        <button id="search-next" class="search-nav-btn" onclick="nextSearchResult()">›</button>
+                    </div>
+                </div>
                 <div>
                     <button class="filter-btn active" data-filter="all">All Lineages</button>
                     <button class="filter-btn" data-filter="Vimalamitra">Vimalamitra</button>
@@ -3121,24 +3190,188 @@
             });
         }
 
-        // Search functionality
+        // Advanced search functionality
+        let searchResults = [];
+        let currentSearchIndex = -1;
+        let searchHighlightClass = 'search-highlight';
+
+        // Add search highlight styles
+        const searchStyles = `
+            .search-highlight .node {
+                stroke: #ff6b35 !important;
+                stroke-width: 3px !important;
+            }
+            .search-current-highlight .node {
+                stroke: #ff0000 !important;
+                stroke-width: 4px !important;
+            }
+        `;
+        if (!document.getElementById('search-styles')) {
+            const styleSheet = document.createElement('style');
+            styleSheet.id = 'search-styles';
+            styleSheet.textContent = searchStyles;
+            document.head.appendChild(styleSheet);
+        }
+
         const searchInput = d3.select('#search');
         searchInput.on('input', function() {
-            const searchTerm = normalizeText(this.value);
+            performSearch(this.value);
+        });
+
+        function performSearch(searchTerm) {
+            const normalizedSearchTerm = normalizeText(searchTerm.trim());
             
+            // Clear previous search
+            clearSearchHighlights();
+            searchResults = [];
+            currentSearchIndex = -1;
+            
+            if (normalizedSearchTerm === '') {
+                hideSearchNavigation();
+                return;
+            }
+            
+            // Find all matching nodes
             g.selectAll('.node-group').each(function(d) {
                 const normalizedName = normalizeText(d.name);
                 const normalizedTibetan = normalizeText(d.tibetan);
                 const normalizedNameTibetan = normalizeText(d.nameTibetan);
                 const normalizedNameChinese = normalizeText(d.nameChinese);
                 
-                const isMatch = normalizedName.includes(searchTerm) || 
-                               normalizedTibetan.includes(searchTerm) ||
-                               normalizedNameTibetan.includes(searchTerm) ||
-                               normalizedNameChinese.includes(searchTerm);
-                               
-                d3.select(this).style('opacity', searchTerm === '' || isMatch ? 1 : 0.2);
+                const isMatch = normalizedName.includes(normalizedSearchTerm) || 
+                               normalizedTibetan.includes(normalizedSearchTerm) ||
+                               normalizedNameTibetan.includes(normalizedSearchTerm) ||
+                               normalizedNameChinese.includes(normalizedSearchTerm);
+                
+                if (isMatch) {
+                    searchResults.push({
+                        element: this,
+                        data: d
+                    });
+                    d3.select(this).classed('search-highlight', true);
+                } else {
+                    d3.select(this).style('opacity', 0.3);
+                }
             });
+            
+            // Update navigation UI
+            if (searchResults.length > 0) {
+                showSearchNavigation();
+                currentSearchIndex = 0;
+                highlightCurrentResult();
+                zoomToCurrentResult();
+            } else {
+                hideSearchNavigation();
+            }
+        }
+
+        function showSearchNavigation() {
+            document.getElementById('search-navigation').style.display = 'flex';
+            updateSearchCounter();
+            updateNavigationButtons();
+        }
+
+        function hideSearchNavigation() {
+            document.getElementById('search-navigation').style.display = 'none';
+            g.selectAll('.node-group').style('opacity', 1);
+        }
+
+        function updateSearchCounter() {
+            const counter = document.getElementById('search-counter');
+            if (searchResults.length > 0) {
+                counter.textContent = `${currentSearchIndex + 1} / ${searchResults.length}`;
+            } else {
+                counter.textContent = '0 / 0';
+            }
+        }
+
+        function updateNavigationButtons() {
+            const prevBtn = document.getElementById('search-prev');
+            const nextBtn = document.getElementById('search-next');
+            
+            prevBtn.disabled = currentSearchIndex <= 0;
+            nextBtn.disabled = currentSearchIndex >= searchResults.length - 1;
+        }
+
+        function clearSearchHighlights() {
+            g.selectAll('.node-group')
+                .classed('search-highlight', false)
+                .classed('search-current-highlight', false)
+                .style('opacity', 1);
+        }
+
+        function highlightCurrentResult() {
+            // Clear previous current highlight
+            g.selectAll('.search-current-highlight').classed('search-current-highlight', false);
+            
+            // Highlight current result
+            if (currentSearchIndex >= 0 && currentSearchIndex < searchResults.length) {
+                d3.select(searchResults[currentSearchIndex].element).classed('search-current-highlight', true);
+            }
+        }
+
+        function zoomToCurrentResult() {
+            if (currentSearchIndex < 0 || currentSearchIndex >= searchResults.length) return;
+            
+            const result = searchResults[currentSearchIndex];
+            const nodeData = result.data;
+            
+            // Get node position - use the actual positioned coordinates
+            const nodeX = nodeData.x || 0;
+            const nodeY = nodeData.y || 0;
+            
+            // Get actual container dimensions
+            const containerRect = svg.node().getBoundingClientRect();
+            const containerWidth = containerRect.width;
+            const containerHeight = containerRect.height;
+            
+            const scale = 1.5; // Zoom level
+            const translateX = containerWidth / 2 - nodeX * scale;
+            const translateY = containerHeight / 2 - nodeY * scale;
+            
+            // Apply smooth transition
+            svg.transition()
+                .duration(750)
+                .call(zoom.transform, d3.zoomIdentity
+                    .translate(translateX, translateY)
+                    .scale(scale)
+                );
+        }
+
+        function nextSearchResult() {
+            if (currentSearchIndex < searchResults.length - 1) {
+                currentSearchIndex++;
+                highlightCurrentResult();
+                zoomToCurrentResult();
+                updateSearchCounter();
+                updateNavigationButtons();
+            }
+        }
+
+        function previousSearchResult() {
+            if (currentSearchIndex > 0) {
+                currentSearchIndex--;
+                highlightCurrentResult();
+                zoomToCurrentResult();
+                updateSearchCounter();
+                updateNavigationButtons();
+            }
+        }
+
+        // Keyboard navigation for search
+        document.addEventListener('keydown', function(e) {
+            if (searchResults.length > 0 && document.getElementById('search-navigation').style.display !== 'none') {
+                if (e.key === 'ArrowDown' || e.key === 'Enter') {
+                    e.preventDefault();
+                    nextSearchResult();
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    previousSearchResult();
+                } else if (e.key === 'Escape') {
+                    document.getElementById('search').value = '';
+                    performSearch('');
+                }
+            }
         });
 
         // Filter functionality
