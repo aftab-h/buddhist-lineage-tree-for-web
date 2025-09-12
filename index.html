@@ -2006,33 +2006,94 @@
                     popup.style.maxWidth = (viewportWidth - 2 * margin) + 'px';
                 }
             } else {
-                // Desktop positioning (original logic)
-                // Try right side first
-                if (nodeCenterX + (nodeRect.width / 2) + offset + popupWidth + margin < viewportWidth) {
-                    // Right side has space
-                    popupX = nodeCenterX + (nodeRect.width / 2) + offset;
-                    popupY = Math.max(margin, Math.min(viewportHeight - popupHeight - margin, nodeCenterY - popupHeight / 2));
-                } 
-                // Try left side
-                else if (nodeCenterX - (nodeRect.width / 2) - offset - popupWidth > margin) {
-                    // Left side has space
-                    popupX = nodeCenterX - (nodeRect.width / 2) - popupWidth - offset;
-                    popupY = Math.max(margin, Math.min(viewportHeight - popupHeight - margin, nodeCenterY - popupHeight / 2));
-                } 
-                // Try bottom
-                else if (nodeCenterY + (nodeRect.height / 2) + offset + popupHeight + margin < viewportHeight) {
-                    // Bottom has space - center horizontally with viewport constraints
-                    popupX = Math.max(margin, Math.min(viewportWidth - popupWidth - margin, nodeCenterX - popupWidth / 2));
-                    popupY = nodeCenterY + (nodeRect.height / 2) + offset;
+                // Smart desktop positioning - avoid overlapping other nodes
+                const positions = [
+                    // Right side
+                    {
+                        x: nodeCenterX + (nodeRect.width / 2) + offset,
+                        y: Math.max(margin, Math.min(viewportHeight - popupHeight - margin, nodeCenterY - popupHeight / 2)),
+                        name: 'right'
+                    },
+                    // Left side
+                    {
+                        x: nodeCenterX - (nodeRect.width / 2) - popupWidth - offset,
+                        y: Math.max(margin, Math.min(viewportHeight - popupHeight - margin, nodeCenterY - popupHeight / 2)),
+                        name: 'left'
+                    },
+                    // Bottom
+                    {
+                        x: Math.max(margin, Math.min(viewportWidth - popupWidth - margin, nodeCenterX - popupWidth / 2)),
+                        y: nodeCenterY + (nodeRect.height / 2) + offset,
+                        name: 'bottom'
+                    },
+                    // Top
+                    {
+                        x: Math.max(margin, Math.min(viewportWidth - popupWidth - margin, nodeCenterX - popupWidth / 2)),
+                        y: nodeCenterY - (nodeRect.height / 2) - offset - popupHeight,
+                        name: 'top'
+                    }
+                ];
+                
+                // Function to check if popup overlaps with other nodes
+                function getNodeOverlapScore(popupRect) {
+                    let overlapScore = 0;
+                    const allNodes = document.querySelectorAll('.node-group');
+                    
+                    allNodes.forEach(node => {
+                        if (node === currentPopupNode) return; // Skip the clicked node
+                        
+                        const nodeRect = node.getBoundingClientRect();
+                        const nodeX = nodeRect.left - containerRect.left;
+                        const nodeY = nodeRect.top - containerRect.top;
+                        const nodeW = nodeRect.width;
+                        const nodeH = nodeRect.height;
+                        
+                        // Check overlap
+                        const overlapLeft = Math.max(popupRect.x, nodeX);
+                        const overlapTop = Math.max(popupRect.y, nodeY);
+                        const overlapRight = Math.min(popupRect.x + popupRect.width, nodeX + nodeW);
+                        const overlapBottom = Math.min(popupRect.y + popupRect.height, nodeY + nodeH);
+                        
+                        if (overlapLeft < overlapRight && overlapTop < overlapBottom) {
+                            const overlapArea = (overlapRight - overlapLeft) * (overlapBottom - overlapTop);
+                            overlapScore += overlapArea;
+                        }
+                    });
+                    
+                    return overlapScore;
                 }
-                // Try top
-                else if (nodeCenterY - (nodeRect.height / 2) - offset - popupHeight > margin) {
-                    // Top has space - center horizontally with viewport constraints
-                    popupX = Math.max(margin, Math.min(viewportWidth - popupWidth - margin, nodeCenterX - popupWidth / 2));
-                    popupY = nodeCenterY - (nodeRect.height / 2) - offset - popupHeight;
-                }
-                // Fallback: force fit on right with adjustment
-                else {
+                
+                // Evaluate each position and choose the one with least overlap
+                let bestPosition = null;
+                let bestScore = Infinity;
+                
+                positions.forEach(pos => {
+                    // Check if position is within viewport bounds
+                    if (pos.x >= margin && pos.x + popupWidth <= viewportWidth - margin &&
+                        pos.y >= margin && pos.y + popupHeight <= viewportHeight - margin) {
+                        
+                        const popupRect = {
+                            x: pos.x,
+                            y: pos.y,
+                            width: popupWidth,
+                            height: popupHeight
+                        };
+                        
+                        const overlapScore = getNodeOverlapScore(popupRect);
+                        
+                        if (overlapScore < bestScore) {
+                            bestScore = overlapScore;
+                            bestPosition = pos;
+                        }
+                    }
+                });
+                
+                // Use best position or fallback
+                if (bestPosition) {
+                    popupX = bestPosition.x;
+                    popupY = bestPosition.y;
+                } else {
+                    // Fallback: force fit on right with adjustment
                     popupX = Math.max(margin, Math.min(viewportWidth - popupWidth - margin, nodeCenterX + (nodeRect.width / 2) + offset));
                     popupY = Math.max(margin, Math.min(viewportHeight - popupHeight - margin, nodeCenterY - popupHeight / 2));
                 }
