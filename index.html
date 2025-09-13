@@ -97,6 +97,22 @@
             align-items: center;
             margin-bottom: 10px;
         }
+        .controls-close-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+            color: #666;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .controls-close-btn:hover {
+            background: #f0f0f0;
+            color: #333;
+        }
 
         .language-selector {
             margin-left: 15px;
@@ -1020,8 +1036,13 @@
         <div id="controls">
             <div class="controls-header">
                 <div style="display: flex; align-items: center;">
-                    <span style="font-weight: bold; font-size: 16px;">Settings</span>
+                    <span style="font-weight: bold; font-size: 16px;">Controls</span>
                 </div>
+                <button class="controls-close-btn" onclick="closeControls()" aria-label="Close controls panel">
+                    <svg viewBox="0 0 24 24" width="18" height="18">
+                        <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" fill="currentColor"/>
+                    </svg>
+                </button>
             </div>
             
             <div class="language-selector" style="margin-left: 0; margin-bottom: 16px;">
@@ -2362,6 +2383,36 @@
             const controls = document.getElementById('controls');
             controls.classList.toggle('show');
         }
+        
+        // Close controls panel
+        function closeControls() {
+            const controls = document.getElementById('controls');
+            controls.classList.remove('show');
+        }
+        
+        // Click outside to close controls panel
+        document.addEventListener('click', function(event) {
+            const controls = document.getElementById('controls');
+            const controlsIcon = document.getElementById('controls-icon');
+            
+            // Check if controls panel is open
+            if (controls && controls.classList.contains('show')) {
+                // Check if click was outside both the controls panel and the controls icon
+                if (!controls.contains(event.target) && !controlsIcon.contains(event.target)) {
+                    closeControls();
+                }
+            }
+        });
+        
+        // Escape key to close controls panel
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                const controls = document.getElementById('controls');
+                if (controls && controls.classList.contains('show')) {
+                    closeControls();
+                }
+            }
+        });
         
         function toggleLegend() {
             const content = document.getElementById('legend-content');
