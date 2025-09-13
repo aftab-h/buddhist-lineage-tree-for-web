@@ -2989,7 +2989,7 @@
             const centuryLines = calculateCenturyLines(data.nodes);
             const centuryGroup = g.append('g').attr('class', 'century-lines');
             
-            // Add horizontal century lines with manual fade effect
+            // Add horizontal century lines with center-to-edges fade effect
             centuryLines.forEach(line => {
                 const startX = 250;
                 const endX = width * 3;
@@ -3000,8 +3000,12 @@
                     const segmentWidth = totalWidth / segments;
                     const x1 = startX + (i * segmentWidth);
                     const x2 = startX + ((i + 1) * segmentWidth);
-                    const fadeProgress = i / (segments - 1); // 0 to 1
-                    const opacity = 0.6 * (1 - fadeProgress); // Fade from 0.6 to 0
+                    
+                    // Calculate distance from center (0 at center, 1 at edges)
+                    const centerPoint = segments / 2;
+                    const distanceFromCenter = Math.abs(i - centerPoint) / centerPoint;
+                    // Create fade effect: solid at center (0.6), fade to transparent (0) at edges
+                    const opacity = 0.6 * (1 - distanceFromCenter);
                     
                     if (opacity > 0.02) { // Only draw segments with meaningful opacity
                         centuryGroup.append('line')
@@ -3017,13 +3021,18 @@
                 }
             });
             
+            // Calculate leftmost node position for dynamic label positioning
+            const nodeXPositions = data.nodes.map(n => n.x).filter(x => x !== undefined && !isNaN(x));
+            const leftmostNodeX = nodeXPositions.length > 0 ? Math.min(...nodeXPositions) : 100;
+            const labelX = Math.max(20, leftmostNodeX - 400); // 40px to the left of leftmost node, minimum 20px from edge
+            
             // Add century labels
             centuryGroup.selectAll('.century-label')
                 .data(centuryLines)
                 .enter()
                 .append('text')
                 .attr('class', 'century-label')
-                .attr('x', 20)
+                .attr('x', labelX)
                 .attr('y', d => d.yPosition + 8) // Slightly below the line
                 .attr('font-size', '32px')
                 .attr('font-family', 'Arial, sans-serif')
