@@ -102,7 +102,7 @@
             margin-left: 15px;
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 10px;
         }
 
         .language-selector .language-label {
@@ -112,18 +112,31 @@
         }
 
         .language-selector select {
-            padding: 4px 8px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            font-size: 12px;
+            width: auto;
+            min-width: 120px;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
             background: white;
+            border-radius: 4px;
             cursor: pointer;
-            min-width: 80px;
+            font-size: 12px;
+            min-height: 36px;
+            box-sizing: border-box;
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=US-ASCII,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 4 5'><path fill='%23666' d='M2 0L0 2h4zm0 5L0 3h4z'/></svg>");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            background-size: 12px;
+            padding-right: 36px;
         }
 
+        .language-selector select:hover {
+            background-color: #f0f0f0;
+        }
         .language-selector select:focus {
             outline: none;
-            border-color: #007bff;
+            border-color: #4CAF50;
+            box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
         }
 
         .search-container {
