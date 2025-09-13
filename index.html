@@ -237,6 +237,31 @@
             background: #4CAF50;
             color: white;
         }
+        .lineage-dropdown {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            min-height: 36px;
+            box-sizing: border-box;
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=US-ASCII,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 4 5'><path fill='%23666' d='M2 0L0 2h4zm0 5L0 3h4z'/></svg>");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            background-size: 12px;
+            padding-right: 36px;
+        }
+        .lineage-dropdown:hover {
+            background-color: #f0f0f0;
+        }
+        .lineage-dropdown:focus {
+            outline: none;
+            border-color: #4CAF50;
+            box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+        }
 
         .node {
             cursor: pointer;
@@ -1004,13 +1029,13 @@
                     </div>
                 </div>
                 <div style="margin-bottom: 16px;">
-                    <div style="margin-bottom: 10px; font-weight: bold; font-size: 13px;">Filter by Lineage:</div>
-                    <div style="display: flex; flex-wrap: wrap; gap: 6px;">
-                        <button class="filter-btn active" data-filter="all">All</button>
-                        <button class="filter-btn" data-filter="Vimalamitra">Vimalamitra</button>
-                        <button class="filter-btn" data-filter="Padmasambhava">Padmasambhava</button>
-                        <button class="filter-btn" data-filter="Vairocana">Vairocana</button>
-                    </div>
+                    <div style="margin-bottom: 8px; font-weight: bold; font-size: 13px;">Filter by Lineage:</div>
+                    <select id="lineage-filter" class="lineage-dropdown">
+                        <option value="all">All</option>
+                        <option value="Vimalamitra">Vimalamitra</option>
+                        <option value="Padmasambhava">Padmasambhava</option>
+                        <option value="Vairocana">Vairocana</option>
+                    </select>
                 </div>
                 
                 <div style="margin-bottom: 16px;">
@@ -3649,11 +3674,8 @@
         });
 
         // Filter functionality
-        d3.selectAll('.filter-btn').on('click', function() {
-            d3.selectAll('.filter-btn').classed('active', false);
-            d3.select(this).classed('active', true);
-            
-            currentFilter = this.dataset.filter;
+        document.getElementById('lineage-filter').addEventListener('change', function() {
+            currentFilter = this.value;
             const filteredData = filterData(currentFilter);
             renderVisualization(filteredData);
         });
@@ -3984,8 +4006,8 @@
             document.querySelector('.language-label').textContent = translations.language;
             document.getElementById('search').placeholder = translations.searchPlaceholder;
             
-            // Update filter buttons
-            document.querySelector('[data-filter="all"]').textContent = translations.allLineages;
+            // Update filter dropdown
+            document.querySelector('#lineage-filter option[value="all"]').textContent = translations.allLineages;
             document.getElementById('quiz-mode-btn').textContent = translations.startQuiz;
             
             // Update legend
