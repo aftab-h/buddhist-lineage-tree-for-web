@@ -5,9 +5,10 @@
   "main": "index.html",
   "scripts": {
     "dev": "vite --open",
-    "build": "vite build",
+    "build": "node generate-image-manifest.js && vite build",
     "preview": "vite preview",
-    "optimize-images": "node optimize-images.js"
+    "optimize-images": "node optimize-images.js",
+    "generate-manifest": "node generate-image-manifest.js"
   },
   "homepage": "https://aftab-h.github.io/buddhist-lineage-tree-for-web",
   "keywords": ["dzogchen", "buddhist", "lineage", "visualization", "d3js"],

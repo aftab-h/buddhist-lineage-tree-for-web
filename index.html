@@ -2706,7 +2706,12 @@
         // Initialize the application
         async function initializeApp() {
             try {
-                const csvData = await loadCSVData();
+                // Load CSV data and image manifest in parallel for faster startup
+                const [csvData] = await Promise.all([
+                    loadCSVData(),
+                    loadImageManifest() // Preload manifest on app startup
+                ]);
+
                 if (!csvData) {
                     console.error('Failed to load CSV data');
                     return;
@@ -3448,31 +3453,52 @@
                 .replace(/^-|-$/g, '');    // Remove leading/trailing hyphens
         }
 
-        // Image loading system
-        async function loadNodeImages(nodeName) {
-            const normalizedName = normalizeText(nodeName);
-            const images = [];
+        // Image manifest system
+        let imageManifest = null;
+        let manifestLoadPromise = null;
 
-            // Check for images one by one, stopping at first gap
-            for (let imageIndex = 1; imageIndex <= 10; imageIndex++) {
-                // Only check optimized folder with .jpg extension
-                const imagePath = `images/optimized/${normalizedName}-${imageIndex}.jpg`;
-
-                try {
-                    const response = await fetch(imagePath, { method: 'HEAD' });
-                    if (response.ok) {
-                        images.push(imagePath);
-                    } else {
-                        // No image found for this index, stop looking
-                        break;
-                    }
-                } catch (error) {
-                    // No image found for this index, stop looking
-                    break;
-                }
+        // Load image manifest once on page load
+        async function loadImageManifest() {
+            if (manifestLoadPromise) {
+                return manifestLoadPromise;
             }
 
-            return images;
+            manifestLoadPromise = (async () => {
+                try {
+                    console.log('Loading image manifest...');
+                    const response = await fetch('./image-manifest.json');
+                    if (response.ok) {
+                        imageManifest = await response.json();
+                        console.log(`✅ Image manifest loaded: ${Object.keys(imageManifest).length} nodes with images`);
+                        return imageManifest;
+                    } else {
+                        console.warn('⚠️ Image manifest not found, falling back to individual image checking');
+                        return null;
+                    }
+                } catch (error) {
+                    console.warn('⚠️ Failed to load image manifest:', error);
+                    return null;
+                }
+            })();
+
+            return manifestLoadPromise;
+        }
+
+        // Image loading system - now uses manifest for instant lookup
+        async function loadNodeImages(nodeName) {
+            const normalizedName = normalizeText(nodeName);
+
+            // Ensure manifest is loaded
+            const manifest = await loadImageManifest();
+
+            if (manifest && manifest[normalizedName]) {
+                // Instant lookup from manifest - no network requests!
+                return manifest[normalizedName];
+            }
+
+            // Fallback to old method if manifest not available or node not found
+            console.log(`No images found in manifest for: ${normalizedName}`);
+            return [];
         }
 
         // Image carousel display function
