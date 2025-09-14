@@ -3062,12 +3062,28 @@
             const centuryLines = calculateCenturyLines(data.nodes);
             const centuryGroup = g.append('g').attr('class', 'century-lines');
             
-            // Add horizontal century lines with center-to-edges fade effect
+            // Calculate boundaries from ALL visible nodes after filtering
+            const nodeXPositions = data.nodes.map(n => n.x).filter(x => x !== undefined && !isNaN(x));
+            
+            if (nodeXPositions.length === 0) return; // No nodes to work with
+            
+            const leftmostNodeX = Math.min(...nodeXPositions);
+            const rightmostNodeX = Math.max(...nodeXPositions);
+            
+            // Assume nodes are positioned at their center, calculate actual centers
+            const nodeWidth = 180; // From CSS - should match actual node width
+            const leftmostNodeCenterX = leftmostNodeX + (nodeWidth / 2);
+            const rightmostNodeCenterX = rightmostNodeX + (nodeWidth / 2);
+            
+            // Position century text at fixed offset from leftmost node center
+            const centuryTextX = leftmostNodeCenterX - 500;
+            
+            // Add horizontal century lines spanning from leftmost to rightmost node centers
             centuryLines.forEach(line => {
-                const startX = 250;
-                const endX = width * 3;
+                const startX = leftmostNodeCenterX;
+                const endX = rightmostNodeCenterX;
                 const totalWidth = endX - startX;
-                const segments = 20; // Number of segments for smooth fade effect
+                const segments = 40; // More segments for smoother fade effect
                 
                 for (let i = 0; i < segments; i++) {
                     const segmentWidth = totalWidth / segments;
@@ -3094,18 +3110,13 @@
                 }
             });
             
-            // Calculate leftmost node position for dynamic label positioning
-            const nodeXPositions = data.nodes.map(n => n.x).filter(x => x !== undefined && !isNaN(x));
-            const leftmostNodeX = nodeXPositions.length > 0 ? Math.min(...nodeXPositions) : 100;
-            const labelX = Math.max(20, leftmostNodeX - 400); // 40px to the left of leftmost node, minimum 20px from edge
-            
-            // Add century labels
+            // Add century labels using calculated position
             centuryGroup.selectAll('.century-label')
                 .data(centuryLines)
                 .enter()
                 .append('text')
                 .attr('class', 'century-label')
-                .attr('x', labelX)
+                .attr('x', centuryTextX)
                 .attr('y', d => d.yPosition + 8) // Slightly below the line
                 .attr('font-size', '32px')
                 .attr('font-family', 'Arial, sans-serif')
