@@ -3452,55 +3452,26 @@
         async function loadNodeImages(nodeName) {
             const normalizedName = normalizeText(nodeName);
             const images = [];
-            const extensions = ['jpg', 'jpeg', 'png', 'gif'];
-            
+
             // Check for images one by one, stopping at first gap
             for (let imageIndex = 1; imageIndex <= 10; imageIndex++) {
-                let foundImage = null;
-                
-                // Try each extension for this index  
-                for (const ext of extensions) {
-                    // Try optimized folder first, then original folder
-                    const folders = ['images/optimized', 'images'];
-                    
-                    for (const folder of folders) {
-                        const imagePath = `${folder}/${normalizedName}-${imageIndex}.${ext}`;
-                        
-                        try {
-                            const response = await fetch(imagePath, { method: 'HEAD' });
-                            if (response.ok) {
-                                // Double-check by trying to load the actual image
-                                const testImg = new Image();
-                                const imageExists = await new Promise((resolve) => {
-                                    testImg.onload = () => resolve(true);
-                                    testImg.onerror = () => resolve(false);
-                                    testImg.src = imagePath;
-                                });
-                                
-                                if (imageExists) {
-                                    foundImage = imagePath;
-                                    break;
-                                }
-                            }
-                        } catch (error) {
-                            // Continue to next extension
-                            continue;
-                        }
-                        
-                        if (foundImage) break; // Exit folder loop if found
+                // Only check optimized folder with .jpg extension
+                const imagePath = `images/optimized/${normalizedName}-${imageIndex}.jpg`;
+
+                try {
+                    const response = await fetch(imagePath, { method: 'HEAD' });
+                    if (response.ok) {
+                        images.push(imagePath);
+                    } else {
+                        // No image found for this index, stop looking
+                        break;
                     }
-                    
-                    if (foundImage) break; // Exit extension loop if found
-                }
-                
-                if (foundImage) {
-                    images.push(foundImage);
-                } else {
+                } catch (error) {
                     // No image found for this index, stop looking
                     break;
                 }
             }
-            
+
             return images;
         }
 
