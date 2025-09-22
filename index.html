@@ -1723,12 +1723,12 @@
             const lineages = splitIntoLineageTrees(nodes, links);
             
             // Step 2: Use D3 tree layout for each lineage's X positioning (Vairocana left, Vimalamitra center, Padmasambhava right)
-            positionLineageNodes(lineages.vairocana, 300, 400);     // Left column, 400px wide
-            positionLineageNodes(lineages.vimalamitra, 800, 400);   // Center column, 400px wide
-            positionLineageNodes(lineages.padmasambhava, 1300, 400); // Right column, 400px wide
-            
+            positionLineageNodes(lineages.vairocana, 300, 1200);     // Left column, 1200px wide
+            positionLineageNodes(lineages.vimalamitra, 1800, 1200);  // Center column, 1200px wide
+            positionLineageNodes(lineages.padmasambhava, 3300, 1200); // Right column, 1200px wide
+
             // Step 3: Apply D3 tree layout to shared ancestors too (no more hardcoding!)
-            positionLineageNodes(lineages.shared, 800, 600);        // Center column, wider to accommodate branching
+            positionLineageNodes(lineages.shared, 1800, 1200);       // Center column, wider to accommodate branching
             
             // Step 4: Apply final positioning - D3's X + Chronological Y with sub-layer offsets
             
@@ -1832,7 +1832,7 @@
                 
                 // Adaptive separation based on layer crowding
                 let minSeparation = 180; // Base minimum separation
-                
+
                 if (layerNodes.length > 6) {
                     minSeparation = 220; // More space for very crowded layers
                 } else if (layerNodes.length > 4) {
