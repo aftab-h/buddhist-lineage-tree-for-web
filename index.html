@@ -1715,20 +1715,66 @@
             });
         }
 
+        // Calculate optimal width for each lineage based on node density
+        function calculateLineageWidth(lineageNodes, minWidth = 600, maxWidth = 1400) {
+            if (lineageNodes.length === 0) return minWidth;
+
+            // Group nodes by time layer to find the densest period
+            const layerGroups = d3.groups(lineageNodes, d => d.timeLayer);
+            const maxNodesInLayer = Math.max(...layerGroups.map(([layer, nodes]) => nodes.length));
+
+            // Calculate width based on density (more nodes = more width needed)
+            const calculatedWidth = Math.min(maxWidth, Math.max(minWidth, maxNodesInLayer * 180));
+            console.log(`Lineage width calculation: ${lineageNodes.length} nodes, max ${maxNodesInLayer} in one layer -> ${calculatedWidth}px`);
+
+            return calculatedWidth;
+        }
+
+        // Calculate balanced positioning that keeps all lineages close together
+        function calculateDynamicLineagePositions(lineages) {
+            // Use fixed, reasonable widths to prevent excessive spreading
+            const vairocanaWidth = 800;   // Fixed reasonable width
+            const vimalamitraWidth = 1000; // Slightly wider for denser lineage
+            const padmasambhavaWidth = 800; // Fixed reasonable width
+            const sharedWidth = 400;        // Fixed width for shared ancestors
+
+            // Position lineages with controlled spacing - keep them close together
+            const vairocanaX = 200;   // Left position
+            const vimalamitraX = 1200; // Center position - close to Vairocana
+            const padmasambhavaX = 2400; // Right position - close to Vimalamitra
+            const sharedX = vimalamitraX; // Center shared ancestors with Vimalamitra
+
+            console.log('Balanced positioning (prevents over-spreading):');
+            console.log(`  Vairocana: X=${vairocanaX}, Width=${vairocanaWidth}`);
+            console.log(`  Vimalamitra: X=${vimalamitraX}, Width=${vimalamitraWidth}`);
+            console.log(`  Padmasambhava: X=${padmasambhavaX}, Width=${padmasambhavaWidth}`);
+            console.log(`  Shared: X=${sharedX}, Width=${sharedWidth}`);
+
+            return {
+                vairocana: { x: vairocanaX, width: vairocanaWidth },
+                vimalamitra: { x: vimalamitraX, width: vimalamitraWidth },
+                padmasambhava: { x: padmasambhavaX, width: padmasambhavaWidth },
+                shared: { x: sharedX, width: sharedWidth }
+            };
+        }
+
         // New main positioning function using lineage preprocessing with D3 tree layout
         function applyLineageBasedLayout(nodes, links) {
             console.log('=== LINEAGE-BASED LAYOUT WITH D3 TREES ===');
-            
+
             // Step 1: Split into lineage trees
             const lineages = splitIntoLineageTrees(nodes, links);
-            
-            // Step 2: Use D3 tree layout for each lineage's X positioning (Vairocana left, Vimalamitra center, Padmasambhava right)
-            positionLineageNodes(lineages.vairocana, 300, 1200);     // Left column, 1200px wide
-            positionLineageNodes(lineages.vimalamitra, 1800, 1200);  // Center column, 1200px wide
-            positionLineageNodes(lineages.padmasambhava, 3300, 1200); // Right column, 1200px wide
 
-            // Step 3: Apply D3 tree layout to shared ancestors too (no more hardcoding!)
-            positionLineageNodes(lineages.shared, 1800, 400);        // Center column, compact width for blue nodes
+            // Step 2: Calculate dynamic positions based on actual content
+            const positions = calculateDynamicLineagePositions(lineages);
+
+            // Step 3: Use D3 tree layout for each lineage with calculated positions
+            positionLineageNodes(lineages.vairocana, positions.vairocana.x, positions.vairocana.width);
+            positionLineageNodes(lineages.vimalamitra, positions.vimalamitra.x, positions.vimalamitra.width);
+            positionLineageNodes(lineages.padmasambhava, positions.padmasambhava.x, positions.padmasambhava.width);
+
+            // Step 4: Apply D3 tree layout to shared ancestors
+            positionLineageNodes(lineages.shared, positions.shared.x, positions.shared.width);
             
             // Step 4: Apply final positioning - D3's X + Chronological Y with sub-layer offsets
             
