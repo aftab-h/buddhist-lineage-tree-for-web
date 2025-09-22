@@ -72,11 +72,42 @@ The lineage data comes from `dzogchen_lineage.csv` with key fields:
 - **Responsive Design**: Adapts to different screen sizes
 - **Century Markers**: Timeline visualization along the bottom
 
+## Scalability Requirements & Current Challenges
+
+### Scalability Needs
+This visualization must be **highly scalable** because:
+- **Continuous Growth**: More nodes are regularly added, especially in the Aural transmission category
+- **Dense Bottom Sections**: Later centuries (18th-21st) have many contemporary teachers
+- **Visibility Maintenance**: Must remain readable as the dataset expands
+
+### Current Architecture Challenge
+We face a **fundamental spacing problem**:
+
+1. **Dense Vimalamitra Lineage**: The center lineage (Vimalamitra) becomes extremely dense, especially at the bottom
+2. **Excessive Width Calculation**: `calculateOptimalLineageWidth()` gives Vimalamitra very wide allocation (potentially 300px × many nodes)
+3. **Sequential Positioning Problem**: Since we position Padmasambhava after Vimalamitra's rightmost extent, it gets pushed way out to the right
+4. **Poor User Experience**: Padmasambhava lineage becomes difficult to read and navigate due to excessive horizontal distance
+
+### The Spacing Dilemma
+- **Need Dynamic Spacing**: Bottom sections with many overlapping nodes need room to spread out
+- **Must Maintain Order**: Cannot change Vairocana → Vimalamitra → Padmasambhava sequence
+- **Avoid Over-Expansion**: Current dynamic width causes Vimalamitra to dominate horizontal space
+- **Preserve Readability**: All three lineages must remain accessible and readable
+
+### Architectural Goals
+The spacing system must:
+1. **Scale gracefully** as more nodes are added
+2. **Balance density** between the three lineages
+3. **Maintain fixed left-to-right order** while preventing excessive pushing
+4. **Keep all lineages** within reasonable viewing distance
+5. **Prevent overlap** in dense time periods without sacrificing overall layout
+
 ## Goals
 This visualization aims to:
 1. Make the complex Dzogchen lineage accessible and navigable
 2. Preserve the historical accuracy of teacher-student relationships
 3. Show the evolution and branching of transmission methods over time
 4. Provide an educational tool for understanding Buddhist lineage history
+5. **Scale effectively** as the dataset grows, maintaining readability across all lineages
 
 The spacing and layout algorithms balance historical accuracy with visual clarity, ensuring that the dense network of relationships remains readable while preserving the authentic structure of the lineage transmissions.
