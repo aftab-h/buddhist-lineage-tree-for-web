@@ -1,57 +1,79 @@
 Name_English,Name_Wylie_Tibetan,Name_Tibetan,Name_Chinese,Dates,Description_English,Description_Tibetan,Description_Chinese,Transmission_Mode,Lineage,Received_Teachings_From,Gave_Teachings_To,Incarnation_Of,Familial_Relationship_To,Eminated as,Position_Date
-"Rigdzin Pema Lingpa",,,,1450-1521,"Great treasure revealer",,,Aural,Padmasambhava,,"4th Pema Lingpa","Longchen Rabjampa",,,1450
-"2nd Pema Lingpa, Tendzin Chokyi Drakpa",,,,,,,,Aural,Padmasambhava,,,"Rigdzin Pema Lingpa",,,1400
+Rigdzin Pema Lingpa,,,,1450-1521,Great treasure revealer,,,Aural,Padmasambhava,,4th Pema Lingpa,Longchen Rabjampa,,,1450
+"2nd Pema Lingpa, Tendzin Chokyi Drakpa",,,,,,,,Aural,Padmasambhava,,,Rigdzin Pema Lingpa,,,1400
 "3rd Pema Lingpa, Kunchen Tsultrim Dorje",,,,,,,,Aural,Padmasambhava,,,"2nd Pema Lingpa, Tendzin Chokyi Drakpa",,,1420
-"4th Pema Lingpa",,,,1640-1717,"Incarnation of Pema Lingpa",,,Aural,Padmasambhava,"Rigdzin Pema Lingpa","5th Pema Lingpa","3rd Pema Lingpa, Kunchen Tsultrim Dorje",,,1640
-"5th Pema Lingpa",,,,1704-1752,"Incarnation of Pema Lingpa",,,Aural,Padmasambhava,"4th Pema Lingpa","6th Pema Lingpa","4th Pema Lingpa",,,1704
-"6th Pema Lingpa",,,,1715-1792,"Incarnation of Pema Lingpa",,,Aural,Padmasambhava,"5th Pema Lingpa","7th Pema Lingpa","5th Pema Lingpa",,,1715
-"7th Pema Lingpa",,,,1807-1872,"Incarnation of Pema Lingpa",,,Aural,Padmasambhava,"6th Pema Lingpa","8th Pema Lingpa","6th Pema Lingpa",,,1807
-"8th Pema Lingpa",,,,1874-1927,"Incarnation of Pema Lingpa",,,Aural,Padmasambhava,"7th Pema Lingpa","9th Pema Lingpa","7th Pema Lingpa",,,1874
-"9th Pema Lingpa",,,,1928-2001,"Incarnation of Pema Lingpa",,,Aural,Padmasambhava,"8th Pema Lingpa","10th Pema Lingpa","8th Pema Lingpa",,,1928
-"10th Pema Lingpa",,,,1949-,"Current incarnation of Pema Lingpa",,,Aural,Padmasambhava,"9th Pema Lingpa","11th Pema Lingpa, Kunzang Pema Rinchen Namgyal","9th Pema Lingpa",,,1949
-"11th Pema Lingpa, Kunzang Pema Rinchen Namgyal",,,,1968-,"Current incarnation of Pema Lingpa",,,Aural,Padmasambhava,,,"10th Pema Lingpa",,1968
-"Dawa Gyaltsen",,,,,,,,Aural,Padmasambhava,,,"Rigdzin Pema Lingpa",,,1500
-"Tukse Incarnations",,,,,,,,Aural,Padmasambhava,,,"Dawa Gyaltsen",,,1520
-"Rigdzin Pema Trinle",,,,,,,,Aural,Padmasambhava,,,"Dawa Gyaltsen",,,1520
-"Gangteng Incarnations",,,,,,,,Aural,Padmasambhava,,,"Rigdzin Pema Trinle",,,1540
-"Jigme Kundröl Chungpo",,,,1728-1798,"Master in Vimalamitra lineage",,,Aural,Vimalamitra,,"Jigme Gyalwai Nyugu",,,1728
-"Jigme Gyalwai Nyugu",,,,1765-1843,"Student of Jigme Lingpa",,,Aural,Vimalamitra,"Jigme Lingpa","Palrul Öpagö",,,1765
-"Palrul Öpagö",,,,1808-1887,"Great master Patrul Rinpoche",,,Aural,Vimalamitra,"Jigme Gyalwai Nyugu","Jamyang Khyentse Wangpo; Mipham Rinpoche",,,1808
-"Jamyang Khyentse Wangpo",,,,1820-1892,"Great Rime master",,,Aural,Vimalamitra,"Palrul Öpagö","Öpame Thekchok Dorje",,,1820
-"Öpame Thekchok Dorje",,,,1895-1960,"Master in modern lineage",,,Aural,Vimalamitra,"Jamyang Khyentse Wangpo","Gyatrul Rinpoche; Orgyen Tobgyal Rinpoche",,,1895
-"Tetön Sogyal",,,,1856-1926,"Treasure revealer",,,Aural,Padmasambhava,,"Öpame Thekchok Dorje",,,1856
-"Gyatrul Rinpoche",,,,1924-,"Contemporary master",,,Aural,Vimalamitra,"Öpame Thekchok Dorje","Sangye Khandro",,,1924
-"Orgyen Tobgyal Rinpoche",,,,1951-,"Contemporary master",,,Aural,Vimalamitra,"Öpame Thekchok Dorje","Padma Khandro",,,1951
-"Dilgo Khyentse Rinpoche",,,,1910-1991,"Great 20th century master",,,Aural,Vimalamitra,,"Jigme Khyentse Norbu; Sogyal Rinpoche",,,1910
-"Jigme Khyentse Norbu",,,,1964-,"Contemporary master",,,Aural,Vimalamitra,"Dilgo Khyentse Rinpoche",,,1964
-"Sogyal Rinpoche",,,,1947-2019,"Contemporary master",,,Aural,Vimalamitra,"Dilgo Khyentse Rinpoche",,,1947
-"Longchen Rabjampa",,,,1308-1364,"Great master Longchenpa",,,Aural,Vimalamitra,,"Khenchen Chabdal Lhundrup; Khedrup Delek Gyatso","Pema Ledrel Tsal",,,1308
-"Khenchen Chabdal Lhundrup",,,,,,,,Aural,Vimalamitra,"Longchen Rabjampa","Gyalse Tulku Drakpa Ozer",,,1350
-"Gyalse Tulku Drakpa Ozer",,,,,,,,Aural,Vimalamitra,"Khenchen Chabdal Lhundrup","Trulzhik Sang-gye Onpo Sherab Gyatso",,,1380
-"Trulzhik Sang-gye Onpo Sherab Gyatso",,,,,,,,Aural,Vimalamitra,"Gyalse Tulku Drakpa Ozer","Gyalse Dawa Drakpa",,,1410
-"Gyalse Dawa Drakpa",,,,,,,,Aural,Vimalamitra,"Trulzhik Sang-gye Onpo Sherab Gyatso","Drupchen Kunzang Dorje",,,1440
-"Drupchen Kunzang Dorje",,,,,,,,Aural,Vimalamitra,"Gyalse Dawa Drakpa","Choje Kunga Gyalsen Palzang",,,1470
-"Choje Kunga Gyalsen Palzang",,,,,,,,Aural,Vimalamitra,"Drupchen Kunzang Dorje","Tulku Natsok Rangdrol",,,1500
-"Tulku Natsok Rangdrol",,,,,,,,Aural,Vimalamitra,"Choje Kunga Gyalsen Palzang","Tulku Tendzin Drakpa, 2nd Pema Lingpa",,,1530
-"Tulku Tendzin Drakpa, 2nd Pema Lingpa",,,,,,,,Aural,Vimalamitra,"Tulku Natsok Rangdrol","Khenpo Do-ngak Tendzin",,,1560
-"Khenpo Do-ngak Tendzin",,,,,,,,Aural,Vimalamitra,"Tulku Tendzin Drakpa, 2nd Pema Lingpa","Rigdzin Chenpo Trinle Lhundrup",,,1590
-"Rigdzin Chenpo Trinle Lhundrup",,,,,,,,Aural,Vimalamitra,"Khenpo Do-ngak Tendzin","Terchen Gyurme Dorje",,,1620
-"Terchen Gyurme Dorje",,,,,,,,Aural,Vimalamitra,"Rigdzin Chenpo Trinle Lhundrup",,,,1650
-"Khedrup Delek Gyatso",,,,,,,,Aural,Vimalamitra,"Longchen Rabjampa","Takok Jadral Choje Tashi Jungne",,,1350
-"Takok Jadral Choje Tashi Jungne",,,,,,,,Aural,Vimalamitra,"Khedrup Delek Gyatso","Guru Zhenpen",,,1380
-"Guru Zhenpen",,,,,,,,Aural,Vimalamitra,"Takok Jadral Choje Tashi Jungne","Namkha Dorje",,,1410
-"Namkha Dorje",,,,,,,,Aural,Vimalamitra,"Guru Zhenpen","Osel Longyang",,,1440
-"Osel Longyang",,,,,,,,Aural,Vimalamitra,"Namkha Dorje","Dzogchenpa Sonam Rigdzin",,,1470
-"Dzogchenpa Sonam Rigdzin",,,,,,,,Aural,Vimalamitra,"Osel Longyang","Kunchen Ngawang Pema",,,1500
-"Kunchen Ngawang Pema",,,,,,,,Aural,Vimalamitra,"Dzogchenpa Sonam Rigdzin","Dzogchenpa Sonam Wangpo",,,1530
-"Dzogchenpa Sonam Wangpo",,,,,,,,Aural,Vimalamitra,"Kunchen Ngawang Pema","Lhatsun Namkha Jigme",,,1560
-"Lhatsun Namkha Jigme",,,,,,,,Aural,Vimalamitra,"Dzogchenpa Sonam Wangpo","Dzogchenpa Longdzok Tadral",,,1590
-"Dzogchenpa Longdzok Tadral",,,,,,,,Aural,Vimalamitra,"Lhatsun Namkha Jigme",,,,1620
-"Jigme Lingpa",,,,1730-1798,"Great treasure revealer",,,Aural,Vimalamitra,"Longchen Rabjampa","1st Dodrupchen; Jigme Gyalwai Nyugu",,,1730
-"1st Dodrupchen, Jigmé Trinlé Özer",,,,1745-1821,First Dodrupchen,,,Aural,Vimalamitra,Jigme Lingpa,2nd Dodrupchen,,,,1745
-"2nd Dodrupchen, Jikmé Phuntsok Jungné",,,,1824-1863,Second Dodrupchen,,,Aural,Vimalamitra,1st Dodrupchen,3rd Dodrupchen,1st Dodrupchen,,,1824
-"3rd Dodrupchen, Jigmé Tenpé",,,,1865-1926,Third Dodrupchen,,,Aural,Vimalamitra,2nd Dodrupchen,4th Dodrupchen,2nd Dodrupchen,,,1865
-4th Dodrupchen Jigmé Trinlé,,,,,Fourth Dodrupchen,,,Aural,Vimalamitra,3rd Dodrupchen,,3rd Dodrupchen,,,1900
+4th Pema Lingpa,,,,1640-1717,Incarnation of Pema Lingpa,,,Aural,Padmasambhava,Rigdzin Pema Lingpa,5th Pema Lingpa,"3rd Pema Lingpa, Kunchen Tsultrim Dorje",,,1640
+5th Pema Lingpa,,,,1704-1752,Incarnation of Pema Lingpa,,,Aural,Padmasambhava,4th Pema Lingpa,6th Pema Lingpa,4th Pema Lingpa,,,1704
+6th Pema Lingpa,,,,1715-1792,Incarnation of Pema Lingpa,,,Aural,Padmasambhava,5th Pema Lingpa,7th Pema Lingpa,5th Pema Lingpa,,,1715
+7th Pema Lingpa,,,,1807-1872,Incarnation of Pema Lingpa,,,Aural,Padmasambhava,6th Pema Lingpa,8th Pema Lingpa,6th Pema Lingpa,,,1807
+8th Pema Lingpa,,,,1874-1927,Incarnation of Pema Lingpa,,,Aural,Padmasambhava,7th Pema Lingpa,9th Pema Lingpa,7th Pema Lingpa,,,1874
+9th Pema Lingpa,,,,1928-2001,Incarnation of Pema Lingpa,,,Aural,Padmasambhava,8th Pema Lingpa,10th Pema Lingpa,8th Pema Lingpa,,,1928
+10th Pema Lingpa,,,,1949-,Current incarnation of Pema Lingpa,,,Aural,Padmasambhava,9th Pema Lingpa,"11th Pema Lingpa, Kunzang Pema Rinchen Namgyal",9th Pema Lingpa,,,1949
+"11th Pema Lingpa, Kunzang Pema Rinchen Namgyal",,,,1968-,Current incarnation of Pema Lingpa,,,Aural,Padmasambhava,,,10th Pema Lingpa,,,1968
+Dawa Gyaltsen,,,,,,,,Aural,Padmasambhava,,,Rigdzin Pema Lingpa,,,1500
+Tukse Incarnations,,,,,,,,Aural,Padmasambhava,,,Dawa Gyaltsen,,,1520
+Rigdzin Pema Trinle,,,,,,,,Aural,Padmasambhava,,,Dawa Gyaltsen,,,1520
+Gangteng Incarnations,,,,,,,,Aural,Padmasambhava,,,Rigdzin Pema Trinle,,,1540
+Jigme Kundröl Chungpo,,,,1728-1798,Master in Vimalamitra lineage,,,Aural,Vimalamitra,,Jigme Gyalwai Nyugu,,,,1728
+Jigme Gyalwai Nyugu,,,,1765-1843,Student of Jigme Lingpa,,,Aural,Vimalamitra,Rigdzin Jigme Lingpa,Paltrul Orgyen Jigme Chokyi Wangpo,,,,1765
+Paltrul Orgyen Jigme Chokyi Wangpo,,,,1808-1887,Great master Patrul Rinpoche,,,Aural,Vimalamitra,Jigme Gyalwai Nyugu,Jamyang Khyentse Wangpo; Mipham Rinpoche,,,,1808
+Jamyang Khyentse Wangpo,,,,1820-1892,Great Rime master,,,Aural,Vimalamitra,Paltrul Orgyen Jigme Chokyi Wangpo,Öpame Thekchok Dorje,,,,1820
+Öpame Thekchok Dorje,,,,1895-1960,Master in modern lineage,,,Aural,Vimalamitra,Jamyang Khyentse Wangpo,Gyatrul Rinpoche; Orgyen Tobgyal Rinpoche,,,,1895
+Tetön Sogyal,,,,1856-1926,Treasure revealer,,,Aural,Padmasambhava,,Öpame Thekchok Dorje,,,,1856
+Gyatrul Rinpoche,,,,1924-,Contemporary master,,,Aural,Vimalamitra,Öpame Thekchok Dorje,Sangye Khandro,,,,1924
+Orgyen Tobgyal Rinpoche,,,,1951-,Contemporary master,,,Aural,Vimalamitra,Öpame Thekchok Dorje,Padma Khandro,,,,1951
+Dilgo Khyentse Rinpoche,,,,1910-1991,Great 20th century master,,,Aural,Vimalamitra,,Jigme Khyentse Norbu; Sogyal Rinpoche,,,,1910
+Jigme Khyentse Norbu,,,,1964-,Contemporary master,,,Aural,Vimalamitra,Dilgo Khyentse Rinpoche,,,,,1964
+Sogyal Rinpoche,,,,1947-2019,Contemporary master,,,Aural,Vimalamitra,Dilgo Khyentse Rinpoche,,,,,1947
+Longchen Rabjampa,,,,1308-1364,Great master Longchenpa,,,Aural,Vimalamitra,,Khenchen Chabdal Lhundrup; Khedrup Delek Gyatso,Pema Ledrel Tsal,,,1308
+Khenchen Chabdal Lhundrup,,,,,,,,Aural,Vimalamitra,Longchen Rabjampa,Gyalse Tulku Drakpa Ozer,,,,1350
+Gyalse Tulku Drakpa Ozer,,,,,,,,Aural,Vimalamitra,Khenchen Chabdal Lhundrup,Trulzhik Sang-gye Onpo Sherab Gyatso,,,,1380
+Trulzhik Sang-gye Onpo Sherab Gyatso,,,,,,,,Aural,Vimalamitra,Gyalse Tulku Drakpa Ozer,Gyalse Dawa Drakpa,,,,1410
+Gyalse Dawa Drakpa,,,,,,,,Aural,Vimalamitra,Trulzhik Sang-gye Onpo Sherab Gyatso,Drupchen Kunzang Dorje,,,,1440
+Drupchen Kunzang Dorje,,,,,,,,Aural,Vimalamitra,Gyalse Dawa Drakpa,Choje Kunga Gyalsen Palzang,,,,1470
+Choje Kunga Gyalsen Palzang,,,,,,,,Aural,Vimalamitra,Drupchen Kunzang Dorje,Tulku Natsok Rangdrol,,,,1500
+Tulku Natsok Rangdrol,,,,,,,,Aural,Vimalamitra,Choje Kunga Gyalsen Palzang,"Tulku Tendzin Drakpa, 2nd Pema Lingpa",,,,1530
+"Tulku Tendzin Drakpa, 2nd Pema Lingpa",,,,,,,,Aural,Vimalamitra,Tulku Natsok Rangdrol,Khenpo Do-ngak Tendzin,,,,1560
+Khenpo Do-ngak Tendzin,,,,,,,,Aural,Vimalamitra,"Tulku Tendzin Drakpa, 2nd Pema Lingpa",Rigdzin Chenpo Trinle Lhundrup,,,,1590
+Rigdzin Chenpo Trinle Lhundrup,,,,,,,,Aural,Vimalamitra,Khenpo Do-ngak Tendzin,Terchen Gyurme Dorje (terdak lingpa),,,,1620
+Terchen Gyurme Dorje (terdak lingpa),,,,,,,,Aural,Vimalamitra,Rigdzin Chenpo Trinle Lhundrup,"kunzang mingyur paldron; gyalse rinchen namgyal; lotsawa chopal hgyatso (lochen dharma shri); rikse choktrul pema gyurme gyatso; katokpa gyalse rinpoche sonam detsen; 2nd dzogchen rinpoche, gyurme tekchok tendzin",,,,1650
+kunzang mingyur paldron,,,,,,,,,,Terchen Gyurme Dorje (terdak lingpa),khenchen oddiyyana,,,,
+khenchen oddiyyana,,,,,,,,,,kunzang mingyur paldron,trichen gyurme trinle namgyal,,,,
+trichen gyurme trinle namgyal,,,,,,,,,,khenchen oddiyyana,jetsunma trinle chodron,,,,
+jetsunma trinle chodron,,,,,,,,,,trichen gyurme trinle namgyal,jamyang khyentsei wangpo,,,,
+jamyang khyentsei wangpo,,,,,,,,,,jetsunma trinle chodron,,,,,
+gyalse rinchen namgyal,,,,,,,,,,Terchen Gyurme Dorje (terdak lingpa),ngak rabjampa orgyen chodrak; khenchen oddiyana,,,,
+ngak rabjampa orgyen chodrak,,,,,,,,,,gyalse rinchen namgyal,ngakyi rabjampa orgyen palgon (drupwant shrinatha); jetsunma trinle chodron,,,,
+ngakyi rabjampa orgyen palgon (drupwant shrinatha),,,,,,,,,,ngak rabjampa orgyen chodrak,rigdzin jigme lingpa,,,,
+rigdzin jigme lingpa,,,,,,,,,,ngakyi rabjampa orgyen palgon (drupwant shrinatha),jigme kundrol namgyal; jigme gyalwai nyugu; getse jigme nogtsar tendzin; 1st dodrupchen jigme trinle ozer,,,,
+trehorpa kyabgon yeshe gyaltsen,,,,,,,,,,"1st Dodrupchen, Jigmé Trinlé Özer",chonyon dharma seng-ge,,,,
+chonyon dharma seng-ge,,,,,,,,,,trehorpa kyabgon yeshe gyaltsen,dakki chonyi zangmo,,,,
+chogyal ngagi wangpo,,,,,,,,,,"1st Dodrupchen, Jigmé Trinlé Özer",zhabkar tsokdruk rangdrol,,,,
+zhabkar tsokdruk rangdrol,,,,,,,,,,chogyal ngagi wangpo,kyabgon pema gyatso,,,,
+kyabgon pema gyatso,,,,,,,,,,zhabkar tsokdruk rangdrol,dakki chonyi zangmo,,,,
+dakki chonyi zangmo,,,,,,,,,,kyabgon pema gyatso; chonyon dharma seng-ge,zhadeu trulzhik chenpo ngawang chokyi lodro,,,,
+lotsawa chopal gyatso (lochen dharma shri),,,,,,,,,,Terchen Gyurme Dorje (terdak lingpa),,,,,
+rikse choktrul pema gyurme gyatso,,,,,,,,,,Terchen Gyurme Dorje (terdak lingpa),,,,,
+katokpa gyalse rinpoche sonam detsen,,,,,,,,,,Terchen Gyurme Dorje (terdak lingpa),,,,,
+"2nd dzogchen rinpoche, gyurme tekchok tendzin",,,,,,,,,,Terchen Gyurme Dorje (terdak lingpa),barchung lama tashi gyatso,,,,
+barchung lama tashi gyatso,,,,,,,,,,"2nd dzogchen rinpoche, gyurme tekchok tendzin",,gemang gyalse rigpai dorje (gyalse zhenpen taye ozer),,,
+,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,
+Khedrup Delek Gyatso,,,,,,,,Aural,Vimalamitra,Longchen Rabjampa,Takok Jadral Choje Tashi Jungne,,,,1350
+Takok Jadral Choje Tashi Jungne,,,,,,,,Aural,Vimalamitra,Khedrup Delek Gyatso,Guru Zhenpen,,,,1380
+Guru Zhenpen,,,,,,,,Aural,Vimalamitra,Takok Jadral Choje Tashi Jungne,Namkha Dorje,,,,1410
+Namkha Dorje,,,,,,,,Aural,Vimalamitra,Guru Zhenpen,Osel Longyang,,,,1440
+Osel Longyang,,,,,,,,Aural,Vimalamitra,Namkha Dorje,Dzogchenpa Sonam Rigdzin,,,,1470
+Dzogchenpa Sonam Rigdzin,,,,,,,,Aural,Vimalamitra,Osel Longyang,Kunchen Ngawang Pema,,,,1500
+Kunchen Ngawang Pema,,,,,,,,Aural,Vimalamitra,Dzogchenpa Sonam Rigdzin,Dzogchenpa Sonam Wangpo,,,,1530
+Dzogchenpa Sonam Wangpo,,,,,,,,Aural,Vimalamitra,Kunchen Ngawang Pema,Lhatsun Namkha Jigme,,,,1560
+Lhatsun Namkha Jigme,,,,,,,,Aural,Vimalamitra,Dzogchenpa Sonam Wangpo,Dzogchenpa Longdzok Tadral,,,,1590
+Dzogchenpa Longdzok Tadral,,,,,,,,Aural,Vimalamitra,Lhatsun Namkha Jigme,,,,,1620
+Jigme Lingpa,,,,1730-1798,Great treasure revealer,,,Aural,Vimalamitra,Longchen Rabjampa,1st Dodrupchen; Jigme Gyalwai Nyugu,,,,1730
+"1st Dodrupchen, Jigmé Trinlé Özer",,,,1745-1821,First Dodrupchen,,,Aural,Vimalamitra,Rigdzin Jigme Lingpa,"2nd Dodrupchen, jigme puntsok jungne; chogyal ngagi wangpo; trehorpa kyabgon yeshe gyaltsen; do khyentse yeshe dorje; 4th dzogchen rinpoche, Mingyur Namkhai dorje; gemang gyalse rigpai dorje; choying tobden dorje; choklung repa damtsik dorje",,,,1745
+"2nd Dodrupchen, Jikmé Phuntsok Jungné",,,,1824-1863,Second Dodrupchen,,,Aural,Vimalamitra,"1st Dodrupchen, Jigmé Trinlé Özer",,"1st Dodrupchen, Jigmé Trinlé Özer",,,1824
+"3rd Dodrupchen, jigme tenpai nyima",,,,1865-1926,Third Dodrupchen,,,Aural,Vimalamitra,"2nd Dodrupchen, Jikmé Phuntsok Jungné",,"2nd Dodrupchen, Jikmé Phuntsok Jungné",,,1865
+"4th Dodrupchen, Jigmé Trinlé Palbar",,,,,Fourth Dodrupchen,,,Aural,Vimalamitra,"3rd Dodrupchen, jigme tenpai nyima",,"3rd Dodrupchen, jigme tenpai nyima",,,1900
 Du Khyentse Yeshe Dorje,,,,1800-1866,Great master,,,Aural,Vimalamitra,,4th Dzogchen Rinpoche,,,,1800
 4th Dzogchen Rinpoche,,,,1793-1850,Fourth Dzogchen Rinpoche,,,Aural,Vimalamitra,Du Khyentse Yeshe Dorje,,,,,1793
 Chöying Rangdröl,,,,1745-1821,Master in lineage,,,Aural,Vimalamitra,,Chokhang Repa Könchok,,,,1745
