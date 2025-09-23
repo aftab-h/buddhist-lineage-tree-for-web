@@ -59,11 +59,32 @@ The visualization uses color coding to represent different types of dharma trans
 
 ## Data Structure
 The lineage data comes from `dzogchen_lineage.csv` with key fields:
-- **Name**: Teacher names in English, Tibetan transliteration, and Tibetan script
-- **Position_Date**: Chronological positioning (used for Y-axis)
-- **Lineage**: Which of the three main lineages the teacher belongs to
+
+### Core Identification Fields
+- **Name_English**: Teacher names in English
+- **Name_Wylie_Tibetan**: Tibetan transliteration using Wylie system
+- **Name_Tibetan**: Tibetan script
+- **Name_Chinese**: Chinese names where applicable
+- **Dates**: Birth and death years (e.g., "1308-1364")
+- **Description_English**: Brief description of the master's role/significance
+
+### Transmission & Lineage Fields
 - **Transmission_Mode**: Mind-to-Mind, Symbolic, or Aural
-- **Teacher/Student relationships**: Hierarchical connections for tree structure
+- **Lineage**: Which of the three main lineages (Vairocana, Vimalamitra, Padmasambhava)
+- **Position_Date**: Chronological positioning number (used for Y-axis positioning)
+
+### Relationship Fields
+- **Received_Teachings_From**: Teacher(s) this master learned from (solid lines in diagrams)
+- **Gave_Teachings_To**: Student(s) this master taught (solid lines in diagrams)
+- **Incarnation_Of**: Previous incarnation (dotted lines in diagrams)
+- **Familial_Relationship_To**: Family connections (dashed lines in diagrams)
+- **Eminated as**: **IMPORTANT** - This field indicates when a spiritual entity emanated/manifested as this particular master. This is different from incarnation - it's about a higher spiritual being expressing itself through this form. Contains NAMES only, never dates.
+
+### Critical Column Usage Notes
+- **Position_Date**: Always contains numeric values for chronological positioning
+- **Eminated as**: Contains names of entities that emanated as this master, or empty. Never contains dates.
+- **Incarnation_Of**: Shows reincarnation lineages (used for dotted line connections)
+- **Received_Teachings_From/Gave_Teachings_To**: Used for solid line teacher-student connections
 
 ## Visual Features
 - **Interactive Tooltips**: Hover over nodes for detailed teacher information
