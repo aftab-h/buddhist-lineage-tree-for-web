@@ -58,33 +58,31 @@ The visualization uses color coding to represent different types of dharma trans
 - **Collision Detection**: Prevents overlapping while maintaining hierarchical relationships
 
 ## Data Structure
-The lineage data comes from `dzogchen_lineage.csv` with key fields:
+The lineage data comes from `dzogchen_lineage.csv` with the following exact column structure:
 
-### Core Identification Fields
-- **Name_English**: Teacher names in English
-- **Name_Wylie_Tibetan**: Tibetan transliteration using Wylie system
-- **Name_Tibetan**: Tibetan script
-- **Name_Chinese**: Chinese names where applicable
-- **Dates**: Birth and death years (e.g., "1308-1364")
-- **Description_English**: Brief description of the master's role/significance
+### CSV Column Structure (1-14):
+1. **Name_English** - Teacher names in English (source of truth for all name references)
+2. **Name_Wylie_Tibetan** - Tibetan transliteration using Wylie system
+3. **Name_Tibetan** - Tibetan script
+4. **Name_Chinese** - Chinese names where applicable
+5. **Dates** - Birth and death years (e.g., "1308-1364") or time periods
+6. **Description_English** - Brief description of the master's role/significance
+7. **Description_Tibetan** - Tibetan description
+8. **Description_Chinese** - Chinese description
+9. **Transmission_Mode** - Mind-to-Mind, Symbolic, or Aural
+10. **Lineage** - Which of the three main lineages (Vairocana, Vimalamitra, Padmasambhava, or "All lineages")
+11. **Received_Teachings_From** - Teacher(s) this master learned from (semicolon-separated names)
+12. **Gave_Teachings_To** - Student(s) this master taught (semicolon-separated names)
+13. **Eminated as** - Names of entities that emanated as this master (semicolon-separated)
+14. **Position_Date** - Numeric chronological positioning value (used for Y-axis positioning)
 
-### Transmission & Lineage Fields
-- **Transmission_Mode**: Mind-to-Mind, Symbolic, or Aural
-- **Lineage**: Which of the three main lineages (Vairocana, Vimalamitra, Padmasambhava)
-- **Position_Date**: Chronological positioning number (used for Y-axis positioning)
-
-### Relationship Fields
-- **Received_Teachings_From**: Teacher(s) this master learned from (solid lines in diagrams)
-- **Gave_Teachings_To**: Student(s) this master taught (solid lines in diagrams)
-- **Incarnation_Of**: Previous incarnation (dotted lines in diagrams)
-- **Familial_Relationship_To**: Family connections (dashed lines in diagrams)
-- **Eminated as**: **IMPORTANT** - This field indicates when a spiritual entity emanated/manifested as this particular master. This is different from incarnation - it's about a higher spiritual being expressing itself through this form. Contains NAMES only, never dates.
-
-### Critical Column Usage Notes
-- **Position_Date**: Always contains numeric values for chronological positioning
-- **Eminated as**: Contains names of entities that emanated as this master, or empty. Never contains dates.
-- **Incarnation_Of**: Shows reincarnation lineages (used for dotted line connections)
-- **Received_Teachings_From/Gave_Teachings_To**: Used for solid line teacher-student connections
+### Key Field Usage Notes:
+- **Name_English (Column 1)**: This is generally canonical source of truth for all name references
+- **Received_Teachings_From (Column 11)**: Teacher-student relationships (solid lines), names must match Column 1 exactly
+- **Gave_Teachings_To (Column 12)**: Student-teacher relationships (solid lines), names must match Column 1 exactly
+- **Eminated as (Column 13)**: Spiritual emanation relationships, names must match Column 1 exactly
+- **Position_Date (Column 14)**: Always numeric values for chronological positioning (0-2000+)
+- **Multiple names**: Use semicolon (;) separation, no commas within relationship fields
 
 ## Visual Features
 - **Interactive Tooltips**: Hover over nodes for detailed teacher information
