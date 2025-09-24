@@ -1660,35 +1660,45 @@
         // Split data into three separate lineage trees for preprocessing
         function splitIntoLineageTrees(nodes, links) {
             console.log('=== SPLITTING INTO LINEAGE TREES ===');
-            
+
             const lineages = {
                 vimalamitra: { nodes: [], links: [] },
                 padmasambhava: { nodes: [], links: [] },
                 vairocana: { nodes: [], links: [] },
-                shared: { nodes: [], links: [] } // For nodes that belong to multiple lineages
+                shared: { nodes: [], links: [] }, // For early sacred ancestors (0-100)
+                allLineages: { nodes: [], links: [] } // For post-Longchenpa unified masters
             };
-            
-            // Identify shared ancestor nodes that appear in multiple lineages
-            const sharedAncestors = ['Samantabhadra/Samantabhadrī', 'Buddhas of the Five Families', 
+
+            // Identify shared ancestor nodes that appear in multiple lineages (early period)
+            const sharedAncestors = ['Samantabhadra/Samantabhadrī', 'Buddhas of the Five Families',
                                    'Supreme Emanation Blessing', 'Sublime Wisdom Emanation (Vajradhara)',
-                                   'Vajrasattva', 'Vajrapāṇi', 'Cheu Nangwa Dampa Samkyi Mikhyapa', 
+                                   'Vajrasattva', 'Vajrapāṇi', 'Cheu Nangwa Dampa Samkyi Mikhyapa',
                                    'Śākyamuni Buddha', 'Garab Dorje', 'Mañjuśrimitra', 'Śrī Siṃha'];
-            
-            // Split nodes into lineages
+
+            // Split nodes into lineages with special handling for time periods
             nodes.forEach(node => {
-                if (sharedAncestors.includes(node.id)) {
+                const positionDate = parseInt(node.positionDate) || 0;
+
+                // Early sacred period (0-100) - these should maintain proper spacing
+                if (positionDate <= 100 || sharedAncestors.includes(node.id)) {
                     lineages.shared.nodes.push(node);
-                } else if (node.primaryLineage === 'Vimalamitra' || 
-                          (node.lineage && node.lineage.includes('Vimalamitra'))) {
+                }
+                // Post-Longchenpa unified lineage (All Lineages)
+                else if (node.lineage === 'All Lineages') {
+                    lineages.allLineages.nodes.push(node);
+                }
+                // Pre-Longchenpa individual lineages
+                else if (node.primaryLineage === 'Vimalamitra' ||
+                        (node.lineage && node.lineage.includes('Vimalamitra'))) {
                     lineages.vimalamitra.nodes.push(node);
-                } else if (node.primaryLineage === 'Padmasambhava' || 
+                } else if (node.primaryLineage === 'Padmasambhava' ||
                           (node.lineage && node.lineage.includes('Padmasambhava'))) {
                     lineages.padmasambhava.nodes.push(node);
-                } else if (node.primaryLineage === 'Vairocana' || 
+                } else if (node.primaryLineage === 'Vairocana' ||
                           (node.lineage && node.lineage.includes('Vairocana'))) {
                     lineages.vairocana.nodes.push(node);
                 } else {
-                    lineages.shared.nodes.push(node); // Fallback to shared
+                    lineages.shared.nodes.push(node); // Fallback to shared for early period
                 }
             });
             
@@ -1700,7 +1710,9 @@
                 if (!sourceNode || !targetNode) return;
                 
                 // Determine which lineage this link belongs to based on target node
-                if (lineages.vimalamitra.nodes.includes(targetNode)) {
+                if (lineages.allLineages.nodes.includes(targetNode)) {
+                    lineages.allLineages.links.push(link);
+                } else if (lineages.vimalamitra.nodes.includes(targetNode)) {
                     lineages.vimalamitra.links.push(link);
                 } else if (lineages.padmasambhava.nodes.includes(targetNode)) {
                     lineages.padmasambhava.links.push(link);
@@ -1811,25 +1823,29 @@
             const vairocanaWidth = 800;   // Fixed reasonable width
             const vimalamitraWidth = 1000; // Slightly wider for denser lineage
             const padmasambhavaWidth = 800; // Fixed reasonable width
-            const sharedWidth = 400;        // Fixed width for shared ancestors
+            const sharedWidth = 600;        // Fixed width for shared ancestors (0-100 period)
+            const allLineagesWidth = 1200;  // Width for post-Longchenpa unified lineage
 
             // Position lineages with controlled spacing - keep them close together
             const vairocanaX = 200;   // Left position
             const vimalamitraX = 1200; // Center position - close to Vairocana
             const padmasambhavaX = 2400; // Right position - close to Vimalamitra
-            const sharedX = vimalamitraX; // Center shared ancestors with Vimalamitra
+            const sharedX = vimalamitraX; // Center shared ancestors (0-100) with Vimalamitra
+            const allLineagesX = vimalamitraX; // Center post-Longchenpa nodes with middle
 
             console.log('Balanced positioning (prevents over-spreading):');
             console.log(`  Vairocana: X=${vairocanaX}, Width=${vairocanaWidth}`);
             console.log(`  Vimalamitra: X=${vimalamitraX}, Width=${vimalamitraWidth}`);
             console.log(`  Padmasambhava: X=${padmasambhavaX}, Width=${padmasambhavaWidth}`);
-            console.log(`  Shared: X=${sharedX}, Width=${sharedWidth}`);
+            console.log(`  Shared (0-100): X=${sharedX}, Width=${sharedWidth}`);
+            console.log(`  All Lineages (1325+): X=${allLineagesX}, Width=${allLineagesWidth}`);
 
             return {
                 vairocana: { x: vairocanaX, width: vairocanaWidth },
                 vimalamitra: { x: vimalamitraX, width: vimalamitraWidth },
                 padmasambhava: { x: padmasambhavaX, width: padmasambhavaWidth },
-                shared: { x: sharedX, width: sharedWidth }
+                shared: { x: sharedX, width: sharedWidth },
+                allLineages: { x: allLineagesX, width: allLineagesWidth }
             };
         }
 
@@ -1848,8 +1864,11 @@
             positionLineageNodes(lineages.vimalamitra, positions.vimalamitra.x, positions.vimalamitra.width);
             positionLineageNodes(lineages.padmasambhava, positions.padmasambhava.x, positions.padmasambhava.width);
 
-            // Step 4: Apply D3 tree layout to shared ancestors
+            // Step 4: Apply D3 tree layout to shared ancestors (early sacred period 0-100)
             positionLineageNodes(lineages.shared, positions.shared.x, positions.shared.width);
+
+            // Step 5: Apply D3 tree layout to unified All Lineages (post-Longchenpa period)
+            positionLineageNodes(lineages.allLineages, positions.allLineages.x, positions.allLineages.width);
             
             // Step 4: Apply final positioning - D3's X + Chronological Y with sub-layer offsets
             
