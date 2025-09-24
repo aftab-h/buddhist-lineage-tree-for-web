@@ -215,8 +215,8 @@
             </div>
 
             <div class="control-group">
-                <label>Density Sensitivity</label>
-                <input type="range" id="densitySensitivity" min="0.1" max="2" step="0.1" value="1" oninput="updateDensitySensitivity(this.value)">
+                <label>Node Spacing</label>
+                <input type="range" id="densitySensitivity" min="0.5" max="3" step="0.1" value="1" oninput="updateDensitySensitivity(this.value)">
             </div>
 
             <div class="control-group">
@@ -400,75 +400,109 @@
             console.log(`Loaded ${nodes.length} nodes and ${links.length} links`);
         }
 
-        // Calculate node density by century for adaptive Y-axis
-        function calculateCenturyDensity(nodes) {
-            const timeExtent = d3.extent(nodes, d => d.position);
-            const densityMap = new Map();
+        // Create normalized time-based Y-scale for optimal vertical spacing
+        function createNormalizedTimeScale(nodes) {
+            // Sort nodes by time position
+            const sortedNodes = [...nodes].sort((a, b) => a.position - b.position);
 
-            // Create century buckets
-            for (let century = Math.floor(timeExtent[0] / 100) * 100; century <= Math.ceil(timeExtent[1] / 100) * 100; century += 100) {
-                densityMap.set(century, 0);
+            if (sortedNodes.length === 0) return (pos) => margin.top;
+
+            // Calculate time gaps between consecutive nodes
+            const gaps = [];
+            for (let i = 1; i < sortedNodes.length; i++) {
+                const gap = sortedNodes[i].position - sortedNodes[i-1].position;
+                gaps.push({
+                    startTime: sortedNodes[i-1].position,
+                    endTime: sortedNodes[i].position,
+                    gap: gap,
+                    startNode: sortedNodes[i-1],
+                    endNode: sortedNodes[i]
+                });
             }
 
-            // Count nodes per century
-            nodes.forEach(node => {
-                const century = Math.floor(node.position / 100) * 100;
-                densityMap.set(century, (densityMap.get(century) || 0) + 1);
-            });
+            // Define minimum spacing between nodes (pixels) - much more conservative
+            const minNodeSpacing = 15 * densitySensitivity;
+            const maxGapSpacing = 40 * densitySensitivity;
 
-            return densityMap;
-        }
-
-        // Create adaptive Y-scale based on node density
-        function createAdaptiveYScale(nodes) {
-            const timeExtent = d3.extent(nodes, d => d.position);
-            const densityMap = calculateCenturyDensity(nodes);
-            const maxDensity = Math.max(...densityMap.values());
-
-            // Define minimum and maximum heights for centuries (affected by sensitivity)
-            const minCenturyHeight = 20;  // Minimum space for empty centuries
-            const maxCenturyHeight = 150 * densitySensitivity; // Maximum space for dense centuries
-
-            // Calculate cumulative Y positions
+            // Assign Y positions based on normalized spacing
             const yPositions = new Map();
             let currentY = margin.top;
 
-            // Sort centuries chronologically
-            const sortedCenturies = Array.from(densityMap.keys()).sort((a, b) => a - b);
+            // Set first node position
+            yPositions.set(sortedNodes[0].position, currentY);
+            currentY += minNodeSpacing;
 
-            sortedCenturies.forEach(century => {
-                const density = densityMap.get(century);
+            // Calculate spacing for each gap
+            gaps.forEach(gapInfo => {
+                const { gap, endNode } = gapInfo;
 
-                // Calculate height based on density (logarithmic scaling)
-                let height;
-                if (density === 0) {
-                    height = minCenturyHeight;
+                // Determine spacing based on time gap - much more conservative
+                let spacing;
+                if (gap <= 5) {
+                    // Very close in time - minimum spacing
+                    spacing = minNodeSpacing;
+                } else if (gap <= 25) {
+                    // Close in time - slight increase
+                    spacing = minNodeSpacing * 1.2;
+                } else if (gap <= 50) {
+                    // Medium gap - moderate spacing
+                    spacing = minNodeSpacing * 1.5;
+                } else if (gap <= 100) {
+                    // Large gap - good spacing
+                    spacing = minNodeSpacing * 2;
                 } else {
-                    // Use logarithmic scaling to prevent extreme differences
-                    const densityRatio = Math.log(density + 1) / Math.log(maxDensity + 1);
-                    height = minCenturyHeight + (maxCenturyHeight - minCenturyHeight) * densityRatio;
+                    // Very large gap - maximum spacing
+                    spacing = Math.min(maxGapSpacing, minNodeSpacing * 2.5);
                 }
 
-                yPositions.set(century, currentY);
-                currentY += height;
+                yPositions.set(endNode.position, currentY);
+                currentY += spacing;
             });
 
-            // Create interpolation function for any position value
+            // Constrain total height to reasonable viewport size
+            const maxAllowedHeight = height * 3; // Max 3x viewport height
+            if (currentY > maxAllowedHeight) {
+                // Scale down all positions proportionally
+                const scaleFactor = maxAllowedHeight / currentY;
+                yPositions.forEach((y, position) => {
+                    yPositions.set(position, margin.top + (y - margin.top) * scaleFactor);
+                });
+                currentY = maxAllowedHeight;
+            }
+
+            // Create interpolation function
             const yScale = (position) => {
-                const century = Math.floor(position / 100) * 100;
-                const nextCentury = century + 100;
+                // Find the closest nodes before and after this position
+                let beforeNode = null;
+                let afterNode = null;
 
-                const centuryY = yPositions.get(century) || margin.top;
-                const nextCenturyY = yPositions.get(nextCentury) || (height - margin.bottom);
+                for (let i = 0; i < sortedNodes.length; i++) {
+                    if (sortedNodes[i].position <= position) {
+                        beforeNode = sortedNodes[i];
+                    }
+                    if (sortedNodes[i].position >= position && !afterNode) {
+                        afterNode = sortedNodes[i];
+                        break;
+                    }
+                }
 
-                // Interpolate within the century
-                const centuryProgress = (position - century) / 100;
-                return centuryY + (nextCenturyY - centuryY) * centuryProgress;
+                // Handle edge cases
+                if (!beforeNode) return yPositions.get(afterNode.position);
+                if (!afterNode) return yPositions.get(beforeNode.position);
+                if (beforeNode === afterNode) return yPositions.get(beforeNode.position);
+
+                // Interpolate between the two nodes
+                const beforeY = yPositions.get(beforeNode.position);
+                const afterY = yPositions.get(afterNode.position);
+                const timeDiff = afterNode.position - beforeNode.position;
+                const progress = (position - beforeNode.position) / timeDiff;
+
+                return beforeY + (afterY - beforeY) * progress;
             };
 
-            // Store density info for axis creation
-            yScale.densityMap = densityMap;
-            yScale.yPositions = yPositions;
+            // Store info for axis creation
+            yScale.nodePositions = yPositions;
+            yScale.sortedNodes = sortedNodes;
             yScale.totalHeight = currentY;
 
             return yScale;
@@ -477,16 +511,16 @@
         function createVisualization() {
             const mainGroup = svg.select('.main-group');
 
-            // Create adaptive time scale based on node density
-            const yScale = createAdaptiveYScale(nodes);
+            // Create normalized time scale for optimal vertical spacing
+            const yScale = createNormalizedTimeScale(nodes);
 
-            // Set initial Y positions based on adaptive scale
+            // Set initial Y positions based on normalized scale
             nodes.forEach(node => {
                 node.y = yScale(node.position);
             });
 
-            // Create time axis with density information
-            createAdaptiveTimeAxis(mainGroup, yScale);
+            // Create time axis with normalized spacing
+            createNormalizedTimeAxis(mainGroup, yScale);
 
             // Create links
             linkElements = mainGroup.selectAll('.link')
@@ -526,17 +560,14 @@
             createForceSimulation(yScale);
         }
 
-        function createAdaptiveTimeAxis(container, yScale) {
+        function createNormalizedTimeAxis(container, yScale) {
             const timeAxis = container.append('g')
                 .attr('class', 'time-axis');
 
-            const densityMap = yScale.densityMap;
-            const yPositions = yScale.yPositions;
+            const sortedNodes = yScale.sortedNodes;
+            const nodePositions = yScale.nodePositions;
 
-            // Get centuries with their positions
-            const centuries = Array.from(densityMap.keys()).sort((a, b) => a - b);
-
-            // Add main axis line (extends to total height)
+            // Add main axis line
             timeAxis.append('line')
                 .attr('x1', margin.left - 20)
                 .attr('x2', margin.left - 20)
@@ -545,60 +576,73 @@
                 .attr('stroke', '#444')
                 .attr('stroke-width', 2);
 
-            // Add century markers
-            timeAxis.selectAll('.century-tick')
-                .data(centuries)
-                .enter()
-                .append('g')
-                .attr('class', 'century-tick')
-                .each(function(d) {
-                    const g = d3.select(this);
-                    const y = yPositions.get(d);
-                    const density = densityMap.get(d);
+            // Create time markers for every 50 years or major periods
+            const timeMarkers = [];
+            const timeExtent = d3.extent(sortedNodes, d => d.position);
 
-                    // Main century line
+            // Add century markers
+            for (let year = Math.floor(timeExtent[0] / 100) * 100; year <= Math.ceil(timeExtent[1] / 100) * 100; year += 100) {
+                if (year >= timeExtent[0] && year <= timeExtent[1]) {
+                    timeMarkers.push({ year: year, type: 'century' });
+                }
+            }
+
+            // Add 50-year markers for better granularity
+            for (let year = Math.floor(timeExtent[0] / 50) * 50; year <= Math.ceil(timeExtent[1] / 50) * 50; year += 50) {
+                if (year >= timeExtent[0] && year <= timeExtent[1] && year % 100 !== 0) {
+                    timeMarkers.push({ year: year, type: 'half-century' });
+                }
+            }
+
+            // Add node markers for actual data points
+            sortedNodes.forEach((node, i) => {
+                if (i % 5 === 0) { // Show every 5th node to avoid clutter
+                    timeMarkers.push({ year: node.position, type: 'node', node: node });
+                }
+            });
+
+            timeMarkers.forEach(marker => {
+                const y = yScale(marker.year);
+                const g = timeAxis.append('g').attr('class', 'time-tick');
+
+                if (marker.type === 'century') {
+                    // Century markers - bold
+                    g.append('line')
+                        .attr('x1', margin.left - 30)
+                        .attr('x2', margin.left - 15)
+                        .attr('y1', y)
+                        .attr('y2', y)
+                        .attr('stroke', '#888')
+                        .attr('stroke-width', 2);
+
+                    g.append('text')
+                        .attr('x', margin.left - 35)
+                        .attr('y', y + 4)
+                        .attr('class', 'time-label')
+                        .style('font-size', '12px')
+                        .style('fill', '#aaa')
+                        .text(marker.year > 0 ? `${marker.year} CE` : `${Math.abs(marker.year)} BCE`);
+
+                } else if (marker.type === 'half-century') {
+                    // Half-century markers - lighter
                     g.append('line')
                         .attr('x1', margin.left - 25)
                         .attr('x2', margin.left - 15)
                         .attr('y1', y)
                         .attr('y2', y)
-                        .attr('stroke', '#666')
-                        .attr('stroke-width', density > 0 ? 2 : 1);
+                        .attr('stroke', '#555')
+                        .attr('stroke-width', 1);
 
-                    // Century label
-                    g.append('text')
-                        .attr('x', margin.left - 35)
-                        .attr('y', y + 4)
-                        .attr('class', 'time-label')
-                        .style('font-size', density > 0 ? '12px' : '10px')
-                        .style('fill', density > 0 ? '#aaa' : '#666')
-                        .text(d > 0 ? `${d} CE` : `${Math.abs(d)} BCE`);
-
-                    // Density indicator (node count)
-                    if (density > 0) {
-                        g.append('text')
-                            .attr('x', margin.left - 35)
-                            .attr('y', y + 16)
-                            .attr('class', 'density-label')
-                            .style('font-size', '8px')
-                            .style('fill', '#888')
-                            .text(`(${density} masters)`);
-                    }
-
-                    // Visual density indicator - bar showing relative density
-                    if (density > 0) {
-                        const maxDensity = Math.max(...densityMap.values());
-                        const barWidth = (density / maxDensity) * 10;
-
-                        g.append('rect')
-                            .attr('x', margin.left - 15)
-                            .attr('y', y - 2)
-                            .attr('width', barWidth)
-                            .attr('height', 4)
-                            .attr('fill', '#4a90e2')
-                            .attr('opacity', 0.6);
-                    }
-                });
+                } else if (marker.type === 'node') {
+                    // Node markers - small dots
+                    g.append('circle')
+                        .attr('cx', margin.left - 20)
+                        .attr('cy', y)
+                        .attr('r', 2)
+                        .attr('fill', '#4a90e2')
+                        .attr('opacity', 0.6);
+                }
+            });
         }
 
         function createForceSimulation(yScale) {
@@ -670,12 +714,12 @@
         }
 
         function updateTimeScale(value) {
-            // Create new adaptive scale with compression factor
-            const adaptiveScale = createAdaptiveYScale(nodes);
+            // Create new normalized scale with compression factor
+            const normalizedScale = createNormalizedTimeScale(nodes);
 
-            // Apply compression factor to the adaptive scale
+            // Apply compression factor to the normalized scale
             const compressedScale = (position) => {
-                const originalY = adaptiveScale(position);
+                const originalY = normalizedScale(position);
                 const scaledY = margin.top + (originalY - margin.top) * value;
                 return scaledY;
             };
@@ -695,7 +739,7 @@
         function updateDensitySensitivity(value) {
             densitySensitivity = value;
 
-            // Recreate the entire visualization with new density settings
+            // Recreate the entire visualization with new spacing settings
             svg.select('.main-group').selectAll('*').remove();
             createVisualization();
         }
