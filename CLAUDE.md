@@ -90,6 +90,45 @@ Both `dzogchen_lineage.csv` and `new_lineage_nodes.csv` now use this structure:
 - **Position_Date (Column 16)**: Always numeric values for chronological positioning (0-2000+)
 - **Multiple names**: Use semicolon (;) separation, no commas within relationship fields
 
+## Visual Line Types for Relationships
+
+The visualization uses distinct line styles to represent different types of relationships between masters:
+
+### **Solid Lines** - Direct Teaching Transmission
+- **Source**: `Received_Teachings_From` (Column 11) and `Gave_Teachings_To` (Column 12)
+- **Style**: Solid, continuous lines
+- **Color**: Typically matches lineage color (Green for Aural, Purple for Symbolic, Blue for Mind-to-Mind)
+- **Direction**: From teacher to student (hierarchical flow)
+- **Represents**: Direct dharma transmission between teacher and student
+
+### **Dotted Lines** - Incarnation Relationships
+- **Source**: `Incarnation_Of` (Column 13)
+- **Style**: Small dots with regular spacing
+- **Color**: Distinct from teaching lines (suggested: gray or muted color)
+- **Direction**: From previous incarnation to current incarnation
+- **Represents**: Reincarnation lineage showing continuation of the same consciousness stream
+
+### **Dashed Lines** - Family Teaching Relationships
+- **Source**: `Family_Received_From` (Column 14)
+- **Style**: Medium dashes with gaps
+- **Color**: Different from other relationship types (suggested: brown or earth tone)
+- **Direction**: From family teacher to family student
+- **Represents**: Dharma transmission within family structures (father to son, uncle to nephew, etc.)
+
+### **Double-Dotted Lines** - Spiritual Emanation
+- **Source**: `Eminated as` (Column 15)
+- **Style**: Double dots or dotted with different spacing pattern
+- **Color**: Distinct emanation color (suggested: golden or bright accent)
+- **Direction**: From emanating entity to emanated form
+- **Represents**: Higher spiritual beings manifesting as specific masters (different from reincarnation)
+
+### **Implementation Guidelines**
+- **Line Hierarchy**: Solid teaching lines should be most prominent, other relationships secondary
+- **Color Coordination**: Each line type needs distinct visual identity while maintaining overall design harmony
+- **Interactive Tooltips**: Hovering over lines should indicate relationship type
+- **Legend**: Include visual legend showing all four line types with labels
+- **Accessibility**: Ensure line types are distinguishable even without color (for colorblind users)
+
 ### File Status & Recent Updates:
 - **`dzogchen_lineage.csv`**: Main lineage data file - **UPDATED & CLEANED**
   - Expanded from 12 to 16-column format to match new CSV structure
@@ -132,6 +171,11 @@ Both `dzogchen_lineage.csv` and `new_lineage_nodes.csv` now use this structure:
 - **Lineage Filtering**: Focus on individual lineages
 - **Responsive Design**: Adapts to different screen sizes
 - **Century Markers**: Timeline visualization along the bottom
+- **Relationship Legend**: Visual legend showing all four line types:
+  - **Solid Lines**: Direct teaching transmission (teacher-student)
+  - **Dotted Lines**: Incarnation relationships (reincarnation lineages)
+  - **Dashed Lines**: Family teaching relationships (family dharma transmission)
+  - **Double-Dotted Lines**: Spiritual emanation (higher beings manifesting as masters)
 
 ## Scalability Requirements & Current Challenges
 
