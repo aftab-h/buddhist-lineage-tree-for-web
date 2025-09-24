@@ -11,17 +11,13 @@ The visualization organizes the post-symbolic transmission period into three pri
 1. **Vairocana Lineage** (Left/Green)
    - Begins with Vairocana in the 8th century
    - Continues through disciples like Pang Sang-gyé Gönpo, Yudra Nyingpo
-   - Generally sparser in later periods
 
 2. **Vimalamitra Lineage** (Center/Green)
    - Begins with Vimalamitra in the 8th century
-   - Most densely populated lineage, especially in later centuries
-   - Continues through Nyang Tingzin Zanpo, Longchenpa, and many modern teachers
 
 3. **Padmasambhava Lineage** (Right/Purple)
    - Begins with Padmasambhava in the 8th century
    - Flows through Yeshe Tsogyel, Princess Pemasel, and various treasure revealers
-   - Includes many terma (treasure) revelations
 
 ## Transmission Modes
 The visualization uses color coding to represent different types of dharma transmission:
@@ -39,9 +35,9 @@ The visualization uses color coding to represent different types of dharma trans
 - **Centered Layout**: All early Mind-to-Mind transmission nodes cluster around the middle
 
 ### Later Period - Three Lineage Trees (Post-100)
-- **Fixed Sequential Order**: Vairocana → Vimalamitra → Padmasambhava (left to right) - this order is mandatory and cannot be changed
+- **Fixed Sequential Order**: Vairocana → Vimalamitra → Padmasambhava (left to right) - this order is mandatory and should not be changed
 - **Dynamic Width Calculation**: Each lineage gets width based on node density in crowded periods using `calculateOptimalLineageWidth()`
-- **Sequential Positioning**: Lineages positioned one after another based on actual rightmost node positions + spacing
+- **Sequential Positioning**: Lineages positioned one after another based on actual rightmost node positions + spacing //but this might be bad design, maybe theres a better way to ensure the order of the three lineages. im not sure. 
 - **D3 Tree Layout**: Uses D3's tree algorithm within each lineage for proper hierarchical branching
 
 ### Positioning Algorithm
@@ -126,7 +122,7 @@ The visualization uses distinct line styles to represent different types of rela
 - **Line Hierarchy**: Solid teaching lines should be most prominent, other relationships secondary
 - **Color Coordination**: Each line type needs distinct visual identity while maintaining overall design harmony
 - **Interactive Tooltips**: Hovering over lines should indicate relationship type
-- **Legend**: Include visual legend showing all four line types with labels
+- **Legend**: Include visual legend showing all line types with labels
 - **Accessibility**: Ensure line types are distinguishable even without color (for colorblind users)
 
 ### File Status & Recent Updates:
@@ -137,7 +133,7 @@ The visualization uses distinct line styles to represent different types of rela
 - Both files maintained identical 16-column structures throughout merge process
 
 ### Recent Data Cleanup (Completed):
-**Merge Process (December 2024):**
+**Merge Process (septemer 23 2025):**
 - Successfully merged 224 new records into original 103 masters
 - Total dataset: **318 unique masters** (from 327 initial entries)
 - **Zero duplicates remaining** (verified)
@@ -160,9 +156,8 @@ The visualization uses distinct line styles to represent different types of rela
 - Ensured relationship field consistency
 
 ### Outstanding Data Issues (Pending):
-**Naming Inconsistencies in Relationship Fields:**
-- Teacher/student references may use variant spellings not matching canonical `Name_English`
-- Requires systematic validation of all relationship field references against Column 1 names
+**Node Layout Optimization:**
+- Optimize the nodes layout tree algorhtim; we get lots of clustering especially as we go lower, that makes it very hard to see the nodes. We often get nodes overlapping eachother, when ideally this should never happen. 
 - Critical for proper visualization connections
 
 ## Visual Features
@@ -188,8 +183,7 @@ This visualization must be **highly scalable** because:
 ### Current Architecture Challenge
 We face a **fundamental spacing problem**:
 
-1. **Dense Vimalamitra Lineage**: The center lineage (Vimalamitra) becomes extremely dense, especially at the bottom
-2. **Excessive Width Calculation**: `calculateOptimalLineageWidth()` gives Vimalamitra very wide allocation (potentially 300px × many nodes)
+1. **Dense Lineage**: The map becomes extremely dense, especially at the bottom
 3. **Sequential Positioning Problem**: Since we position Padmasambhava after Vimalamitra's rightmost extent, it gets pushed way out to the right
 4. **Poor User Experience**: Padmasambhava lineage becomes difficult to read and navigate due to excessive horizontal distance
 
