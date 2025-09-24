@@ -226,6 +226,14 @@
                 <button onclick="filterTransmission('Symbolic')">Symbolic</button>
                 <button onclick="filterTransmission('Aural')">Aural</button>
             </div>
+
+            <div class="control-group">
+                <label>Filter by Lineage</label>
+                <button onclick="filterLineage('all')" class="active">All</button>
+                <button onclick="filterLineage('Vairocana')">Vairocana</button>
+                <button onclick="filterLineage('Vimalamitra')">Vimalamitra</button>
+                <button onclick="filterLineage('Padmasambhava')">Padmasambhava</button>
+            </div>
         </div>
 
         <div class="legend">
@@ -273,6 +281,7 @@
         let linkElements;
         let tooltip;
         let currentFilter = 'all';
+        let currentLineageFilter = 'all';
         let densitySensitivity = 1.0;
 
         // Dimensions
@@ -543,7 +552,11 @@
                 .data(nodes)
                 .enter()
                 .append('circle')
-                .attr('class', d => `node ${d.transmission.toLowerCase().replace('-', '-').replace(' ', '-')}`)
+                .attr('class', d => {
+                    // Clean transmission mode for CSS class
+                    const cleanTransmission = d.transmission.toLowerCase().replace(/[\s-]/g, '-');
+                    return `node ${cleanTransmission}`;
+                })
                 .attr('r', d => {
                     // Size based on number of connections
                     const connections = d.teachers.length + d.students.length;
@@ -747,20 +760,43 @@
         function filterTransmission(mode) {
             currentFilter = mode;
 
-            // Update button states
-            document.querySelectorAll('.controls button').forEach(btn => {
+            // Update button states for transmission filter
+            document.querySelectorAll('.controls .control-group:nth-child(4) button').forEach(btn => {
                 btn.classList.remove('active');
             });
             event.target.classList.add('active');
 
-            // Filter nodes and links
+            applyFilters();
+        }
+
+        function filterLineage(lineage) {
+            currentLineageFilter = lineage;
+
+            // Update button states for lineage filter
+            document.querySelectorAll('.controls .control-group:nth-child(5) button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            applyFilters();
+        }
+
+        function applyFilters() {
+            // Apply both transmission and lineage filters
             nodeElements
-                .style('opacity', d => mode === 'all' || d.transmission === mode ? 0.9 : 0.1);
+                .style('opacity', d => {
+                    const transmissionMatch = currentFilter === 'all' || d.transmission === currentFilter;
+                    const lineageMatch = currentLineageFilter === 'all' || d.lineage === currentLineageFilter;
+                    return transmissionMatch && lineageMatch ? 0.9 : 0.1;
+                });
 
             linkElements
                 .style('opacity', d => {
-                    if (mode === 'all') return 0.7;
-                    return (d.source.transmission === mode || d.target.transmission === mode) ? 0.7 : 0.1;
+                    const sourceVisible = (currentFilter === 'all' || d.source.transmission === currentFilter) &&
+                                        (currentLineageFilter === 'all' || d.source.lineage === currentLineageFilter);
+                    const targetVisible = (currentFilter === 'all' || d.target.transmission === currentFilter) &&
+                                         (currentLineageFilter === 'all' || d.target.lineage === currentLineageFilter);
+                    return sourceVisible && targetVisible ? 0.7 : 0.1;
                 });
         }
 
