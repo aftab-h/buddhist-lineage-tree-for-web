@@ -90,10 +90,41 @@ Both `dzogchen_lineage.csv` and `new_lineage_nodes.csv` now use this structure:
 - **Position_Date (Column 16)**: Always numeric values for chronological positioning (0-2000+)
 - **Multiple names**: Use semicolon (;) separation, no commas within relationship fields
 
-### File Status:
-- **`dzogchen_lineage.csv`**: Main lineage data file (now updated to 16-column format)
-- **`new_lineage_nodes.csv`**: Additional nodes to be merged into main file
-- Both files now have identical column structures for seamless merging
+### File Status & Recent Updates:
+- **`dzogchen_lineage.csv`**: Main lineage data file - **UPDATED & CLEANED**
+  - Expanded from 12 to 16-column format to match new CSV structure
+  - Enhanced merge preserved chronological positioning while adding better descriptions and broader lineage scope
+- **`new_lineage_nodes.csv`**: **FULLY MERGED** into main file (224 records integrated)
+- Both files maintained identical 16-column structures throughout merge process
+
+### Recent Data Cleanup (Completed):
+**Merge Process (December 2024):**
+- Successfully merged 224 new records into original 103 masters
+- Total dataset: **318 unique masters** (from 327 initial entries)
+- **Zero duplicates remaining** (verified)
+
+**8 Duplicate Names Resolved:**
+1. **Dza Pukhung Gyurmé Ngedön Wangpo** - Enhanced merge with better description
+2. **Terchen Orgyen Chokgyur Lingpa** - Combined broader lineage scope with detailed dates
+3. **Rigdzin Jigme Lingpa** - Triple duplicate resolved, preserved chronological positioning
+4. **3rd Katok Situ** - Merged detailed teacher names with student lists
+5. **Yukhok Jadralwa Chöying Rangdrol** - Enhanced dates and teacher relationships
+6. **Chungtrul Pema Wangchen** - Preserved broader lineage with precise dates
+7. **Dilgo Khyentsé Yangsi** - Added incarnation/emanation relationships
+8. **Minling Trichen Kunzang Wangyal** - Combined complete information with contemporary context
+
+**Enhanced Merge Strategy Applied:**
+- Preserved chronological `Position_Date` for historical accuracy
+- Maintained broader lineage scope when available
+- Added better descriptions and precise dates
+- Used detailed teacher name formats
+- Ensured relationship field consistency
+
+### Outstanding Data Issues (Pending):
+**Naming Inconsistencies in Relationship Fields:**
+- Teacher/student references may use variant spellings not matching canonical `Name_English`
+- Requires systematic validation of all relationship field references against Column 1 names
+- Critical for proper visualization connections
 
 ## Visual Features
 - **Interactive Tooltips**: Hover over nodes for detailed teacher information
