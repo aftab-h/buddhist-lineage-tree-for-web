@@ -58,9 +58,11 @@ The visualization uses color coding to represent different types of dharma trans
 - **Collision Detection**: Prevents overlapping while maintaining hierarchical relationships
 
 ## Data Structure
-The lineage data comes from `dzogchen_lineage.csv` with the following exact column structure:
+The project uses two CSV files that now have identical column structures (16 columns):
 
-### CSV Column Structure (1-14):
+### Unified CSV Column Structure (1-16):
+Both `dzogchen_lineage.csv` and `new_lineage_nodes.csv` now use this structure:
+
 1. **Name_English** - Teacher names in English (source of truth for all name references)
 2. **Name_Wylie_Tibetan** - Tibetan transliteration using Wylie system
 3. **Name_Tibetan** - Tibetan script
@@ -73,16 +75,25 @@ The lineage data comes from `dzogchen_lineage.csv` with the following exact colu
 10. **Lineage** - Which of the three main lineages (Vairocana, Vimalamitra, Padmasambhava, or "All lineages")
 11. **Received_Teachings_From** - Teacher(s) this master learned from (semicolon-separated names)
 12. **Gave_Teachings_To** - Student(s) this master taught (semicolon-separated names)
-13. **Eminated as** - Names of entities that emanated as this master (semicolon-separated)
-14. **Position_Date** - Numeric chronological positioning value (used for Y-axis positioning)
+13. **Incarnation_Of** - Previous incarnation relationships (dotted lines in visualization)
+14. **Family_Received_From** - Family-based teaching relationships (dashed lines in visualization)
+15. **Eminated as** - Names of entities that emanated as this master (semicolon-separated)
+16. **Position_Date** - Numeric chronological positioning value (used for Y-axis positioning)
 
 ### Key Field Usage Notes:
-- **Name_English (Column 1)**: This is generally canonical source of truth for all name references
+- **Name_English (Column 1)**: The canonical source of truth for all name references in both files
 - **Received_Teachings_From (Column 11)**: Teacher-student relationships (solid lines), names must match Column 1 exactly
 - **Gave_Teachings_To (Column 12)**: Student-teacher relationships (solid lines), names must match Column 1 exactly
-- **Eminated as (Column 13)**: Spiritual emanation relationships, names must match Column 1 exactly
-- **Position_Date (Column 14)**: Always numeric values for chronological positioning (0-2000+)
+- **Incarnation_Of (Column 13)**: Reincarnation relationships (dotted lines), names must match Column 1 exactly
+- **Family_Received_From (Column 14)**: Family teaching relationships (dashed lines), names must match Column 1 exactly
+- **Eminated as (Column 15)**: Spiritual emanation relationships, names must match Column 1 exactly
+- **Position_Date (Column 16)**: Always numeric values for chronological positioning (0-2000+)
 - **Multiple names**: Use semicolon (;) separation, no commas within relationship fields
+
+### File Status:
+- **`dzogchen_lineage.csv`**: Main lineage data file (now updated to 16-column format)
+- **`new_lineage_nodes.csv`**: Additional nodes to be merged into main file
+- Both files now have identical column structures for seamless merging
 
 ## Visual Features
 - **Interactive Tooltips**: Hover over nodes for detailed teacher information
