@@ -317,10 +317,31 @@
             stroke-width: 4px;
             stroke-opacity: 0.8;
         }
-        
-        /* Dotted style for emanation connections */
+
+        /* Solid lines for direct teaching transmission (default) */
+        .link.teaching {
+            stroke-dasharray: none;
+        }
+
+        /* Dotted lines for incarnation relationships */
+        .link.incarnation {
+            stroke-dasharray: 3,6;
+            stroke: #888;
+            stroke-width: 3px;
+        }
+
+        /* Dashed lines for family teaching relationships */
+        .link.family {
+            stroke-dasharray: 8,4;
+            stroke: #8B4513;
+            stroke-width: 3px;
+        }
+
+        /* Double-dotted lines for spiritual emanation */
         .link.emanation {
-            stroke-dasharray: 5,5;
+            stroke-dasharray: 3,3,1,3;
+            stroke: #DAA520;
+            stroke-width: 3px;
         }
 
         /* Fade effect for century lines */
@@ -1118,13 +1139,37 @@
                 <div class="legend-item">
                     <svg width="30" height="12" style="margin-right: 8px;">
                         <defs>
-                            <marker id="legend-arrow-dotted" viewBox="0 -5 10 10" refX="8" refY="0" markerWidth="4" markerHeight="4" orient="auto">
-                                <path d="M0,-5L10,0L0,5" fill="#666" opacity="0.8"/>
+                            <marker id="legend-arrow-incarnation" viewBox="0 -5 10 10" refX="8" refY="0" markerWidth="4" markerHeight="4" orient="auto">
+                                <path d="M0,-5L10,0L0,5" fill="#888" opacity="0.8"/>
                             </marker>
                         </defs>
-                        <path d="M2,6 L24,6" stroke="#666" stroke-width="2" stroke-dasharray="5,5" fill="none" marker-end="url(#legend-arrow-dotted)" opacity="0.8"/>
+                        <path d="M2,6 L24,6" stroke="#888" stroke-width="2" stroke-dasharray="3,6" fill="none" marker-end="url(#legend-arrow-incarnation)" opacity="0.8"/>
                     </svg>
-                    <span>Emanation Relationship</span>
+                    <span>Incarnation Lineage</span>
+                </div>
+
+                <div class="legend-item">
+                    <svg width="30" height="12" style="margin-right: 8px;">
+                        <defs>
+                            <marker id="legend-arrow-family" viewBox="0 -5 10 10" refX="8" refY="0" markerWidth="4" markerHeight="4" orient="auto">
+                                <path d="M0,-5L10,0L0,5" fill="#8B4513" opacity="0.8"/>
+                            </marker>
+                        </defs>
+                        <path d="M2,6 L24,6" stroke="#8B4513" stroke-width="2" stroke-dasharray="8,4" fill="none" marker-end="url(#legend-arrow-family)" opacity="0.8"/>
+                    </svg>
+                    <span>Family Teaching</span>
+                </div>
+
+                <div class="legend-item">
+                    <svg width="30" height="12" style="margin-right: 8px;">
+                        <defs>
+                            <marker id="legend-arrow-emanation" viewBox="0 -5 10 10" refX="8" refY="0" markerWidth="4" markerHeight="4" orient="auto">
+                                <path d="M0,-5L10,0L0,5" fill="#DAA520" opacity="0.8"/>
+                            </marker>
+                        </defs>
+                        <path d="M2,6 L24,6" stroke="#DAA520" stroke-width="2" stroke-dasharray="3,3,1,3" fill="none" marker-end="url(#legend-arrow-emanation)" opacity="0.8"/>
+                    </svg>
+                    <span>Spiritual Emanation</span>
                 </div>
             </div>
         </div>
@@ -1371,6 +1416,36 @@
                                 type: 'emanation'  // Mark as emanation link
                             });
                             nodes.get(person.Name_English).children.push(emanation);
+                        }
+                    });
+                }
+
+                // Process incarnation relationships from "Incarnation_Of" column
+                if (person.Incarnation_Of) {
+                    const incarnations = person.Incarnation_Of.split(';').map(i => i.trim());
+                    incarnations.forEach(incarnation => {
+                        if (incarnation && nodes.has(incarnation) && nodes.has(person.Name_English)) {
+                            links.push({
+                                source: incarnation,
+                                target: person.Name_English,
+                                lineage: person.Lineage,
+                                type: 'incarnation'  // Mark as incarnation link
+                            });
+                        }
+                    });
+                }
+
+                // Process family teaching relationships from "Family_Received_From" column
+                if (person.Family_Received_From) {
+                    const familyTeachers = person.Family_Received_From.split(';').map(f => f.trim());
+                    familyTeachers.forEach(familyTeacher => {
+                        if (familyTeacher && nodes.has(familyTeacher) && nodes.has(person.Name_English)) {
+                            links.push({
+                                source: familyTeacher,
+                                target: person.Name_English,
+                                lineage: person.Lineage,
+                                type: 'family'  // Mark as family teaching link
+                            });
                         }
                     });
                 }
@@ -3187,7 +3262,14 @@
                 .data(data.links)
                 .enter()
                 .append('path')
-                .attr('class', d => d.type === 'emanation' ? 'link emanation' : 'link')
+                .attr('class', d => {
+                    switch(d.type) {
+                        case 'emanation': return 'link emanation';
+                        case 'incarnation': return 'link incarnation';
+                        case 'family': return 'link family';
+                        default: return 'link teaching'; // Default for regular teaching relationships
+                    }
+                })
                 .attr('d', d => {
                     const source = data.nodes.find(n => n.id === d.source);
                     const target = data.nodes.find(n => n.id === d.target);
