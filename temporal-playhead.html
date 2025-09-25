@@ -41,6 +41,11 @@
             stroke: #357abd;
         }
 
+        .node.mind-to-mind {
+            fill: #4a90e2;
+            stroke: #357abd;
+        }
+
         .node.symbolic {
             fill: #9b59b6;
             stroke: #7d3c98;
@@ -227,7 +232,7 @@
             <div class="control-group">
                 <label>Filter by Transmission</label>
                 <button onclick="filterTransmission('all')" class="active">All</button>
-                <button onclick="filterTransmission('Mind-to-Mind')">Mind</button>
+                <button onclick="filterTransmission('Mind to Mind')">Mind</button>
                 <button onclick="filterTransmission('Symbolic')">Symbolic</button>
                 <button onclick="filterTransmission('Aural')">Aural</button>
             </div>
@@ -468,6 +473,21 @@
                 });
             });
 
+            // Debug: Check transmission types
+            const transmissionTypes = [...new Set(nodes.map(n => n.transmission))];
+            console.log('Transmission types found:', transmissionTypes);
+
+            // Debug: Count by transmission
+            const transmissionCounts = {};
+            nodes.forEach(n => {
+                transmissionCounts[n.transmission] = (transmissionCounts[n.transmission] || 0) + 1;
+            });
+            console.log('Transmission counts:', transmissionCounts);
+
+            // Debug: Check first few Mind to Mind nodes
+            const mindToMindNodes = nodes.filter(n => n.transmission === 'Mind to Mind');
+            console.log(`Found ${mindToMindNodes.length} Mind to Mind nodes:`, mindToMindNodes.slice(0, 3));
+
             console.log(`Loaded ${nodes.length} nodes and ${links.length} links`);
         }
 
@@ -518,13 +538,19 @@
 
         function updateVisualization() {
             const maxPosition = Math.max(...nodes.map(n => n.position));
-            const timeThreshold = (currentTime / 100) * maxPosition;
+            const minPosition = Math.min(...nodes.map(n => n.position));
+            const timeThreshold = minPosition + (currentTime / 100) * (maxPosition - minPosition);
 
             // Filter nodes that exist at current time and match filters
             const visibleNodes = nodes.filter(d => {
                 const existsAtTime = d.position <= timeThreshold;
                 const transmissionMatch = currentFilter === 'all' || d.transmission === currentFilter;
-                const lineageMatch = currentLineageFilter === 'all' || d.lineage === currentLineageFilter;
+                const lineageMatch = currentLineageFilter === 'all' ||
+                                   d.lineage === currentLineageFilter ||
+                                   d.lineage === 'All lineages' ||
+                                   d.lineage.includes(currentLineageFilter);
+
+
                 return existsAtTime && transmissionMatch && lineageMatch;
             });
 
@@ -600,7 +626,8 @@
 
         function updateTimeDisplay() {
             const maxPosition = Math.max(...nodes.map(n => n.position));
-            const currentYear = Math.round((currentTime / 100) * maxPosition);
+            const minPosition = Math.min(...nodes.map(n => n.position));
+            const currentYear = Math.round(minPosition + (currentTime / 100) * (maxPosition - minPosition));
             document.getElementById('timeDisplay').textContent = `Time Position: ${currentYear}`;
         }
 
