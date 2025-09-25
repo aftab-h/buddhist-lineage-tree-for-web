@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buddhist Lineage - Temporal Playhead Visualization</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Tibetan:wght@400;600&family=Noto+Sans+SC:wght@400;600&display=swap');
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Arial', 'Noto Sans Tibetan', 'Noto Sans SC', sans-serif;
+            background: #0a0a0a;
+            color: #ffffff;
+            overflow: hidden;
+        }
+
+        #container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+
+        svg {
+            width: 100%;
+            height: 100%;
+            background: #0a0a0a;
+        }
+
+        /* Node Styles */
+        .node {
+            cursor: pointer;
+            stroke-width: 1.5px;
+            opacity: 0.9;
+        }
+
+        .node.mind-to-mind {
+            fill: #4a90e2;
+            stroke: #357abd;
+        }
+
+        .node.symbolic {
+            fill: #9b59b6;
+            stroke: #7d3c98;
+        }
+
+        .node.aural {
+            fill: #27ae60;
+            stroke: #1e8449;
+        }
+
+        .node:hover {
+            opacity: 1;
+            stroke-width: 3px;
+        }
+
+        /* Link Styles */
+        .link {
+            fill: none;
+            stroke-width: 1.5px;
+            opacity: 0.7;
+        }
+
+        .link.teaching {
+            stroke: #ffffff;
+        }
+
+        .link.incarnation {
+            stroke: #888888;
+            stroke-dasharray: 2,2;
+        }
+
+        .link.family {
+            stroke: #cd853f;
+            stroke-dasharray: 5,3;
+        }
+
+        .link.emanation {
+            stroke: #ffd700;
+            stroke-dasharray: 1,1;
+        }
+
+        /* Controls */
+        .controls {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(20, 20, 20, 0.9);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #333;
+            backdrop-filter: blur(10px);
+            min-width: 250px;
+        }
+
+        .control-group {
+            margin-bottom: 15px;
+        }
+
+        .control-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #ffffff;
+        }
+
+        .control-group button {
+            margin-right: 5px;
+            margin-bottom: 5px;
+            padding: 5px 10px;
+            border: 1px solid #555;
+            background: #333;
+            color: #fff;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+
+        .control-group button:hover {
+            background: #444;
+        }
+
+        .control-group button.active {
+            background: #4a90e2;
+            border-color: #357abd;
+        }
+
+        .control-group input[type="range"] {
+            width: 100%;
+            margin-top: 5px;
+        }
+
+        /* Time playhead styles */
+        .time-playhead {
+            background: linear-gradient(90deg, #4a90e2 0%, #27ae60 50%, #9b59b6 100%);
+            height: 8px;
+            border-radius: 4px;
+        }
+
+        .time-display {
+            text-align: center;
+            font-size: 14px;
+            font-weight: bold;
+            margin-top: 5px;
+            color: #4a90e2;
+        }
+
+        /* Legend */
+        .legend {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(20, 20, 20, 0.9);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #333;
+            backdrop-filter: blur(10px);
+        }
+
+        .legend h4 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            color: #ffffff;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+
+        /* Tooltip styles */
+        .tooltip {
+            position: absolute;
+            text-align: left;
+            padding: 12px;
+            font-size: 12px;
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            border: 1px solid #333;
+            border-radius: 8px;
+            pointer-events: none;
+            z-index: 1000;
+            max-width: 300px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="container">
+        <svg id="visualization"></svg>
+
+
+        <div class="controls">
+            <div class="control-group">
+                <label>Time Playhead</label>
+                <input type="range" id="timeSlider" min="0" max="100" value="100" class="time-playhead">
+                <div class="time-display" id="timeDisplay">Year: 2000</div>
+            </div>
+
+            <div class="control-group">
+                <label>Play Controls</label>
+                <button onclick="playTime()">▶ Play</button>
+                <button onclick="pauseTime()">⏸ Pause</button>
+                <button onclick="resetTime()">⏮ Reset</button>
+            </div>
+
+            <div class="control-group">
+                <label>Animation Speed</label>
+                <input type="range" id="speedSlider" min="0.1" max="3" step="0.1" value="1">
+            </div>
+
+            <div class="control-group">
+                <label>Layout Force</label>
+                <input type="range" id="forceStrength" min="0" max="100" value="30">
+            </div>
+
+            <div class="control-group">
+                <label>Filter by Transmission</label>
+                <button onclick="filterTransmission('all')" class="active">All</button>
+                <button onclick="filterTransmission('Mind-to-Mind')">Mind</button>
+                <button onclick="filterTransmission('Symbolic')">Symbolic</button>
+                <button onclick="filterTransmission('Aural')">Aural</button>
+            </div>
+
+            <div class="control-group">
+                <label>Filter by Lineage</label>
+                <button onclick="filterLineage('all')" class="active">All</button>
+                <button onclick="filterLineage('Vairocana')">Vairocana</button>
+                <button onclick="filterLineage('Vimalamitra')">Vimalamitra</button>
+                <button onclick="filterLineage('Padmasambhava')">Padmasambhava</button>
+            </div>
+        </div>
+
+        <div class="legend">
+            <h4>Transmission Modes</h4>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #4a90e2;"></div>
+                Mind-to-Mind
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #9b59b6;"></div>
+                Symbolic
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #27ae60;"></div>
+                Aural
+            </div>
+
+            <h4 style="margin-top: 15px;">Relationship Types</h4>
+            <div class="legend-item">
+                <span style="margin-right: 8px;">━━━</span> Teaching
+            </div>
+            <div class="legend-item">
+                <span style="margin-right: 8px;">┅┅┅</span> Incarnation
+            </div>
+            <div class="legend-item">
+                <span style="margin-right: 8px;">╌╌╌</span> Family
+            </div>
+            <div class="legend-item">
+                <span style="margin-right: 8px;">···</span> Emanation
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let simulation;
+        let svg;
+        let nodes = [];
+        let links = [];
+        let nodeElements;
+        let linkElements;
+        let tooltip;
+        let currentTime = 100; // Current time position (0-100)
+        let isPlaying = false;
+        let playInterval;
+        let animationSpeed = 1;
+
+        // Filters
+        let currentFilter = 'all';
+        let currentLineageFilter = 'all';
+
+        // Dimensions
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+        const centerX = width / 2;
+        const centerY = height / 2;
+        const maxRadius = Math.min(width, height) * 0.4;
+
+        // Initialize visualization
+        function init() {
+            // Setup SVG
+            svg = d3.select('#visualization')
+                .attr('width', width)
+                .attr('height', height);
+
+            // Create tooltip
+            tooltip = d3.select('body').append('div')
+                .attr('class', 'tooltip')
+                .style('opacity', 0);
+
+            // Setup zoom
+            const zoom = d3.zoom()
+                .scaleExtent([0.1, 4])
+                .on('zoom', (event) => {
+                    svg.select('.main-group').attr('transform', event.transform);
+                });
+
+            svg.call(zoom);
+
+            // Create main group for all elements
+            svg.append('g').attr('class', 'main-group');
+
+            // Setup event listeners
+            setupEventListeners();
+
+            // Load data
+            loadData();
+        }
+
+        function setupEventListeners() {
+            // Time slider
+            document.getElementById('timeSlider').addEventListener('input', function() {
+                currentTime = parseFloat(this.value);
+                updateTimeDisplay();
+                updateVisualization();
+            });
+
+            // Speed slider
+            document.getElementById('speedSlider').addEventListener('input', function() {
+                animationSpeed = parseFloat(this.value);
+            });
+
+            // Force strength slider
+            document.getElementById('forceStrength').addEventListener('input', function() {
+                if (simulation) {
+                    const strength = -parseInt(this.value);
+                    simulation.force('charge').strength(strength);
+                    simulation.alpha(0.3).restart();
+                }
+            });
+        }
+
+        async function loadData() {
+            try {
+                const response = await fetch('./data/dzogchen_lineage.csv');
+                const csvText = await response.text();
+
+                const parsedData = parseCSV(csvText);
+                processData(parsedData);
+                createVisualization();
+            } catch (error) {
+                console.error('Error loading data:', error);
+            }
+        }
+
+        function parseCSV(csvText) {
+            const lines = csvText.trim().split('\n');
+            const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+
+            return lines.slice(1).map(line => {
+                const values = parseCSVLine(line);
+                const row = {};
+                headers.forEach((header, index) => {
+                    row[header] = values[index] || '';
+                });
+                return row;
+            });
+        }
+
+        function parseCSVLine(line) {
+            const values = [];
+            let current = '';
+            let inQuotes = false;
+
+            for (let i = 0; i < line.length; i++) {
+                const char = line[i];
+                if (char === '"') {
+                    inQuotes = !inQuotes;
+                } else if (char === ',' && !inQuotes) {
+                    values.push(current.trim().replace(/"/g, ''));
+                    current = '';
+                } else {
+                    current += char;
+                }
+            }
+            values.push(current.trim().replace(/"/g, ''));
+            return values;
+        }
+
+        function processData(data) {
+            // Process nodes
+            nodes = data.map(d => {
+                const positionDate = parseFloat(d.Position_Date) || 0;
+                return {
+                    id: d.Name_English,
+                    name: d.Name_English,
+                    transmission: d.Transmission_Mode || 'Aural',
+                    lineage: d.Lineage || 'All lineages',
+                    position: positionDate,
+                    teachers: (d.Received_Teachings_From || '').split(';').filter(t => t.trim()),
+                    students: (d.Gave_Teachings_To || '').split(';').filter(s => s.trim()),
+                    incarnationOf: (d.Incarnation_Of || '').split(';').filter(i => i.trim()),
+                    familyFrom: (d.Family_Received_From || '').split(';').filter(f => f.trim()),
+                    emanatedAs: (d['Eminated as'] || '').split(';').filter(e => e.trim())
+                };
+            });
+
+            // Process links
+            links = [];
+            nodes.forEach(node => {
+                // Teaching relationships
+                node.teachers.forEach(teacherName => {
+                    const teacher = nodes.find(n => n.id === teacherName.trim());
+                    if (teacher) {
+                        links.push({
+                            source: teacher.id,
+                            target: node.id,
+                            type: 'teaching'
+                        });
+                    }
+                });
+
+                // Incarnation relationships
+                node.incarnationOf.forEach(prevName => {
+                    const prev = nodes.find(n => n.id === prevName.trim());
+                    if (prev) {
+                        links.push({
+                            source: prev.id,
+                            target: node.id,
+                            type: 'incarnation'
+                        });
+                    }
+                });
+
+                // Family relationships
+                node.familyFrom.forEach(familyName => {
+                    const family = nodes.find(n => n.id === familyName.trim());
+                    if (family) {
+                        links.push({
+                            source: family.id,
+                            target: node.id,
+                            type: 'family'
+                        });
+                    }
+                });
+
+                // Emanation relationships
+                node.emanatedAs.forEach(emanationName => {
+                    const emanation = nodes.find(n => n.id === emanationName.trim());
+                    if (emanation) {
+                        links.push({
+                            source: node.id,
+                            target: emanation.id,
+                            type: 'emanation'
+                        });
+                    }
+                });
+            });
+
+            console.log(`Loaded ${nodes.length} nodes and ${links.length} links`);
+        }
+
+        function createVisualization() {
+            const mainGroup = svg.select('.main-group');
+
+            // Create empty selections that will be populated by update()
+            linkElements = mainGroup.append('g')
+                .attr('stroke', '#999')
+                .attr('stroke-opacity', 0.6)
+                .selectAll('line');
+
+            nodeElements = mainGroup.append('g')
+                .attr('stroke', '#fff')
+                .attr('stroke-width', 1.5)
+                .selectAll('circle');
+
+            // Create force simulation (empty initially)
+            createTemporalSimulation();
+
+            // Initial update
+            updateTimeDisplay();
+            updateVisualization();
+        }
+
+        function createTemporalSimulation() {
+            simulation = d3.forceSimulation()
+                .force('charge', d3.forceManyBody().strength(-100))
+                .force('link', d3.forceLink().id(d => d.id).distance(50))
+                .force('x', d3.forceX())
+                .force('y', d3.forceY())
+                .on('tick', tick);
+        }
+
+        function tick() {
+            // Update link positions
+            linkElements
+                .attr('x1', d => d.source.x)
+                .attr('y1', d => d.source.y)
+                .attr('x2', d => d.target.x)
+                .attr('y2', d => d.target.y);
+
+            // Update node positions
+            nodeElements
+                .attr('cx', d => d.x)
+                .attr('cy', d => d.y);
+        }
+
+        function updateVisualization() {
+            const maxPosition = Math.max(...nodes.map(n => n.position));
+            const timeThreshold = (currentTime / 100) * maxPosition;
+
+            // Filter nodes that exist at current time and match filters
+            const visibleNodes = nodes.filter(d => {
+                const existsAtTime = d.position <= timeThreshold;
+                const transmissionMatch = currentFilter === 'all' || d.transmission === currentFilter;
+                const lineageMatch = currentLineageFilter === 'all' || d.lineage === currentLineageFilter;
+                return existsAtTime && transmissionMatch && lineageMatch;
+            });
+
+            // Filter links where both nodes are visible
+            const visibleNodeIds = new Set(visibleNodes.map(d => d.id));
+            const visibleLinks = links.filter(d =>
+                visibleNodeIds.has(d.source.id || d.source) &&
+                visibleNodeIds.has(d.target.id || d.target)
+            );
+
+            // Update the simulation - CRITICAL: preserve old node positions
+            updateSimulation(visibleNodes, visibleLinks);
+        }
+
+        function updateSimulation(visibleNodes, visibleLinks) {
+            // Make a shallow copy to protect against mutation, while
+            // recycling old nodes to preserve position and velocity.
+            const old = new Map(nodeElements.data().map(d => [d.id, d]));
+            const updatedNodes = visibleNodes.map(d => ({...old.get(d.id), ...d}));
+            const updatedLinks = visibleLinks.map(d => ({...d}));
+
+            // Update nodes with enter/exit pattern
+            nodeElements = nodeElements
+                .data(updatedNodes, d => d.id)
+                .join(enter => enter.append('circle')
+                    .attr('r', d => {
+                        const connections = d.teachers.length + d.students.length;
+                        return Math.max(4, Math.min(12, connections * 1.2 + 4));
+                    })
+                    .attr('class', d => `node ${d.transmission.toLowerCase().replace(/\s+/g, '-')}`)
+                    .call(drag(simulation))
+                    .on('mouseover', showTooltip)
+                    .on('mouseout', hideTooltip)
+                    .call(node => node.append('title').text(d => d.name))
+                );
+
+            // Update links with enter/exit pattern
+            linkElements = linkElements
+                .data(updatedLinks, d => [d.source.id || d.source, d.target.id || d.target])
+                .join('line')
+                .attr('class', d => `link ${d.type}`);
+
+            // Update simulation forces
+            simulation.nodes(updatedNodes);
+            simulation.force('link').links(updatedLinks);
+            simulation.alpha(1).restart();
+        }
+
+        // Add drag functionality
+        function drag(simulation) {
+            function dragstarted(event, d) {
+                if (!event.active) simulation.alphaTarget(0.3).restart();
+                d.fx = d.x;
+                d.fy = d.y;
+            }
+
+            function dragged(event, d) {
+                d.fx = event.x;
+                d.fy = event.y;
+            }
+
+            function dragended(event, d) {
+                if (!event.active) simulation.alphaTarget(0);
+                d.fx = null;
+                d.fy = null;
+            }
+
+            return d3.drag()
+                .on('start', dragstarted)
+                .on('drag', dragged)
+                .on('end', dragended);
+        }
+
+        function updateTimeDisplay() {
+            const maxPosition = Math.max(...nodes.map(n => n.position));
+            const currentYear = Math.round((currentTime / 100) * maxPosition);
+            document.getElementById('timeDisplay').textContent = `Time Position: ${currentYear}`;
+        }
+
+        function showTooltip(event, d) {
+            tooltip.transition().duration(200).style('opacity', .9);
+            tooltip.html(`
+                <strong>${d.name}</strong><br/>
+                Transmission: ${d.transmission}<br/>
+                Lineage: ${d.lineage}<br/>
+                Time Position: ${d.position}<br/>
+                Teachers: ${d.teachers.length}<br/>
+                Students: ${d.students.length}
+            `)
+                .style('left', (event.pageX + 10) + 'px')
+                .style('top', (event.pageY - 28) + 'px');
+        }
+
+        function hideTooltip() {
+            tooltip.transition().duration(500).style('opacity', 0);
+        }
+
+        // Control functions
+        function playTime() {
+            if (!isPlaying) {
+                isPlaying = true;
+                playInterval = setInterval(() => {
+                    currentTime += animationSpeed;
+                    if (currentTime > 100) {
+                        currentTime = 100;
+                        pauseTime();
+                    }
+                    document.getElementById('timeSlider').value = currentTime;
+                    updateTimeDisplay();
+                    updateVisualization();
+                }, 100);
+            }
+        }
+
+        function pauseTime() {
+            isPlaying = false;
+            if (playInterval) {
+                clearInterval(playInterval);
+            }
+        }
+
+        function resetTime() {
+            pauseTime();
+            currentTime = 0;
+            document.getElementById('timeSlider').value = currentTime;
+            updateTimeDisplay();
+            updateVisualization();
+        }
+
+        function filterTransmission(mode) {
+            currentFilter = mode;
+
+            // Update button states
+            document.querySelectorAll('.controls .control-group:nth-child(5) button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            updateVisualization();
+        }
+
+        function filterLineage(lineage) {
+            currentLineageFilter = lineage;
+
+            // Update button states
+            document.querySelectorAll('.controls .control-group:nth-child(6) button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            updateVisualization();
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

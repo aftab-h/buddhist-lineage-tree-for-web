@@ -234,6 +234,12 @@
                 <button onclick="filterLineage('Vimalamitra')">Vimalamitra</button>
                 <button onclick="filterLineage('Padmasambhava')">Padmasambhava</button>
             </div>
+
+            <div class="control-group">
+                <label>Layout Mode</label>
+                <button onclick="setLayoutMode('linear')" class="active" id="linear-btn">Linear</button>
+                <button onclick="setLayoutMode('circular')" id="circular-btn">Circular</button>
+            </div>
         </div>
 
         <div class="legend">
@@ -283,6 +289,7 @@
         let currentFilter = 'all';
         let currentLineageFilter = 'all';
         let densitySensitivity = 1.0;
+        let layoutMode = 'linear'; // 'linear' or 'circular'
 
         // Dimensions
         const width = window.innerWidth;
@@ -659,32 +666,67 @@
         }
 
         function createForceSimulation(yScale) {
-            simulation = d3.forceSimulation(nodes)
-                .force('link', d3.forceLink(links)
-                    .id(d => d.id)
-                    .distance(d => {
-                        // Shorter links for teaching relationships
-                        switch(d.type) {
-                            case 'teaching': return 50;
-                            case 'incarnation': return 80;
-                            case 'family': return 70;
-                            case 'emanation': return 60;
-                            default: return 50;
-                        }
-                    })
-                    .strength(0.3))
-                .force('charge', d3.forceManyBody()
-                    .strength(-100))
-                .force('x', d3.forceX(width / 2)
-                    .strength(0.1))
-                .force('y', d3.forceY(d => yScale(d.position))
-                    .strength(0.9)) // Strong Y force to maintain adaptive time positioning
-                .force('collision', d3.forceCollide()
-                    .radius(d => {
-                        const connections = d.teachers.length + d.students.length;
-                        return Math.max(6, Math.min(14, connections * 1.5 + 6));
-                    }))
-                .on('tick', tick);
+            if (layoutMode === 'circular') {
+                // Circular layout simulation
+                simulation = d3.forceSimulation(nodes)
+                    .force('link', d3.forceLink(links)
+                        .id(d => d.id)
+                        .distance(d => {
+                            // Shorter links for teaching relationships
+                            switch(d.type) {
+                                case 'teaching': return 50;
+                                case 'incarnation': return 80;
+                                case 'family': return 70;
+                                case 'emanation': return 60;
+                                default: return 50;
+                            }
+                        })
+                        .strength(0.3))
+                    .force('charge', d3.forceManyBody()
+                        .strength(-100))
+                    .force('radial', d3.forceRadial(d => {
+                        // Map time position to radius from center
+                        const minRadius = 100;
+                        const maxRadius = Math.min(width, height) * 0.4;
+                        const normalizedPosition = d.position / Math.max(...nodes.map(n => n.position));
+                        return minRadius + (maxRadius - minRadius) * normalizedPosition;
+                    }, width / 2, height / 2)
+                        .strength(0.8))
+                    .force('collision', d3.forceCollide()
+                        .radius(d => {
+                            const connections = d.teachers.length + d.students.length;
+                            return Math.max(8, Math.min(16, connections * 1.5 + 8));
+                        }))
+                    .on('tick', tick);
+            } else {
+                // Linear layout simulation (original)
+                simulation = d3.forceSimulation(nodes)
+                    .force('link', d3.forceLink(links)
+                        .id(d => d.id)
+                        .distance(d => {
+                            // Shorter links for teaching relationships
+                            switch(d.type) {
+                                case 'teaching': return 50;
+                                case 'incarnation': return 80;
+                                case 'family': return 70;
+                                case 'emanation': return 60;
+                                default: return 50;
+                            }
+                        })
+                        .strength(0.3))
+                    .force('charge', d3.forceManyBody()
+                        .strength(-100))
+                    .force('x', d3.forceX(width / 2)
+                        .strength(0.1))
+                    .force('y', d3.forceY(d => yScale(d.position))
+                        .strength(0.9)) // Strong Y force to maintain adaptive time positioning
+                    .force('collision', d3.forceCollide()
+                        .radius(d => {
+                            const connections = d.teachers.length + d.students.length;
+                            return Math.max(6, Math.min(14, connections * 1.5 + 6));
+                        }))
+                    .on('tick', tick);
+            }
 
             simulation.alpha(1).restart();
         }
@@ -789,7 +831,35 @@
                     const lineageMatch = currentLineageFilter === 'all' || d.lineage === currentLineageFilter;
                     return transmissionMatch && lineageMatch ? 0.9 : 0.1;
                 });
+        }
 
+        function setLayoutMode(mode) {
+            if (layoutMode !== mode) {
+                layoutMode = mode;
+
+                // Update button states
+                document.querySelectorAll('.controls .control-group:nth-child(6) button').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                document.getElementById(mode === 'linear' ? 'linear-btn' : 'circular-btn').classList.add('active');
+
+                // Recreate the simulation with the new layout
+                if (simulation) {
+                    simulation.stop();
+                }
+
+                // Find the current yScale function
+                const yScale = d3.scaleLinear()
+                    .domain([0, Math.max(...nodes.map(n => n.position))])
+                    .range([margin.top, height - margin.bottom]);
+
+                createForceSimulation(yScale);
+
+                console.log(`Layout mode switched to: ${mode}`);
+            }
+        }
+
+        function updateLinkFilters() {
             linkElements
                 .style('opacity', d => {
                     const sourceVisible = (currentFilter === 'all' || d.source.transmission === currentFilter) &&
