@@ -1622,11 +1622,25 @@
         // Initialize when page loads
         document.addEventListener('DOMContentLoaded', init);
 
-        // Add body click listener to clear traceback
+        // Add body click listener to clear traceback and close popup
         document.addEventListener('click', function(event) {
-            // Only clear if clicking outside of nodes and controls
-            if (!event.target.closest('.node') && !event.target.closest('.controls') && !event.target.closest('circle')) {
-                clearTraceback();
+            // Check if clicking on a node or control element
+            const clickedOnNode = event.target.closest('.node') || event.target.closest('circle');
+            const clickedOnControls = event.target.closest('.controls');
+            const clickedOnPopup = event.target.closest('.popup-card');
+
+            // Only clear/close if clicking outside of interactive elements
+            if (!clickedOnNode && !clickedOnControls && !clickedOnPopup) {
+                // Clear traceback
+                if (tracebackActive) {
+                    clearTraceback();
+                }
+
+                // Close popup
+                const popup = document.getElementById('popup-card');
+                if (popup && !popup.classList.contains('hidden')) {
+                    closePopup();
+                }
             }
         });
 
@@ -1733,13 +1747,69 @@
                 .replace(/^-|-$/g, '');
         }
 
+        // Image manifest system
+        async function loadImageManifest() {
+            if (manifestLoadPromise) {
+                return manifestLoadPromise;
+            }
+
+            manifestLoadPromise = (async () => {
+                try {
+                    console.log('Loading image manifest...');
+                    const response = await fetch('./image-manifest.json');
+                    if (response.ok) {
+                        imageManifest = await response.json();
+                        console.log(`✅ Image manifest loaded: ${Object.keys(imageManifest).length} nodes with images`);
+                        return imageManifest;
+                    } else {
+                        console.warn('⚠️ Image manifest not found, falling back to individual image checking');
+                        return null;
+                    }
+                } catch (error) {
+                    console.warn('⚠️ Failed to load image manifest:', error);
+                    return null;
+                }
+            })();
+
+            return manifestLoadPromise;
+        }
+
         // Image loading system
         async function loadNodeImages(nodeName) {
             const normalizedName = normalizeText(nodeName);
 
-            // For now, return empty array - will implement manifest system later
-            // This is just to prevent errors
-            return [];
+            // Ensure manifest is loaded
+            const manifest = await loadImageManifest();
+
+            if (manifest && manifest[normalizedName]) {
+                // Instant lookup from manifest - no network requests!
+                console.log(`Found ${manifest[normalizedName].length} images for: ${nodeName}`);
+                return manifest[normalizedName];
+            }
+
+            // Fallback to basic filename check if manifest not available
+            console.log(`No images found in manifest for: ${normalizedName}`);
+
+            // Try common image extensions for the normalized name
+            const extensions = ['jpg', 'jpeg', 'png', 'webp'];
+            const imagePromises = extensions.map(ext => {
+                const imagePath = `./images/${normalizedName}.${ext}`;
+                return new Promise((resolve) => {
+                    const img = new Image();
+                    img.onload = () => resolve(imagePath);
+                    img.onerror = () => resolve(null);
+                    img.src = imagePath;
+                });
+            });
+
+            const results = await Promise.all(imagePromises);
+            const validImages = results.filter(path => path !== null);
+
+            if (validImages.length > 0) {
+                console.log(`Found ${validImages.length} images via fallback for: ${nodeName}`);
+            }
+
+            return validImages;
         }
 
         function displayImageCarousel(container, images) {
@@ -1821,13 +1891,25 @@
         // Add Escape key listener to clear traceback AND close popup
         document.addEventListener('keydown', function(event) {
             if (event.key === 'Escape') {
+                let handled = false;
+
                 if (tracebackActive) {
                     console.log('Escape key pressed - clearing traceback');
                     clearTraceback();
+                    handled = true;
                 }
-                if (currentPopupData) {
+
+                // Check if popup is currently open
+                const popup = document.getElementById('popup-card');
+                if (popup && !popup.classList.contains('hidden')) {
                     console.log('Escape key pressed - closing popup');
                     closePopup();
+                    handled = true;
+                }
+
+                if (handled) {
+                    event.preventDefault();
+                    event.stopPropagation();
                 }
             }
         });
