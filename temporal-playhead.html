@@ -737,16 +737,16 @@
                     }))
                     .on('tick', tick);
             } else {
-                // Linear mode: time-based Y positioning
+                // Linear mode: time-based Y positioning with moderate horizontal spread
                 const yScale = createNormalizedTimeScale(nodes);
                 simulation = d3.forceSimulation()
-                    .force('charge', d3.forceManyBody().strength(-100))
+                    .force('charge', d3.forceManyBody().strength(-120)) // Moderate repulsion
                     .force('link', d3.forceLink().id(d => d.id).distance(50).strength(0.3))
-                    .force('x', d3.forceX(centerX).strength(0.1))
+                    .force('x', d3.forceX(centerX).strength(0.05)) // Gentle X centering
                     .force('y', d3.forceY(d => yScale(d.position)).strength(0.9))
                     .force('collision', d3.forceCollide().radius(d => {
                         const connections = d.teachers.length + d.students.length;
-                        return Math.max(6, Math.min(14, connections * 1.5 + 6));
+                        return Math.max(7, Math.min(15, connections * 1.8 + 7)); // Moderate collision radius
                     }))
                     .on('tick', tick);
             }
@@ -812,9 +812,9 @@
                         newNode.x = centerX + (Math.random() - 0.5) * 100;
                         newNode.y = centerY + (Math.random() - 0.5) * 100;
                     } else {
-                        // For linear mode, start at appropriate Y position based on time
+                        // For linear mode, start at appropriate Y position with wider X spread
                         const yScale = createNormalizedTimeScale(nodes);
-                        newNode.x = centerX + (Math.random() - 0.5) * 200;
+                        newNode.x = centerX + (Math.random() - 0.5) * 200; // Much wider initial spread
                         newNode.y = yScale(d.position);
                     }
                     return newNode;
