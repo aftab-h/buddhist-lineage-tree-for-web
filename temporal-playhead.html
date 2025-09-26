@@ -1263,7 +1263,10 @@
                     });
 
                     // Highlight the incoming links with EXACT 50ms delay (like original)
-                    setTimeout(() => {
+                    const linkTimeoutId = setTimeout(() => {
+                        // Check if traceback is still active before proceeding
+                        if (!tracebackActive) return;
+
                         linkElements.each(function(linkData) {
                             const targetId = linkData.target.id || linkData.target;
                             if (targetId === nodeId) {
@@ -1278,13 +1281,18 @@
                                     .duration(150) // EXACT duration from original
                                     .style('opacity', '1');
 
-                                // Add flowing particle effect
-                                setTimeout(() => {
+                                // Add flowing particle effect with tracked timeout
+                                const particleTimeoutId = setTimeout(() => {
+                                    if (!tracebackActive) return; // Double-check before particle creation
                                     createFlowingParticle(linkElement.node(), linkData);
                                 }, 25);
+                                tracebackTimeouts.push(particleTimeoutId);
                             }
                         });
                     }, 50); // EXACT 50ms delay from original - PERFECT!
+
+                    // CRITICAL: Track the link timeout so it can be cleared
+                    tracebackTimeouts.push(linkTimeoutId);
                 }, delay);
 
                 tracebackTimeouts.push(timeoutId);
