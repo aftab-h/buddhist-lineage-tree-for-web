@@ -1,0 +1,4346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Dzogchen Lineage Tree - Interactive Visualization</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Tibetan:wght@400;600&family=Noto+Sans+SC:wght@400;600&display=swap');
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Arial', 'Noto Sans Tibetan', 'Noto Sans SC', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            overflow: hidden;
+        }
+
+        .tibetan-text {
+            font-family: 'Noto Sans Tibetan', serif;
+            font-weight: 400;
+        }
+
+        .chinese-text {
+            font-family: 'Noto Sans SC', sans-serif;
+            font-weight: 400;
+        }
+
+        #container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+
+        #controls-icon {
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            z-index: 1001;
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        #controls-icon:hover {
+            background: rgba(255, 255, 255, 1);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            transform: scale(1.05);
+        }
+
+        #controls-icon svg {
+            width: 20px;
+            height: 20px;
+            fill: #555;
+            transition: fill 0.2s ease;
+        }
+
+        #controls-icon:hover svg {
+            fill: #333;
+        }
+
+        #controls {
+            position: fixed;
+            top: 70px;
+            left: 10px;
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 16px;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+            backdrop-filter: blur(10px);
+            max-width: calc(100vw - 20px);
+            box-sizing: border-box;
+            transform: translateX(-100%);
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        #controls.show {
+            transform: translateX(0);
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .controls-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .controls-close-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+            color: #666;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .controls-close-btn:hover {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .language-selector {
+            margin-left: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .language-selector .language-label {
+            font-size: 11px;
+            color: #666;
+            font-weight: normal;
+        }
+
+        .language-selector select {
+            width: auto;
+            min-width: 120px;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            min-height: 36px;
+            box-sizing: border-box;
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=US-ASCII,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 4 5'><path fill='%23666' d='M2 0L0 2h4zm0 5L0 3h4z'/></svg>");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            background-size: 12px;
+            padding-right: 36px;
+        }
+
+        .language-selector select:hover {
+            background-color: #f0f0f0;
+        }
+        .language-selector select:focus {
+            outline: none;
+            border-color: #4CAF50;
+            box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+        }
+
+        .search-container {
+            position: relative;
+            margin-bottom: 10px;
+        }
+
+        .search-navigation {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            background: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+
+        .search-nav-btn {
+            background: none;
+            border: none;
+            font-size: 16px;
+            font-weight: bold;
+            color: #666;
+            cursor: pointer;
+            padding: 2px 6px;
+            border-radius: 2px;
+            line-height: 1;
+        }
+
+        .search-nav-btn:hover {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .search-nav-btn:disabled {
+            color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .search-counter {
+            font-size: 11px;
+            color: #666;
+            min-width: 30px;
+            text-align: center;
+        }
+
+        #search {
+            width: 100%;
+            padding: 8px 100px 8px 10px; /* Make space for navigation controls */
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+
+        #search:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+
+        .toggle-btn {
+            display: none;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            min-height: 36px;
+            box-sizing: border-box;
+            touch-action: manipulation;
+        }
+
+        .controls-content {
+            display: block;
+        }
+
+        #search {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            width: 100%;
+            max-width: 200px;
+            box-sizing: border-box;
+        }
+
+        .filter-btn {
+            padding: 8px 12px;
+            margin: 2px;
+            border: 1px solid #ddd;
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            min-height: 36px;
+            box-sizing: border-box;
+            touch-action: manipulation;
+        }
+
+        .filter-btn:hover {
+            background: #f0f0f0;
+        }
+
+        .filter-btn.active {
+            background: #4CAF50;
+            color: white;
+        }
+        .lineage-dropdown {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            min-height: 36px;
+            box-sizing: border-box;
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=US-ASCII,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 4 5'><path fill='%23666' d='M2 0L0 2h4zm0 5L0 3h4z'/></svg>");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            background-size: 12px;
+            padding-right: 36px;
+        }
+        .lineage-dropdown:hover {
+            background-color: #f0f0f0;
+        }
+        .lineage-dropdown:focus {
+            outline: none;
+            border-color: #4CAF50;
+            box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+        }
+
+        .node {
+            cursor: pointer;
+            stroke-width: 2px;
+        }
+
+        .node-text {
+            font-size: 14px;
+            font-weight: bold;
+            text-anchor: middle;
+            pointer-events: none;
+            fill: #333;
+        }
+
+        .node-date {
+            font-size: 10px;
+            text-anchor: middle;
+            pointer-events: none;
+            fill: #666;
+        }
+
+        .link {
+            fill: none;
+            stroke-width: 4px;
+            stroke-opacity: 0.8;
+        }
+
+        /* Solid lines for direct teaching transmission (default) */
+        .link.teaching {
+            stroke-dasharray: none;
+        }
+
+        /* Dotted lines for incarnation relationships */
+        .link.incarnation {
+            stroke-dasharray: 3,6;
+            stroke: #888;
+            stroke-width: 3px;
+        }
+
+        /* Dashed lines for family teaching relationships */
+        .link.family {
+            stroke-dasharray: 8,4;
+            stroke: #8B4513;
+            stroke-width: 3px;
+        }
+
+        /* Double-dotted lines for spiritual emanation */
+        .link.emanation {
+            stroke-dasharray: 3,3,1,3;
+            stroke: #DAA520;
+            stroke-width: 3px;
+        }
+
+        /* Fade effect for century lines */
+        .century-line {
+            mask: linear-gradient(to right, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 60%, rgba(0,0,0,0) 100%);
+        }
+
+        .tooltip {
+            position: absolute;
+            padding: 12px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            border-radius: 8px;
+            pointer-events: none;
+            z-index: 1000;
+            max-width: 300px;
+            font-size: 13px;
+            line-height: 1.4;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .highlighted {
+            stroke-width: 4px !important;
+            stroke: #ff6b35 !important;
+        }
+
+        /* Selected node styles */
+        .selected {
+            stroke-width: 3px !important;
+            stroke: #FFD700 !important; /* Gold outline */
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.6);
+            animation: nodeSelect 0.3s ease-out;
+        }
+
+        @keyframes nodeSelect {
+            0% {
+                transform: scale(1);
+                box-shadow: 0 0 0 rgba(255, 215, 0, 0);
+            }
+            50% {
+                transform: scale(1.1);
+                box-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+            }
+            100% {
+                transform: scale(1);
+                box-shadow: 0 0 15px rgba(255, 215, 0, 0.6);
+            }
+        }
+
+        /* Pulse animation for selected node */
+        .selected {
+            animation: nodeSelect 0.3s ease-out, selectedPulse 2s ease-in-out infinite 0.3s;
+        }
+
+        @keyframes selectedPulse {
+            0%, 100% {
+                box-shadow: 0 0 15px rgba(255, 215, 0, 0.6);
+            }
+            50% {
+                box-shadow: 0 0 25px rgba(255, 215, 0, 0.8);
+            }
+        }
+
+        /* Ripple animation for trajectory nodes */
+        .trajectory-ripple {
+            animation: trajectoryRipple 0.6s ease-out;
+        }
+
+        @keyframes trajectoryRipple {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            30% {
+                transform: scale(1.08);
+                opacity: 0.9;
+            }
+            60% {
+                transform: scale(1.02);
+                opacity: 0.95;
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        /* Main clicked node gets a more pronounced ripple */
+        .main-node-ripple {
+            animation: mainNodeRipple 0.5s ease-out;
+        }
+
+        @keyframes mainNodeRipple {
+            0% {
+                transform: scale(1);
+                box-shadow: 0 0 0 rgba(255, 215, 0, 0);
+            }
+            50% {
+                transform: scale(1.12);
+                box-shadow: 0 0 30px rgba(255, 215, 0, 0.8);
+            }
+            100% {
+                transform: scale(1);
+                box-shadow: 0 0 15px rgba(255, 215, 0, 0.6);
+            }
+        }
+
+        .transmission-label {
+            font-size: 16px;
+            font-weight: bold;
+            fill: #444;
+            text-anchor: middle;
+        }
+
+        #legend {
+            position: fixed;
+            top: 10px;
+            right: 10px; /* Back to original position */
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 12px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            max-width: calc(50vw - 15px); /* Back to original width */
+            box-sizing: border-box;
+        }
+
+        .legend-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0;
+            cursor: pointer;
+        }
+        
+        .legend-chevron {
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            width: 18px;
+            height: 18px;
+            transform: rotate(90deg);
+        }
+        
+        .legend-chevron.collapsed {
+            transform: rotate(0deg);
+        }
+
+        .legend-toggle {
+            display: none;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+            min-height: 36px;
+            box-sizing: border-box;
+            touch-action: manipulation;
+        }
+
+        .legend-content {
+            overflow: hidden;
+            transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), 
+                        opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+                        margin-top 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            opacity: 1;
+            max-height: 300px;
+            margin-top: 10px;
+        }
+        
+        .legend-content.collapsed {
+            opacity: 0;
+            max-height: 0;
+            margin-top: 0;
+        }
+
+        /* Recenter button styles */
+        .recenter-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1001;
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.95);
+            border: none;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .recenter-btn:hover {
+            background: rgba(255, 255, 255, 1);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            transform: scale(1.05);
+        }
+
+        .recenter-btn svg {
+            width: 20px;
+            height: 20px;
+            fill: #555;
+            transition: fill 0.2s ease;
+        }
+
+        .recenter-btn:hover svg {
+            fill: #333;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+            font-size: 12px;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 15px;
+            margin-right: 8px;
+            border-radius: 3px;
+        }
+
+        /* Popup card styles */
+        .popup-card {
+            position: absolute;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            max-width: 350px;
+            max-height: 80vh;
+            overflow-y: auto;
+            z-index: 1500;
+            border: 1px solid #e0e0e0;
+            animation: popupFadeIn 0.2s ease-out;
+        }
+
+        /* Image carousel styles */
+        .popup-images {
+            margin-bottom: 15px;
+        }
+
+        .image-carousel {
+            position: relative;
+            width: 100%;
+            border-radius: 6px;
+            background: #f5f5f5;
+            overflow: hidden;
+        }
+
+        .carousel-container {
+            display: flex;
+            transition: transform 0.3s ease;
+            min-height: 200px;
+        }
+
+        .carousel-image {
+            width: 100%;
+            max-width: 100%;
+            height: auto;
+            max-height: 300px;
+            object-fit: contain;
+            flex-shrink: 0;
+            display: block;
+            margin: auto 0;
+        }
+
+        .carousel-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: none;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            transition: opacity 0.2s;
+        }
+
+        .carousel-nav:hover {
+            background: rgba(0, 0, 0, 0.7);
+        }
+
+        .carousel-prev {
+            left: 10px;
+        }
+
+        .carousel-next {
+            right: 10px;
+        }
+
+        .carousel-dots {
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+            margin-top: 8px;
+        }
+
+        .carousel-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #ddd;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .carousel-dot.active {
+            background: #007bff;
+        }
+
+        .carousel-dot:hover {
+            background: #0056b3;
+        }
+
+
+        @keyframes popupFadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .popup-header {
+            padding: 12px 16px 8px 16px;
+            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #f8f9fa;
+        }
+
+        .popup-header h3 {
+            margin: 0;
+            font-size: 16px;
+            color: #333;
+            font-weight: bold;
+        }
+
+        .popup-close {
+            background: none;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            color: #999;
+            padding: 0;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+
+        .popup-close:hover {
+            background: rgba(0, 0, 0, 0.1);
+            color: #666;
+        }
+
+        .popup-body {
+            padding: 12px 16px 16px 16px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .popup-body > div {
+            margin-bottom: 8px;
+            font-size: 13px;
+            line-height: 1.4;
+        }
+
+        .popup-body > div:last-child {
+            margin-bottom: 0;
+        }
+
+        .popup-body strong {
+            color: #495057;
+            font-weight: 600;
+        }
+
+        .popup-tibetan {
+            font-style: italic;
+            color: #6c757d;
+            font-size: 14px;
+        }
+
+        .popup-description {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #f0f0f0;
+            color: #555;
+        }
+
+        /* Mobile responsive styles */
+        @media (max-width: 768px) {
+            #controls-icon {
+                top: 10px;
+                left: 10px;
+                width: 44px;
+                height: 44px;
+            }
+            
+            #controls {
+                position: fixed;
+                top: 65px;
+                left: 5px;
+                right: 5px;
+                width: auto;
+                max-width: none;
+                padding: 12px;
+                background: rgba(255, 255, 255, 0.98);
+            }
+
+            .toggle-btn {
+                display: inline-block;
+            }
+
+            .controls-content.collapsed {
+                display: none;
+            }
+
+            #search {
+                max-width: none;
+                width: 100%;
+                margin-bottom: 8px;
+            }
+
+            .filter-btn {
+                padding: 8px 10px;
+                margin: 2px 1px;
+                font-size: 11px;
+                min-height: 44px;
+                box-sizing: border-box;
+            }
+
+            #legend {
+                position: fixed;
+                top: 10px;
+                right: 10px;
+                max-width: calc(100vw - 80px);
+                padding: 10px;
+                background: rgba(255, 255, 255, 0.98);
+            }
+
+            .recenter-btn {
+                bottom: 15px;
+                right: 15px;
+                width: 44px;
+                height: 44px;
+            }
+
+
+            .legend-content.collapsed {
+                display: none;
+            }
+
+            .legend-item {
+                font-size: 11px;
+                margin-bottom: 6px;
+            }
+
+            .legend-color {
+                width: 16px;
+                height: 12px;
+                margin-right: 6px;
+            }
+
+            .popup-card {
+                max-width: calc(100vw - 20px);
+                margin: 10px;
+            }
+            
+            /* On mobile, still show connector but adjust popup positioning */
+            @media (max-width: 768px) {
+                .popup-card {
+                    max-width: calc(100vw - 40px);
+                }
+            }
+        }
+
+        /* Flash Card Styles */
+        .flashcard-mode {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            z-index: 2000;
+            width: 90vw;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow: hidden;
+            animation: flashcardFadeIn 0.3s ease-out;
+        }
+
+        @keyframes flashcardFadeIn {
+            from {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1);
+            }
+        }
+
+        .flashcard-header {
+            background: #4CAF50;
+            color: white;
+            padding: 16px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .flashcard-header h3 {
+            margin: 0;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            transition: background 0.2s ease;
+        }
+
+        .close-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .flashcard-content {
+            padding: 24px;
+        }
+
+        .score-display {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            font-weight: bold;
+            color: #555;
+        }
+
+        .question-container {
+            margin-bottom: 24px;
+        }
+
+        .question-text {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+            line-height: 1.4;
+        }
+
+        .answer-choices {
+            display: grid;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .answer-choice {
+            padding: 16px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            background: #f9f9f9;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: left;
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .answer-choice:hover {
+            border-color: #4CAF50;
+            background: #f0f8f0;
+            transform: translateY(-1px);
+        }
+
+        .answer-choice.selected {
+            border-color: #4CAF50;
+            background: #e8f5e8;
+        }
+
+        .answer-choice.correct {
+            border-color: #4CAF50;
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .answer-choice.incorrect {
+            border-color: #dc3545;
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .answer-choice.disabled {
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        .flashcard-footer {
+            text-align: center;
+        }
+
+        .next-btn, .restart-btn {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: background 0.2s ease;
+        }
+
+        .next-btn:hover, .restart-btn:hover {
+            background: #45a049;
+        }
+
+        .restart-btn {
+            background: #2196F3;
+        }
+
+        .restart-btn:hover {
+            background: #1976D2;
+        }
+
+        /* Mobile adjustments for flash cards */
+        @media (max-width: 768px) {
+            .flashcard-mode {
+                width: 95vw;
+                max-height: 85vh;
+            }
+
+            .flashcard-content {
+                padding: 16px;
+            }
+
+            .question-text {
+                font-size: 16px;
+            }
+
+            .answer-choice {
+                padding: 12px 16px;
+                font-size: 14px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .filter-btn {
+                padding: 6px 8px;
+                font-size: 10px;
+                margin: 1px;
+            }
+            
+            #legend h4 {
+                font-size: 14px;
+                margin: 0 0 8px 0;
+            }
+
+            .legend-item {
+                font-size: 10px;
+                margin-bottom: 4px;
+            }
+
+            .controls-content div:last-child {
+                font-size: 10px;
+                margin-top: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <div id="controls-icon" onclick="toggleControls()">
+            <svg viewBox="0 0 24 24">
+                <path d="M7,5H21V7H7V5M7,13V11H21V13H7M4,4.5A1.5,1.5 0 0,1 5.5,6A1.5,1.5 0 0,1 4,7.5A1.5,1.5 0 0,1 2.5,6A1.5,1.5 0 0,1 4,4.5M4,10.5A1.5,1.5 0 0,1 5.5,12A1.5,1.5 0 0,1 4,13.5A1.5,1.5 0 0,1 2.5,12A1.5,1.5 0 0,1 4,10.5M7,19V17H21V19H7M4,16.5A1.5,1.5 0 0,1 5.5,18A1.5,1.5 0 0,1 4,19.5A1.5,1.5 0 0,1 2.5,18A1.5,1.5 0 0,1 4,16.5Z"/>
+            </svg>
+        </div>
+        
+        <div id="controls">
+            <div class="controls-header">
+                <div style="display: flex; align-items: center;">
+                    <span style="font-weight: bold; font-size: 16px;">Controls</span>
+                </div>
+                <button class="controls-close-btn" onclick="closeControls()" aria-label="Close controls panel">
+                    <svg viewBox="0 0 24 24" width="18" height="18">
+                        <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" fill="currentColor"/>
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="language-selector" style="margin-left: 0; margin-bottom: 16px;">
+                <span class="language-label">Language:</span>
+                <select id="language-select" onchange="changeLanguage(this.value)">
+                    <option value="en">English</option>
+                    <option value="bo">བོད་ཡིག</option>
+                    <option value="zh">中文</option>
+                </select>
+            </div>
+            <div class="controls-content" id="controls-content">
+                <div class="search-container" style="margin-bottom: 16px;">
+                    <input type="text" id="search" placeholder="Search for a teacher...">
+                    <div class="search-navigation" id="search-navigation" style="display: none;">
+                        <button id="search-prev" class="search-nav-btn" onclick="previousSearchResult()">‹</button>
+                        <span id="search-counter" class="search-counter">0 / 0</span>
+                        <button id="search-next" class="search-nav-btn" onclick="nextSearchResult()">›</button>
+                    </div>
+                </div>
+                <div style="margin-bottom: 16px;">
+                    <div style="margin-bottom: 8px; font-weight: bold; font-size: 13px;">Filter by Lineage:</div>
+                    <select id="lineage-filter" class="lineage-dropdown">
+                        <option value="all">All</option>
+                        <option value="Vimalamitra">Vimalamitra</option>
+                        <option value="Padmasambhava">Padmasambhava</option>
+                        <option value="Vairocana">Vairocana</option>
+                    </select>
+                </div>
+                
+                <div style="margin-bottom: 16px;">
+                    <button id="quiz-mode-btn" class="filter-btn" style="background: #2196F3; color: white; width: 100%; font-weight: bold;">Start Quiz</button>
+                </div>
+                <div id="usage-instructions" style="font-size: 11px; color: #666; margin-top: 10px;">
+                    <!-- <div id="click-node-text">Click node: View details & highlight lineage</div>
+                    <div id="click-elsewhere-text">Click elsewhere: Close popup</div> -->
+                </div>
+            </div>
+        </div>
+
+        <div id="legend" onclick="toggleLegend()">
+            <div class="legend-header">
+                <h4 style="margin: 0;">Legend</h4>
+                <svg class="legend-chevron" viewBox="0 0 24 24">
+                    <path d="M8.5 6l7 6-7 6" stroke="#666" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                </svg>
+            </div>
+            <div class="legend-content collapsed" id="legend-content">
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #4FC3F7;"></div>
+                    <span>Mind-Mind (Primordial)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #BA68C8;"></div>
+                    <span>Symbolic Transmission</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #81C784;"></div>
+                    <span>Aural Lineage</span>
+                </div>
+                
+                <div class="legend-item">
+                    <svg width="30" height="12" style="margin-right: 8px;">
+                        <defs>
+                            <marker id="legend-arrow-solid" viewBox="0 -5 10 10" refX="8" refY="0" markerWidth="4" markerHeight="4" orient="auto">
+                                <path d="M0,-5L10,0L0,5" fill="#666" opacity="0.8"/>
+                            </marker>
+                        </defs>
+                        <path d="M2,6 L24,6" stroke="#666" stroke-width="2" fill="none" marker-end="url(#legend-arrow-solid)" opacity="0.8"/>
+                    </svg>
+                    <span>Teaching Transmission</span>
+                </div>
+                
+                <div class="legend-item">
+                    <svg width="30" height="12" style="margin-right: 8px;">
+                        <defs>
+                            <marker id="legend-arrow-incarnation" viewBox="0 -5 10 10" refX="8" refY="0" markerWidth="4" markerHeight="4" orient="auto">
+                                <path d="M0,-5L10,0L0,5" fill="#888" opacity="0.8"/>
+                            </marker>
+                        </defs>
+                        <path d="M2,6 L24,6" stroke="#888" stroke-width="2" stroke-dasharray="3,6" fill="none" marker-end="url(#legend-arrow-incarnation)" opacity="0.8"/>
+                    </svg>
+                    <span>Incarnation Lineage</span>
+                </div>
+
+                <div class="legend-item">
+                    <svg width="30" height="12" style="margin-right: 8px;">
+                        <defs>
+                            <marker id="legend-arrow-family" viewBox="0 -5 10 10" refX="8" refY="0" markerWidth="4" markerHeight="4" orient="auto">
+                                <path d="M0,-5L10,0L0,5" fill="#8B4513" opacity="0.8"/>
+                            </marker>
+                        </defs>
+                        <path d="M2,6 L24,6" stroke="#8B4513" stroke-width="2" stroke-dasharray="8,4" fill="none" marker-end="url(#legend-arrow-family)" opacity="0.8"/>
+                    </svg>
+                    <span>Family Teaching</span>
+                </div>
+
+                <div class="legend-item">
+                    <svg width="30" height="12" style="margin-right: 8px;">
+                        <defs>
+                            <marker id="legend-arrow-emanation" viewBox="0 -5 10 10" refX="8" refY="0" markerWidth="4" markerHeight="4" orient="auto">
+                                <path d="M0,-5L10,0L0,5" fill="#DAA520" opacity="0.8"/>
+                            </marker>
+                        </defs>
+                        <path d="M2,6 L24,6" stroke="#DAA520" stroke-width="2" stroke-dasharray="3,3,1,3" fill="none" marker-end="url(#legend-arrow-emanation)" opacity="0.8"/>
+                    </svg>
+                    <span>Spiritual Emanation</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Popup card for node details -->
+        <div id="popup-card" class="popup-card hidden">
+            <div class="popup-header">
+                <h3 id="popup-title"></h3>
+                <button class="popup-close" onclick="closePopup()">&times;</button>
+            </div>
+            <div class="popup-body">
+                <div id="popup-images" class="popup-images"></div>
+                <div id="popup-tibetan"></div>
+                <div id="popup-dates"></div>
+                <div id="popup-description"></div>
+            </div>
+        </div>
+
+        <!-- Recenter button -->
+        <button class="recenter-btn" onclick="recenterView()" title="Recenter view">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2l-2 2h4l-2-2zm0 20l2-2h-4l2 2zm10-10l-2-2v4l2-2zm-20 0l2 2v-4l-2 2z" fill="currentColor"/>
+                <circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.5"/>
+            </svg>
+        </button>
+
+        <!-- Flash Card Mode -->
+        <div id="flashcard-mode" class="flashcard-mode hidden">
+            <div class="flashcard-header">
+                <h3>Buddhist Lineage Quiz</h3>
+                <div class="flashcard-controls">
+                    <button id="close-flashcard" class="close-btn">&times;</button>
+                </div>
+            </div>
+            <div class="flashcard-content">
+                <div class="score-display">
+                    <span id="current-score">Score: 0/0</span>
+                    <span id="streak-display">Streak: 0</span>
+                </div>
+                <div class="question-container">
+                    <div id="question-text" class="question-text"></div>
+                    <div id="answer-choices" class="answer-choices"></div>
+                </div>
+                <div class="flashcard-footer">
+                    <button id="next-question" class="next-btn hidden">Next Question</button>
+                    <button id="restart-quiz" class="restart-btn hidden">Restart Quiz</button>
+                </div>
+            </div>
+        </div>
+        
+        <svg id="svg"></svg>
+    </div>
+
+    <script>
+        // Load CSV data dynamically
+        let graphData = null;
+        let currentFilter = 'all';
+
+        async function loadCSVData() {
+            try {
+                const response = await fetch('./data/dzogchen_lineage.csv');
+                const csvText = await response.text();
+                return csvText;
+            } catch (error) {
+                console.error('Error loading CSV:', error);
+                return null;
+            }
+        }
+
+        // Parse CSV data
+        function parseCSV(data) {
+            const lines = data.trim().split('\n');
+            const headers = lines[0].split(',');
+            return lines.slice(1).map(line => {
+                const values = [];
+                let inQuotes = false;
+                let currentValue = '';
+                
+                for (let char of line) {
+                    if (char === '"' && !inQuotes) {
+                        inQuotes = true;
+                    } else if (char === '"' && inQuotes) {
+                        inQuotes = false;
+                    } else if (char === ',' && !inQuotes) {
+                        values.push(currentValue.trim());
+                        currentValue = '';
+                    } else {
+                        currentValue += char;
+                    }
+                }
+                values.push(currentValue.trim());
+
+                const obj = {};
+                headers.forEach((header, i) => {
+                    obj[header.trim()] = values[i] || '';
+                });
+                return obj;
+            });
+        }
+
+        // Identify main transmission spines algorithmically
+        function identifyTransmissionSpines(nodes, links) {
+            // Main spine entities - these form the core transmission lines
+            const spineEntities = {
+                vimalamitra: 'Vimalamitra',
+                padmasambhava: 'Padmasambhava', 
+                vairocana: 'Vairocana'
+            };
+            
+            // Mark nodes with their primary lineage affiliation
+            const nodeMap = new Map(nodes.map(n => [n.id, n]));
+            
+            return spineEntities;
+        }
+        
+        // Mark all nodes with proper lineage affiliation for filtering
+        function markAllNodesWithLineage(nodes, links) {
+            // Define the main lineage ancestors
+            const lineageAncestors = {
+                'Vimalamitra': ['Vimalamitra', 'Jñānasūtra', 'Śrī Siṃha', 'Mañjuśrimitra', 'Garab Dorje'],
+                'Padmasambhava': ['Padmasambhava', 'Śrī Siṃha', 'Mañjuśrimitra', 'Garab Dorje'],
+                'Vairocana': ['Vairocana', 'Śrī Siṃha', 'Garab Dorje']
+            };
+            
+            // Helper function to trace lineage ancestry
+            function findLineageAncestry(nodeId, visited = new Set()) {
+                if (visited.has(nodeId)) return null; // Prevent cycles
+                visited.add(nodeId);
+                
+                // Check if this node is a lineage ancestor
+                for (const [lineage, ancestors] of Object.entries(lineageAncestors)) {
+                    if (ancestors.includes(nodeId)) {
+                        return lineage;
+                    }
+                }
+                
+                // Check parents recursively
+                const parentLinks = links.filter(link => link.target === nodeId);
+                for (const link of parentLinks) {
+                    const parentLineage = findLineageAncestry(link.source, new Set(visited));
+                    if (parentLineage) return parentLineage;
+                }
+                
+                return null;
+            }
+            
+            // Assign lineage to all nodes
+            nodes.forEach(node => {
+                if (!node.primaryLineage) {
+                    // First try to use existing lineage field
+                    if (node.lineage && node.lineage !== 'All lineages') {
+                        const lineageParts = node.lineage.split(';').map(l => l.trim());
+                        for (const part of lineageParts) {
+                            if (part.includes('Vimalamitra')) {
+                                node.primaryLineage = 'Vimalamitra';
+                                break;
+                            } else if (part.includes('Padmasambhava')) {
+                                node.primaryLineage = 'Padmasambhava';
+                                break;
+                            } else if (part.includes('Vairocana')) {
+                                node.primaryLineage = 'Vairocana';
+                                break;
+                            }
+                        }
+                    }
+                    
+                    // If still no lineage, trace ancestry
+                    if (!node.primaryLineage) {
+                        node.primaryLineage = findLineageAncestry(node.id) || 'All lineages';
+                    }
+                }
+            });
+        }
+
+        // Build node and link data
+        function buildGraphData(data) {
+            const nodes = new Map();
+            const links = [];
+
+            // Create nodes - now including Position_Date!
+            data.forEach(person => {
+                if (!nodes.has(person.Name_English)) {
+                    nodes.set(person.Name_English, {
+                        id: person.Name_English,
+                        name: person.Name_English,
+                        tibetan: person.Name_Wylie_Tibetan,
+                        nameTibetan: person.Name_Tibetan || person.Name_English, // Fallback to English
+                        nameChinese: person.Name_Chinese || person.Name_English, // Fallback to English
+                        dates: person.Dates,
+                        description: person.Description_English,
+                        descriptionTibetan: person.Description_Tibetan || person.Description_English, // Fallback to English
+                        descriptionChinese: person.Description_Chinese || person.Description_English, // Fallback to English
+                        transmissionMode: person.Transmission_Mode,
+                        lineage: person.Lineage,
+                        positionDate: person.Position_Date, // Key addition!
+                        level: 0,
+                        children: []
+                    });
+                }
+            });
+
+            // First, collect all emanation relationships
+            const emanationPairs = new Set();
+            data.forEach(person => {
+                if (person["Eminated as"]) {
+                    const emanations = person["Eminated as"].split(';').map(e => e.trim());
+                    emanations.forEach(emanation => {
+                        if (emanation && nodes.has(emanation) && nodes.has(person.Name_English)) {
+                            emanationPairs.add(`${person.Name_English}->${emanation}`);
+                        }
+                    });
+                }
+            });
+
+            // Create teaching links, but skip if emanation relationship exists
+            data.forEach(person => {
+                if (person.Received_Teachings_From) {
+                    const teachers = person.Received_Teachings_From.split(';').map(t => t.trim());
+                    teachers.forEach(teacher => {
+                        if (teacher && nodes.has(teacher) && nodes.has(person.Name_English)) {
+                            // Skip if this is an emanation relationship
+                            const emanationKey = `${teacher}->${person.Name_English}`;
+                            if (!emanationPairs.has(emanationKey)) {
+                                links.push({
+                                    source: teacher,
+                                    target: person.Name_English,
+                                    lineage: person.Lineage
+                                });
+                                nodes.get(teacher).children.push(person.Name_English);
+                            }
+                        }
+                    });
+                }
+                
+                // Process emanation relationships from "Eminated as" column
+                if (person["Eminated as"]) {
+                    const emanations = person["Eminated as"].split(';').map(e => e.trim());
+                    emanations.forEach(emanation => {
+                        if (emanation && nodes.has(emanation) && nodes.has(person.Name_English)) {
+                            links.push({
+                                source: person.Name_English,
+                                target: emanation,
+                                lineage: person.Lineage,
+                                type: 'emanation'  // Mark as emanation link
+                            });
+                            nodes.get(person.Name_English).children.push(emanation);
+                        }
+                    });
+                }
+
+                // Process incarnation relationships from "Incarnation_Of" column
+                if (person.Incarnation_Of) {
+                    const incarnations = person.Incarnation_Of.split(';').map(i => i.trim());
+                    incarnations.forEach(incarnation => {
+                        if (incarnation && nodes.has(incarnation) && nodes.has(person.Name_English)) {
+                            links.push({
+                                source: incarnation,
+                                target: person.Name_English,
+                                lineage: person.Lineage,
+                                type: 'incarnation'  // Mark as incarnation link
+                            });
+                        }
+                    });
+                }
+
+                // Process family teaching relationships from "Family_Received_From" column
+                if (person.Family_Received_From) {
+                    const familyTeachers = person.Family_Received_From.split(';').map(f => f.trim());
+                    familyTeachers.forEach(familyTeacher => {
+                        if (familyTeacher && nodes.has(familyTeacher) && nodes.has(person.Name_English)) {
+                            links.push({
+                                source: familyTeacher,
+                                target: person.Name_English,
+                                lineage: person.Lineage,
+                                type: 'family'  // Mark as family teaching link
+                            });
+                        }
+                    });
+                }
+            });
+
+            // Convert to array and mark lineages
+            const nodeArray = Array.from(nodes.values());
+            
+            // Ensure all nodes have proper lineage marking for filtering
+            markAllNodesWithLineage(nodeArray, links);
+            
+            return {
+                nodes: nodeArray,
+                links: links
+            };
+        }
+
+        // Get color based on transmission mode
+        function getTransmissionColor(transmissionMode) {
+            switch (transmissionMode) {
+                case 'Mind to Mind':
+                    return '#4FC3F7'; // Blue for Mind-to-Mind transmission
+                case 'Symbolic':
+                    return '#BA68C8'; // Purple for Symbolic transmission
+                case 'Aural':
+                    return '#81C784'; // Green for Aural transmission
+                default:
+                    return '#E0E0E0'; // Gray for unknown/mixed
+            }
+        }
+
+        // Get arrowhead marker based on transmission mode
+        function getArrowheadMarker(transmissionMode) {
+            switch (transmissionMode) {
+                case 'Mind to Mind':
+                    return 'url(#arrowhead-mind)';
+                case 'Symbolic':
+                    return 'url(#arrowhead-symbolic)';
+                case 'Aural':
+                    return 'url(#arrowhead-aural)';
+                default:
+                    return 'url(#arrowhead-default)';
+            }
+        }
+
+        // Get highlighted arrowhead marker based on transmission mode
+        function getHighlightedArrowheadMarker(transmissionMode) {
+            switch (transmissionMode) {
+                case 'Mind to Mind':
+                    return 'url(#arrowhead-mind-highlighted)';
+                case 'Symbolic':
+                    return 'url(#arrowhead-symbolic-highlighted)';
+                case 'Aural':
+                    return 'url(#arrowhead-aural-highlighted)';
+                default:
+                    return 'url(#arrowhead-default-highlighted)';
+            }
+        }
+
+        // Calculate optimal connection points between two nodes
+        function getOptimalConnectionPoints(sourceNode, targetNode) {
+            // Node dimensions (from the rect creation code)
+            const nodeWidth = 180;
+            const nodeHeight = 70; // Updated to match new taller nodes
+            const halfWidth = nodeWidth / 2;  // 90
+            const halfHeight = nodeHeight / 2; // 35
+            
+            // Constrained connection range - only use middle 60% of top/bottom edges
+            const connectionRange = nodeWidth * 0.3; // 30% on each side of center = 60% total
+            
+            // Define connection points for each node (relative to node center)
+            // ONLY top/bottom connections - no side connections allowed
+            const connectionPoints = [
+                // Top edge connections (center and slightly offset)
+                { x: 0, y: -halfHeight, name: 'top' },                    // top center
+                { x: -connectionRange/2, y: -halfHeight, name: 'top-left-center' },  // top left-of-center
+                { x: connectionRange/2, y: -halfHeight, name: 'top-right-center' },  // top right-of-center
+                
+                // Bottom edge connections (center and slightly offset)  
+                { x: 0, y: halfHeight, name: 'bottom' },                  // bottom center
+                { x: -connectionRange/2, y: halfHeight, name: 'bottom-left-center' }, // bottom left-of-center
+                { x: connectionRange/2, y: halfHeight, name: 'bottom-right-center' }  // bottom right-of-center
+                
+                // NO side connections - removed entirely
+            ];
+            
+            let shortestDistance = Infinity;
+            let bestSourcePoint = null;
+            let bestTargetPoint = null;
+            
+            // Test all combinations of source and target connection points
+            for (const sourcePoint of connectionPoints) {
+                for (const targetPoint of connectionPoints) {
+                    const sourceX = sourceNode.x + sourcePoint.x;
+                    const sourceY = sourceNode.y + sourcePoint.y;
+                    const targetX = targetNode.x + targetPoint.x;
+                    const targetY = targetNode.y + targetPoint.y;
+                    
+                    // Calculate Euclidean distance
+                    const distance = Math.sqrt(
+                        Math.pow(targetX - sourceX, 2) + Math.pow(targetY - sourceY, 2)
+                    );
+                    
+                    // Simple shortest distance - no preference bonus needed since we only have top/bottom
+                    if (distance < shortestDistance) {
+                        shortestDistance = distance;
+                        bestSourcePoint = { x: sourceX, y: sourceY, side: sourcePoint.name };
+                        bestTargetPoint = { x: targetX, y: targetY, side: targetPoint.name };
+                    }
+                }
+            }
+            
+            return {
+                source: bestSourcePoint,
+                target: bestTargetPoint,
+                distance: shortestDistance
+            };
+        }
+
+        // Create compressed layer mapping for ordinal positions
+        function createOrdinalLayerMapping(nodes) {
+            // Get all unique ordinal positions (0-100) that actually exist
+            const usedOrdinalPositions = nodes
+                .map(node => parseInt(node.positionDate))
+                .filter(pos => pos >= 0 && pos <= 100)
+                .sort((a, b) => a - b);
+            
+            // Remove duplicates
+            const uniquePositions = [...new Set(usedOrdinalPositions)];
+            
+            // Create mapping from position to compressed layer
+            const mapping = {};
+            uniquePositions.forEach((pos, index) => {
+                mapping[pos] = index;
+            });
+            
+            return mapping;
+        }
+        
+        let ordinalLayerMapping = null; // Will be initialized when nodes are loaded
+
+        // Parse Position_Date and map to fine-grained layer levels for better vertical resolution
+        function parsePositionDate(positionDate) {
+            if (!positionDate || positionDate === 'N/A' || positionDate === '') {
+                return 100; // Put undated entities after ordinal layers
+            }
+            
+            const rawDate = parseInt(positionDate);
+            
+            // Keep placeholder years 0-100 as special ordinal layers (but compressed)
+            if (rawDate >= 0 && rawDate <= 100) {
+                if (ordinalLayerMapping && ordinalLayerMapping[rawDate] !== undefined) {
+                    return ordinalLayerMapping[rawDate];
+                }
+                return rawDate; // fallback to raw position if mapping not ready
+            }
+            
+            // For historical/chronological dates (350 CE onwards), use linear spacing with 25-year equivalent gap after ordinal layers
+            if (rawDate >= 350) {
+                const maxOrdinalLayer = ordinalLayerMapping ? Math.max(...Object.values(ordinalLayerMapping)) : 15;
+                // Linear calculation: 50 years per layer starting with 0.5 layer gap (equivalent to 25-year chronological spacing)
+                return maxOrdinalLayer + 0.5 + ((rawDate - 350) / 50);
+            }
+            
+            return 200; // fallback for any other cases (well beyond normal range)
+        }
+
+        // Calculate century line positions using the same system as nodes
+        function calculateCenturyLines(nodes) {
+            // Show centuries for all historical dates (600+ CE) regardless of transmission mode
+            // This covers the full range of historical Buddhist lineage figures
+            
+            const centuries = [
+                { century: '7th Century', year: 600 },  // Start of 7th century
+                { century: '8th Century', year: 700 },  // Start of 8th century
+                { century: '9th Century', year: 800 },  // Start of 9th century
+                { century: '10th Century', year: 900 }, // Start of 10th century
+                { century: '11th Century', year: 1000 },// Start of 11th century
+                { century: '12th Century', year: 1100 },// Start of 12th century
+                { century: '13th Century', year: 1200 },// Start of 13th century
+                { century: '14th Century', year: 1300 },// Start of 14th century
+                { century: '15th Century', year: 1400 },// Start of 15th century
+                { century: '16th Century', year: 1500 },// Start of 16th century
+                { century: '17th Century', year: 1600 },// Start of 17th century
+                { century: '18th Century', year: 1700 },// Start of 18th century
+                { century: '19th Century', year: 1800 },// Start of 19th century
+                { century: '20th Century', year: 1900 },// Start of 20th century
+                { century: '21st Century', year: 2000 } // Start of 21st century
+            ];
+            
+            return centuries.map(c => ({
+                label: c.century,
+                year: c.year,
+                timeLayer: parsePositionDate(c.year),
+                // Use exact same positioning calculation as nodes: baseY + (timeLayer * gridHeight)
+                yPosition: 50 + (parsePositionDate(c.year) * 160) // baseY=50, gridHeight=160
+            }));
+        }
+
+        // Assign vertical positions using Position_Date from CSV
+        function assignVerticalPositions(nodes, links) {
+            // Use Position_Date directly for vertical positioning - this is the key change!
+            nodes.forEach(node => {
+                node.timeLayer = parsePositionDate(node.positionDate);
+                // Convert timeLayer to level for compatibility with existing rendering code
+                node.level = node.timeLayer;
+            });
+
+            return nodes;
+        }
+
+        // Split data into three separate lineage trees for preprocessing
+        function splitIntoLineageTrees(nodes, links) {
+            console.log('=== SPLITTING INTO LINEAGE TREES ===');
+
+            const lineages = {
+                vimalamitra: { nodes: [], links: [] },
+                padmasambhava: { nodes: [], links: [] },
+                vairocana: { nodes: [], links: [] },
+                shared: { nodes: [], links: [] }, // For early sacred ancestors (0-100)
+                allLineages: { nodes: [], links: [] } // For post-Longchenpa unified masters
+            };
+
+            // Identify shared ancestor nodes that appear in multiple lineages (early period)
+            const sharedAncestors = ['Samantabhadra/Samantabhadrī', 'Buddhas of the Five Families',
+                                   'Supreme Emanation Blessing', 'Sublime Wisdom Emanation (Vajradhara)',
+                                   'Vajrasattva', 'Vajrapāṇi', 'Cheu Nangwa Dampa Samkyi Mikhyapa',
+                                   'Śākyamuni Buddha', 'Garab Dorje', 'Mañjuśrimitra', 'Śrī Siṃha'];
+
+            // Split nodes into lineages with special handling for time periods
+            nodes.forEach(node => {
+                const positionDate = parseInt(node.positionDate) || 0;
+
+                // Early sacred period (0-100) - these should maintain proper spacing
+                if (positionDate <= 100 || sharedAncestors.includes(node.id)) {
+                    lineages.shared.nodes.push(node);
+                }
+                // Post-Longchenpa unified lineage (All Lineages)
+                else if (node.lineage === 'All Lineages') {
+                    lineages.allLineages.nodes.push(node);
+                }
+                // Pre-Longchenpa individual lineages
+                else if (node.primaryLineage === 'Vimalamitra' ||
+                        (node.lineage && node.lineage.includes('Vimalamitra'))) {
+                    lineages.vimalamitra.nodes.push(node);
+                } else if (node.primaryLineage === 'Padmasambhava' ||
+                          (node.lineage && node.lineage.includes('Padmasambhava'))) {
+                    lineages.padmasambhava.nodes.push(node);
+                } else if (node.primaryLineage === 'Vairocana' ||
+                          (node.lineage && node.lineage.includes('Vairocana'))) {
+                    lineages.vairocana.nodes.push(node);
+                } else {
+                    lineages.shared.nodes.push(node); // Fallback to shared for early period
+                }
+            });
+            
+            // Split links based on node assignments
+            links.forEach(link => {
+                const sourceNode = nodes.find(n => n.id === link.source);
+                const targetNode = nodes.find(n => n.id === link.target);
+                
+                if (!sourceNode || !targetNode) return;
+                
+                // Determine which lineage this link belongs to based on target node
+                if (lineages.allLineages.nodes.includes(targetNode)) {
+                    lineages.allLineages.links.push(link);
+                } else if (lineages.vimalamitra.nodes.includes(targetNode)) {
+                    lineages.vimalamitra.links.push(link);
+                } else if (lineages.padmasambhava.nodes.includes(targetNode)) {
+                    lineages.padmasambhava.links.push(link);
+                } else if (lineages.vairocana.nodes.includes(targetNode)) {
+                    lineages.vairocana.links.push(link);
+                } else {
+                    lineages.shared.links.push(link);
+                }
+            });
+            
+            console.log('Lineage split results:', {
+                vimalamitra: lineages.vimalamitra.nodes.length + ' nodes',
+                padmasambhava: lineages.padmasambhava.nodes.length + ' nodes', 
+                vairocana: lineages.vairocana.nodes.length + ' nodes',
+                shared: lineages.shared.nodes.length + ' nodes'
+            });
+            
+            return lineages;
+        }
+
+        // Build hierarchical tree structure for D3
+        function buildLineageHierarchy(lineageData) {
+            const { nodes, links } = lineageData;
+            if (nodes.length === 0) return null;
+            
+            // Create maps for tree building
+            const nodeMap = new Map(nodes.map(n => [n.id, { ...n, children: [] }]));
+            const hasParent = new Set();
+            
+            // Build parent-child relationships
+            links.forEach(link => {
+                const parent = nodeMap.get(link.source);
+                const child = nodeMap.get(link.target);
+                if (parent && child) {
+                    parent.children.push(child);
+                    hasParent.add(link.target);
+                }
+            });
+            
+            // Find root nodes (nodes with no parents in this lineage)
+            const roots = nodes.filter(n => !hasParent.has(n.id)).map(n => nodeMap.get(n.id));
+            
+            // If multiple roots, create artificial root to connect them
+            if (roots.length === 1) {
+                return roots[0];
+            } else if (roots.length > 1) {
+                return {
+                    id: 'artificial-root',
+                    name: 'Root',
+                    children: roots
+                };
+            }
+            return null;
+        }
+
+        // Use D3's native tree layout for proper positioning
+        function positionLineageNodes(lineageData, baseX, lineageWidth = 400) {
+            console.log('Using D3 tree layout for lineage with base X:', baseX);
+            
+            const { nodes } = lineageData;
+            if (nodes.length === 0) return;
+            
+            // Build D3 hierarchy
+            const root = buildLineageHierarchy(lineageData);
+            if (!root) return;
+            
+            // Create D3 tree layout
+            const treeLayout = d3.tree()
+                .size([lineageWidth, 1000]) // Width x Height - height doesn't matter since we'll override Y
+                .separation((a, b) => {
+                    // Good separation between siblings
+                    return a.parent === b.parent ? 1.5 : 2;
+                });
+            
+            // Apply D3 tree layout
+            const hierarchy = d3.hierarchy(root);
+            const treeNodes = treeLayout(hierarchy);
+            
+            // Extract D3's X positions and store them
+            treeNodes.each(d => {
+                const originalNode = nodes.find(n => n.id === d.data.id);
+                if (originalNode && d.data.id !== 'artificial-root') {
+                    // D3's X becomes our relative X within the lineage
+                    originalNode.lineageX = baseX + (d.x - lineageWidth/2); // Center the tree around baseX
+                    console.log(`${originalNode.name}: D3 positioned at X=${d.x} -> lineageX=${originalNode.lineageX}`);
+                }
+            });
+        }
+
+        // Calculate optimal width for each lineage based on node density
+        function calculateLineageWidth(lineageNodes, minWidth = 600, maxWidth = 1400) {
+            if (lineageNodes.length === 0) return minWidth;
+
+            // Group nodes by time layer to find the densest period
+            const layerGroups = d3.groups(lineageNodes, d => d.timeLayer);
+            const maxNodesInLayer = Math.max(...layerGroups.map(([layer, nodes]) => nodes.length));
+
+            // Calculate width based on density (more nodes = more width needed)
+            const calculatedWidth = Math.min(maxWidth, Math.max(minWidth, maxNodesInLayer * 180));
+            console.log(`Lineage width calculation: ${lineageNodes.length} nodes, max ${maxNodesInLayer} in one layer -> ${calculatedWidth}px`);
+
+            return calculatedWidth;
+        }
+
+        // Calculate balanced positioning that keeps all lineages close together
+        function calculateDynamicLineagePositions(lineages) {
+            // Use fixed, reasonable widths to prevent excessive spreading
+            const vairocanaWidth = 800;   // Fixed reasonable width
+            const vimalamitraWidth = 1000; // Slightly wider for denser lineage
+            const padmasambhavaWidth = 800; // Fixed reasonable width
+            const sharedWidth = 600;        // Fixed width for shared ancestors (0-100 period)
+            const allLineagesWidth = 1200;  // Width for post-Longchenpa unified lineage
+
+            // Position lineages with controlled spacing - keep them close together
+            const vairocanaX = 200;   // Left position
+            const vimalamitraX = 1200; // Center position - close to Vairocana
+            const padmasambhavaX = 2400; // Right position - close to Vimalamitra
+            const sharedX = vimalamitraX; // Center shared ancestors (0-100) with Vimalamitra
+            const allLineagesX = vimalamitraX; // Center post-Longchenpa nodes with middle
+
+            console.log('Balanced positioning (prevents over-spreading):');
+            console.log(`  Vairocana: X=${vairocanaX}, Width=${vairocanaWidth}`);
+            console.log(`  Vimalamitra: X=${vimalamitraX}, Width=${vimalamitraWidth}`);
+            console.log(`  Padmasambhava: X=${padmasambhavaX}, Width=${padmasambhavaWidth}`);
+            console.log(`  Shared (0-100): X=${sharedX}, Width=${sharedWidth}`);
+            console.log(`  All Lineages (1325+): X=${allLineagesX}, Width=${allLineagesWidth}`);
+
+            return {
+                vairocana: { x: vairocanaX, width: vairocanaWidth },
+                vimalamitra: { x: vimalamitraX, width: vimalamitraWidth },
+                padmasambhava: { x: padmasambhavaX, width: padmasambhavaWidth },
+                shared: { x: sharedX, width: sharedWidth },
+                allLineages: { x: allLineagesX, width: allLineagesWidth }
+            };
+        }
+
+        // New main positioning function using lineage preprocessing with D3 tree layout
+        function applyLineageBasedLayout(nodes, links) {
+            console.log('=== LINEAGE-BASED LAYOUT WITH D3 TREES ===');
+
+            // Step 1: Split into lineage trees
+            const lineages = splitIntoLineageTrees(nodes, links);
+
+            // Step 2: Calculate dynamic positions based on actual content
+            const positions = calculateDynamicLineagePositions(lineages);
+
+            // Step 3: Use D3 tree layout for each lineage with calculated positions
+            positionLineageNodes(lineages.vairocana, positions.vairocana.x, positions.vairocana.width);
+            positionLineageNodes(lineages.vimalamitra, positions.vimalamitra.x, positions.vimalamitra.width);
+            positionLineageNodes(lineages.padmasambhava, positions.padmasambhava.x, positions.padmasambhava.width);
+
+            // Step 4: Apply D3 tree layout to shared ancestors (early sacred period 0-100)
+            positionLineageNodes(lineages.shared, positions.shared.x, positions.shared.width);
+
+            // Step 5: Apply D3 tree layout to unified All Lineages (post-Longchenpa period)
+            positionLineageNodes(lineages.allLineages, positions.allLineages.x, positions.allLineages.width);
+            
+            // Step 4: Apply final positioning - D3's X + Chronological Y with sub-layer offsets
+            
+            // First, group nodes by timeLayer to detect stacking
+            const layerGroups = d3.groups(nodes, d => d.timeLayer);
+            const layerOffsets = new Map();
+            
+            layerGroups.forEach(([timeLayer, layerNodes]) => {
+                // All nodes in the same time layer get no vertical offset - they align horizontally
+                layerNodes.forEach(node => {
+                    layerOffsets.set(node.id, 0);
+                    console.log(`Layer ${timeLayer}: ${node.name} gets Y offset 0 (no staggering)`);
+                });
+            });
+            
+            // Apply final positioning
+            nodes.forEach(node => {
+                // Use D3's calculated X position (lineageX) or fallback to center
+                if (typeof node.lineageX === 'number') {
+                    node.treeX = node.lineageX;
+                } else {
+                    node.treeX = 800; // Default center position
+                }
+                
+                // Apply chronological Y + sub-layer offset
+                const baseY = node.timeLayer * 140;
+                const offset = layerOffsets.get(node.id) || 0;
+                node.treeY = baseY + offset;
+                
+                console.log(`Final position - ${node.name}: (${node.treeX}, ${node.treeY}) [base: ${baseY}, offset: ${offset}]`);
+            });
+            
+            console.log('=== D3 LINEAGE LAYOUT COMPLETE ===');
+            return nodes;
+        }
+        
+        // Step 3: Apply chronological constraints with intelligent sub-layering
+        function applyChronologicalConstraints(nodes) {
+            console.log('Applying chronological constraints with intelligent sub-layering...');
+            
+            // Group nodes by time layer to detect crowded periods
+            const layerGroups = d3.groups(nodes, d => d.timeLayer);
+            const layerAdjustments = new Map();
+            
+            // Detect crowded layers and plan sub-layer adjustments
+            layerGroups.forEach(([timeLayer, layerNodes]) => {
+                if (layerNodes.length > 3) { // If more than 3 nodes in same time layer
+                    console.log(`Crowded layer ${timeLayer} detected with ${layerNodes.length} nodes`);
+                    
+                    // Sort nodes by their tree branching position for consistent sub-layering
+                    layerNodes.sort((a, b) => (a.d3TreeX || 0) - (b.d3TreeX || 0));
+                    
+                    // Create sub-layers within the main time layer
+                    const subLayerHeight = 0.8; // Fraction of main layer height for sub-layers
+                    layerNodes.forEach((node, index) => {
+                        const subLayerOffset = (index / (layerNodes.length - 1)) * subLayerHeight - (subLayerHeight / 2);
+                        layerAdjustments.set(node.id, timeLayer + subLayerOffset);
+                    });
+                } else {
+                    // Not crowded - use standard positioning
+                    layerNodes.forEach(node => {
+                        layerAdjustments.set(node.id, timeLayer);
+                    });
+                }
+            });
+            
+            // Apply the calculated positions
+            nodes.forEach(node => {
+                // Use D3's X position for horizontal (preserves tree branching)
+                node.treeX = node.d3TreeX || 0;
+                
+                // Use adjusted Y position with sub-layering
+                const adjustedLayer = layerAdjustments.get(node.id) || node.timeLayer;
+                const chronologicalY = adjustedLayer * 140; // Increased spacing for better visibility
+                node.treeY = chronologicalY;
+                
+                console.log(`${node.name}: Layer ${node.timeLayer} -> Adjusted ${adjustedLayer.toFixed(2)} -> Y=${node.treeY}`);
+            });
+        }
+        
+        // Step 4: Adaptive spacing algorithm that expands crowded layers automatically
+        function fixChronologicalOverlaps(nodes) {
+            console.log('Applying adaptive spacing algorithm...');
+            
+            // Group nodes by their adjusted time layer (after sub-layering)
+            const layerMap = new Map();
+            nodes.forEach(node => {
+                const adjustedLayer = Math.round(node.treeY / 140); // Convert back from pixels
+                if (!layerMap.has(adjustedLayer)) {
+                    layerMap.set(adjustedLayer, []);
+                }
+                layerMap.get(adjustedLayer).push(node);
+            });
+            
+            // Process each layer
+            layerMap.forEach((layerNodes, layerKey) => {
+                if (layerNodes.length <= 1) return; // No overlaps possible
+                
+                // Sort by D3's original X position to maintain genealogical order
+                layerNodes.sort((a, b) => (a.d3TreeX || 0) - (b.d3TreeX || 0));
+                
+                // Adaptive separation based on layer crowding
+                let minSeparation = 180; // Base minimum separation
+
+                if (layerNodes.length > 6) {
+                    minSeparation = 220; // More space for very crowded layers
+                } else if (layerNodes.length > 4) {
+                    minSeparation = 200; // Extra space for moderately crowded
+                }
+                
+                // Apply intelligent horizontal spacing
+                for (let i = 1; i < layerNodes.length; i++) {
+                    const prevNode = layerNodes[i - 1];
+                    const currentNode = layerNodes[i];
+                    
+                    const currentSeparation = Math.abs(currentNode.treeX - prevNode.treeX);
+                    
+                    if (currentSeparation < minSeparation) {
+                        // Too close! Apply adaptive expansion
+                        const expansionNeeded = minSeparation - currentSeparation;
+                        currentNode.treeX = prevNode.treeX + minSeparation;
+                        
+                        console.log(`Adaptive expansion: ${currentNode.name} moved from X=${currentNode.treeX - expansionNeeded} to X=${currentNode.treeX} (gap: ${minSeparation}px)`);
+                        
+                        // Ripple effect: push subsequent nodes if needed
+                        for (let j = i + 1; j < layerNodes.length; j++) {
+                            const nextNode = layerNodes[j];
+                            if (Math.abs(nextNode.treeX - currentNode.treeX) < minSeparation) {
+                                nextNode.treeX = currentNode.treeX + minSeparation;
+                                console.log(`Ripple expansion: ${nextNode.name} adjusted to X=${nextNode.treeX}`);
+                            } else {
+                                break; // No more adjustments needed
+                            }
+                        }
+                    }
+                }
+                
+                console.log(`Layer ${layerKey} adaptive spacing complete: ${layerNodes.length} nodes with ${minSeparation}px separation`);
+            });
+        }
+        
+        // Build tree hierarchy from parent-child relationships
+        function buildTreeHierarchy(nodes, links) {
+            console.log('Building tree hierarchy...');
+            
+            // Create adjacency maps
+            const childrenMap = new Map();
+            const parentsMap = new Map();
+            
+            nodes.forEach(node => {
+                childrenMap.set(node.id, []);
+                parentsMap.set(node.id, []);
+            });
+            
+            links.forEach(link => {
+                if (childrenMap.has(link.source) && childrenMap.has(link.target)) {
+                    childrenMap.get(link.source).push(link.target);
+                    parentsMap.get(link.target).push(link.source);
+                }
+            });
+            
+            // Find root nodes (nodes with no parents)
+            const rootNodes = nodes.filter(node => {
+                const parents = parentsMap.get(node.id) || [];
+                return parents.length === 0;
+            });
+            
+            console.log(`Found ${rootNodes.length} root nodes:`, rootNodes.map(n => n.name));
+            
+            // Build tree structure recursively
+            function buildChildren(parentNode) {
+                const childIds = childrenMap.get(parentNode.id) || [];
+                const children = childIds
+                    .map(childId => nodes.find(n => n.id === childId))
+                    .filter(child => child);
+                    
+                children.forEach(child => {
+                    child.children = buildChildren(child);
+                    child.parent = parentNode;
+                });
+                
+                return children;
+            }
+            
+            // Build full tree structure
+            rootNodes.forEach(root => {
+                root.children = buildChildren(root);
+                root.parent = null;
+                root.depth = 0;
+            });
+            
+            return { roots: rootNodes, childrenMap, parentsMap };
+        }
+
+
+        // Initialize visualization
+        const container = d3.select('#container');
+        const svg = d3.select('#svg');
+        const tooltip = d3.select('#tooltip');
+
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+
+        svg.attr('width', width).attr('height', height);
+
+        const g = svg.append('g');
+
+        // Define arrowhead markers for different transmission types
+        const defs = svg.append('defs');
+        
+        // Gradient for century lines - fading from center to edges
+        const gradient = defs.append('linearGradient')
+            .attr('id', 'century-line-gradient')
+            .attr('x1', '0%').attr('y1', '0%')
+            .attr('x2', '100%').attr('y2', '0%');
+        
+        gradient.append('stop')
+            .attr('offset', '0%')
+            .attr('stop-color', '#999')
+            .attr('stop-opacity', 0);
+        
+        gradient.append('stop')
+            .attr('offset', '15%')
+            .attr('stop-color', '#999')
+            .attr('stop-opacity', 0.6);
+        
+        gradient.append('stop')
+            .attr('offset', '85%')
+            .attr('stop-color', '#999')
+            .attr('stop-opacity', 0.6);
+        
+        gradient.append('stop')
+            .attr('offset', '100%')
+            .attr('stop-color', '#999')
+            .attr('stop-opacity', 0);
+        
+        // Mind-to-Mind transmission arrowhead (blue)
+        defs.append('marker')
+            .attr('id', 'arrowhead-mind')
+            .attr('viewBox', '0 -5 10 10')
+            .attr('refX', 8)
+            .attr('refY', 0)
+            .attr('markerWidth', 6)
+            .attr('markerHeight', 6)
+            .attr('orient', 'auto')
+            .append('path')
+            .attr('d', 'M0,-5L10,0L0,5')
+            .attr('fill', '#4FC3F7')
+            .attr('opacity', 0.8);
+
+        // Symbolic transmission arrowhead (purple)
+        defs.append('marker')
+            .attr('id', 'arrowhead-symbolic')
+            .attr('viewBox', '0 -5 10 10')
+            .attr('refX', 8)
+            .attr('refY', 0)
+            .attr('markerWidth', 6)
+            .attr('markerHeight', 6)
+            .attr('orient', 'auto')
+            .append('path')
+            .attr('d', 'M0,-5L10,0L0,5')
+            .attr('fill', '#BA68C8')
+            .attr('opacity', 0.8);
+
+        // Aural transmission arrowhead (green)
+        defs.append('marker')
+            .attr('id', 'arrowhead-aural')
+            .attr('viewBox', '0 -5 10 10')
+            .attr('refX', 8)
+            .attr('refY', 0)
+            .attr('markerWidth', 6)
+            .attr('markerHeight', 6)
+            .attr('orient', 'auto')
+            .append('path')
+            .attr('d', 'M0,-5L10,0L0,5')
+            .attr('fill', '#81C784')
+            .attr('opacity', 0.8);
+
+        // Default arrowhead (gray)
+        defs.append('marker')
+            .attr('id', 'arrowhead-default')
+            .attr('viewBox', '0 -5 10 10')
+            .attr('refX', 8)
+            .attr('refY', 0)
+            .attr('markerWidth', 6)
+            .attr('markerHeight', 6)
+            .attr('orient', 'auto')
+            .append('path')
+            .attr('d', 'M0,-5L10,0L0,5')
+            .attr('fill', '#666')
+            .attr('opacity', 0.8);
+
+        // Highlighted versions of each transmission type arrowhead
+        defs.append('marker')
+            .attr('id', 'arrowhead-mind-highlighted')
+            .attr('viewBox', '0 -5 10 10')
+            .attr('refX', 8)
+            .attr('refY', 0)
+            .attr('markerWidth', 8)
+            .attr('markerHeight', 8)
+            .attr('orient', 'auto')
+            .append('path')
+            .attr('d', 'M0,-5L10,0L0,5')
+            .attr('fill', '#ff6b35')
+            .attr('opacity', 1);
+
+        defs.append('marker')
+            .attr('id', 'arrowhead-symbolic-highlighted')
+            .attr('viewBox', '0 -5 10 10')
+            .attr('refX', 8)
+            .attr('refY', 0)
+            .attr('markerWidth', 8)
+            .attr('markerHeight', 8)
+            .attr('orient', 'auto')
+            .append('path')
+            .attr('d', 'M0,-5L10,0L0,5')
+            .attr('fill', '#ff6b35')
+            .attr('opacity', 1);
+
+        defs.append('marker')
+            .attr('id', 'arrowhead-aural-highlighted')
+            .attr('viewBox', '0 -5 10 10')
+            .attr('refX', 8)
+            .attr('refY', 0)
+            .attr('markerWidth', 8)
+            .attr('markerHeight', 8)
+            .attr('orient', 'auto')
+            .append('path')
+            .attr('d', 'M0,-5L10,0L0,5')
+            .attr('fill', '#ff6b35')
+            .attr('opacity', 1);
+
+        defs.append('marker')
+            .attr('id', 'arrowhead-default-highlighted')
+            .attr('viewBox', '0 -5 10 10')
+            .attr('refX', 8)
+            .attr('refY', 0)
+            .attr('markerWidth', 8)
+            .attr('markerHeight', 8)
+            .attr('orient', 'auto')
+            .append('path')
+            .attr('d', 'M0,-5L10,0L0,5')
+            .attr('fill', '#ff6b35')
+            .attr('opacity', 1);
+
+        // Zoom behavior
+        const zoom = d3.zoom()
+            .scaleExtent([0.1, 3])
+            .on('zoom', (event) => {
+                g.attr('transform', event.transform);
+                // Reposition popup if it's open
+                if (currentPopupNode && !document.getElementById('popup-card').classList.contains('hidden')) {
+                    positionPopup();
+                }
+            });
+
+        svg.call(zoom);
+
+        // Store current popup node for repositioning
+        let currentPopupNode = null;
+        let currentPopupData = null;
+        let selectedNode = null; // Track currently selected node
+        let activeRippleTimeouts = []; // Track active animation timeouts
+
+        // Popup functions
+        function showPopup(data, event) {
+            const popup = document.getElementById('popup-card');
+            const title = document.getElementById('popup-title');
+            const imagesContainer = document.getElementById('popup-images');
+            const tibetan = document.getElementById('popup-tibetan');
+            const dates = document.getElementById('popup-dates');
+            const description = document.getElementById('popup-description');
+            
+            // Store current popup info for repositioning
+            currentPopupData = data;
+            currentPopupNode = event.target.closest('.node-group');
+            
+            // Set content with language support
+            title.textContent = getDisplayName(data);
+            
+            // Clear and hide images container initially
+            imagesContainer.innerHTML = '';
+            imagesContainer.style.display = 'none';
+            
+            // Load and display images asynchronously
+            loadNodeImages(data.name).then(images => {
+                if (images.length > 0) {
+                    displayImageCarousel(imagesContainer, images);
+                } else {
+                    // Keep container hidden if no images found
+                    imagesContainer.style.display = 'none';
+                }
+            }).catch(error => {
+                console.log('Error loading images:', error);
+                imagesContainer.style.display = 'none';
+            });
+            
+            // Tibetan Wylie name
+            if (data.tibetan && data.tibetan !== 'N/A' && data.tibetan.trim()) {
+                tibetan.innerHTML = data.tibetan;
+                tibetan.className = 'popup-tibetan';
+                tibetan.style.display = 'block';
+            } else {
+                tibetan.style.display = 'none';
+            }
+            
+            // Dates they existed
+            if (data.dates && data.dates !== 'N/A' && data.dates.trim()) {
+                const translations = uiTranslations[currentLanguage];
+                dates.innerHTML = `<strong>${translations.dates}:</strong> ${data.dates}`;
+                dates.style.display = 'block';
+            } else {
+                dates.style.display = 'none';
+            }
+            
+            // Description with language support
+            const currentDescription = getDisplayDescription(data);
+            if (currentDescription && currentDescription.trim()) {
+                description.innerHTML = currentDescription;
+                description.className = currentLanguage === 'bo' ? 'popup-description tibetan-text' : 
+                                       currentLanguage === 'zh' ? 'popup-description chinese-text' : 'popup-description';
+                description.style.display = 'block';
+            } else {
+                description.style.display = 'none';
+            }
+            
+            // Position popup
+            positionPopup();
+            
+            popup.classList.remove('hidden');
+        }
+
+        function positionPopup() {
+            if (!currentPopupNode || !currentPopupData) return;
+            
+            const popup = document.getElementById('popup-card');
+            
+            // Get node position in screen coordinates
+            const nodeRect = currentPopupNode.getBoundingClientRect();
+            const containerRect = document.getElementById('container').getBoundingClientRect();
+            
+            // Calculate node center
+            const nodeCenterX = nodeRect.left + nodeRect.width / 2 - containerRect.left;
+            const nodeCenterY = nodeRect.top + nodeRect.height / 2 - containerRect.top;
+            
+            // Get actual popup dimensions
+            popup.style.visibility = 'hidden';
+            popup.style.display = 'block';
+            const popupRect = popup.getBoundingClientRect();
+            const popupWidth = Math.max(popupRect.width, 350); // Minimum width
+            const popupHeight = Math.max(popupRect.height, 200); // Minimum height
+            popup.style.display = '';
+            popup.style.visibility = '';
+            
+            const offset = 20; // Distance from node
+            const margin = 20; // Margin from viewport edges
+            
+            let popupX, popupY;
+            
+            // Get viewport dimensions
+            const viewportWidth = window.innerWidth;
+            const viewportHeight = window.innerHeight;
+            
+            // Check if mobile/small screen
+            const isMobile = window.innerWidth <= 768;
+            
+            if (isMobile) {
+                // Mobile-specific positioning: avoid covering the node
+                const nodeTop = nodeRect.top;
+                const nodeBottom = nodeRect.bottom;
+                const nodeLeft = nodeRect.left;
+                const nodeRight = nodeRect.right;
+                
+                // Try positioning below the node first (most common case)
+                if (nodeBottom + offset + popupHeight + margin < viewportHeight) {
+                    // Position below node
+                    popupY = nodeBottom + offset - containerRect.top;
+                    popupX = Math.max(margin, Math.min(viewportWidth - popupWidth - margin, nodeCenterX - popupWidth / 2));
+                }
+                // Try positioning above the node
+                else if (nodeTop - offset - popupHeight > margin) {
+                    // Position above node
+                    popupY = nodeTop - offset - popupHeight - containerRect.top;
+                    popupX = Math.max(margin, Math.min(viewportWidth - popupWidth - margin, nodeCenterX - popupWidth / 2));
+                }
+                // Try positioning to the right (if node is on left side)
+                else if (nodeCenterX < viewportWidth / 2 && nodeRight + offset + popupWidth + margin < viewportWidth) {
+                    // Position to the right of node
+                    popupX = nodeRight + offset - containerRect.left;
+                    popupY = Math.max(margin, Math.min(viewportHeight - popupHeight - margin, nodeCenterY - popupHeight / 2));
+                }
+                // Try positioning to the left (if node is on right side)
+                else if (nodeCenterX >= viewportWidth / 2 && nodeLeft - offset - popupWidth > margin) {
+                    // Position to the left of node
+                    popupX = nodeLeft - offset - popupWidth - containerRect.left;
+                    popupY = Math.max(margin, Math.min(viewportHeight - popupHeight - margin, nodeCenterY - popupHeight / 2));
+                }
+                // Fallback: position at bottom of screen, leaving node visible at top
+                else {
+                    popupX = margin;
+                    popupY = Math.max(nodeBottom + offset - containerRect.top, viewportHeight - popupHeight - margin);
+                    // Make popup narrower if needed to fit
+                    popup.style.maxWidth = (viewportWidth - 2 * margin) + 'px';
+                }
+            } else {
+                // Smart desktop positioning - avoid overlapping other nodes
+                const positions = [
+                    // Right side
+                    {
+                        x: nodeCenterX + (nodeRect.width / 2) + offset,
+                        y: Math.max(margin, Math.min(viewportHeight - popupHeight - margin, nodeCenterY - popupHeight / 2)),
+                        name: 'right'
+                    },
+                    // Left side
+                    {
+                        x: nodeCenterX - (nodeRect.width / 2) - popupWidth - offset,
+                        y: Math.max(margin, Math.min(viewportHeight - popupHeight - margin, nodeCenterY - popupHeight / 2)),
+                        name: 'left'
+                    },
+                    // Bottom
+                    {
+                        x: Math.max(margin, Math.min(viewportWidth - popupWidth - margin, nodeCenterX - popupWidth / 2)),
+                        y: nodeCenterY + (nodeRect.height / 2) + offset,
+                        name: 'bottom'
+                    },
+                    // Top
+                    {
+                        x: Math.max(margin, Math.min(viewportWidth - popupWidth - margin, nodeCenterX - popupWidth / 2)),
+                        y: nodeCenterY - (nodeRect.height / 2) - offset - popupHeight,
+                        name: 'top'
+                    }
+                ];
+                
+                // Function to check if popup overlaps with other nodes
+                function getNodeOverlapScore(popupRect) {
+                    let overlapScore = 0;
+                    const allNodes = document.querySelectorAll('.node-group');
+                    
+                    allNodes.forEach(node => {
+                        if (node === currentPopupNode) return; // Skip the clicked node
+                        
+                        const nodeRect = node.getBoundingClientRect();
+                        const nodeX = nodeRect.left - containerRect.left;
+                        const nodeY = nodeRect.top - containerRect.top;
+                        const nodeW = nodeRect.width;
+                        const nodeH = nodeRect.height;
+                        
+                        // Check overlap
+                        const overlapLeft = Math.max(popupRect.x, nodeX);
+                        const overlapTop = Math.max(popupRect.y, nodeY);
+                        const overlapRight = Math.min(popupRect.x + popupRect.width, nodeX + nodeW);
+                        const overlapBottom = Math.min(popupRect.y + popupRect.height, nodeY + nodeH);
+                        
+                        if (overlapLeft < overlapRight && overlapTop < overlapBottom) {
+                            const overlapArea = (overlapRight - overlapLeft) * (overlapBottom - overlapTop);
+                            overlapScore += overlapArea;
+                        }
+                    });
+                    
+                    return overlapScore;
+                }
+                
+                // Evaluate each position and choose the one with least overlap
+                let bestPosition = null;
+                let bestScore = Infinity;
+                
+                positions.forEach(pos => {
+                    // Check if position is within viewport bounds
+                    if (pos.x >= margin && pos.x + popupWidth <= viewportWidth - margin &&
+                        pos.y >= margin && pos.y + popupHeight <= viewportHeight - margin) {
+                        
+                        const popupRect = {
+                            x: pos.x,
+                            y: pos.y,
+                            width: popupWidth,
+                            height: popupHeight
+                        };
+                        
+                        const overlapScore = getNodeOverlapScore(popupRect);
+                        
+                        if (overlapScore < bestScore) {
+                            bestScore = overlapScore;
+                            bestPosition = pos;
+                        }
+                    }
+                });
+                
+                // Use best position or fallback
+                if (bestPosition) {
+                    popupX = bestPosition.x;
+                    popupY = bestPosition.y;
+                } else {
+                    // Fallback: force fit on right with adjustment
+                    popupX = Math.max(margin, Math.min(viewportWidth - popupWidth - margin, nodeCenterX + (nodeRect.width / 2) + offset));
+                    popupY = Math.max(margin, Math.min(viewportHeight - popupHeight - margin, nodeCenterY - popupHeight / 2));
+                }
+            }
+            
+            // Final viewport boundary enforcement
+            popupX = Math.max(margin, Math.min(viewportWidth - popupWidth - margin, popupX));
+            popupY = Math.max(margin, Math.min(viewportHeight - popupHeight - margin, popupY));
+            
+            // Position popup
+            popup.style.left = popupX + 'px';
+            popup.style.top = popupY + 'px';
+        }
+        
+        function closePopup() {
+            const popup = document.getElementById('popup-card');
+            popup.classList.add('hidden');
+            currentPopupNode = null;
+            currentPopupData = null;
+            clearHighlighting();
+            clearSelection(); // Clear node selection too
+        }
+
+        function clearSelection() {
+            if (selectedNode) {
+                g.selectAll('.node').each(function(d) {
+                    const nodeElement = d3.select(this);
+                    nodeElement.classed('selected', false);
+                    // Restore original color if not highlighted
+                    if (!nodeElement.classed('highlighted')) {
+                        nodeElement
+                            .attr('fill', getOriginalNodeColor(d))
+                            .attr('stroke', '#333')
+                            .attr('stroke-width', 2);
+                    }
+                });
+                selectedNode = null;
+            }
+        }
+
+        // Safari-compatible color utilities
+        function brightenColor(color, factor = 1.3) {
+            // Convert hex color to RGB
+            const hex = color.replace('#', '');
+            const r = parseInt(hex.substr(0, 2), 16);
+            const g = parseInt(hex.substr(2, 2), 16);
+            const b = parseInt(hex.substr(4, 2), 16);
+            
+            // Brighten each component
+            const newR = Math.min(255, Math.round(r * factor));
+            const newG = Math.min(255, Math.round(g * factor));
+            const newB = Math.min(255, Math.round(b * factor));
+            
+            // Convert back to hex
+            return '#' + ((1 << 24) + (newR << 16) + (newG << 8) + newB).toString(16).slice(1);
+        }
+
+        function getOriginalNodeColor(node) {
+            // Return the original transmission color for this node
+            return getTransmissionColor(node.transmissionMode);
+        }
+        
+        // Toggle function for controls panel
+        function toggleControls() {
+            const controls = document.getElementById('controls');
+            controls.classList.toggle('show');
+        }
+        
+        // Close controls panel
+        function closeControls() {
+            const controls = document.getElementById('controls');
+            controls.classList.remove('show');
+        }
+        
+        // Click outside to close controls panel and legend
+        document.addEventListener('click', function(event) {
+            const controls = document.getElementById('controls');
+            const controlsIcon = document.getElementById('controls-icon');
+            const legend = document.getElementById('legend');
+            const legendContent = document.getElementById('legend-content');
+            
+            // Check if controls panel is open
+            if (controls && controls.classList.contains('show')) {
+                // Check if click was outside both the controls panel and the controls icon
+                if (!controls.contains(event.target) && !controlsIcon.contains(event.target)) {
+                    closeControls();
+                }
+            }
+            
+            // Check if legend is open
+            if (legendContent && !legendContent.classList.contains('collapsed')) {
+                // Check if click was outside the legend
+                if (!legend.contains(event.target)) {
+                    closeLegend();
+                }
+            }
+        });
+        
+        // Escape key to close controls panel and legend
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                const controls = document.getElementById('controls');
+                const legendContent = document.getElementById('legend-content');
+                
+                if (controls && controls.classList.contains('show')) {
+                    closeControls();
+                } else if (legendContent && !legendContent.classList.contains('collapsed')) {
+                    closeLegend();
+                }
+            }
+        });
+        
+        function toggleLegend() {
+            const content = document.getElementById('legend-content');
+            const chevron = document.querySelector('.legend-chevron');
+            
+            if (content.classList.contains('collapsed')) {
+                content.classList.remove('collapsed');
+                chevron.classList.remove('collapsed');
+            } else {
+                content.classList.add('collapsed');
+                chevron.classList.add('collapsed');
+            }
+        }
+        
+        // Close legend
+        function closeLegend() {
+            const content = document.getElementById('legend-content');
+            const chevron = document.querySelector('.legend-chevron');
+            content.classList.add('collapsed');
+            chevron.classList.add('collapsed');
+        }
+        
+        function clearHighlighting() {
+            // Clear all active ripple timeouts
+            activeRippleTimeouts.forEach(timeoutId => clearTimeout(timeoutId));
+            activeRippleTimeouts = [];
+            
+            // Immediately stop all transitions and animations
+            g.selectAll('.node')
+                .interrupt() // Stop any D3 transitions
+                .classed('trajectory-ripple main-node-ripple highlighted', false)
+                .attr('fill', function(d) { return getOriginalNodeColor(d); })
+                .attr('stroke', '#333')
+                .attr('stroke-width', 2);
+            
+            // Reset all link highlighting immediately
+            g.selectAll('.link')
+                .interrupt() // Stop any D3 transitions
+                .classed('highlighted', false)
+                .each(function(d) {
+                    const sourceNode = graphData.nodes.find(n => n.id === d.source);
+                    if (sourceNode) {
+                        const normalMarker = getArrowheadMarker(sourceNode.transmissionMode);
+                        d3.select(this).attr('marker-end', normalMarker);
+                    }
+                });
+        }
+
+        function selectNode(nodeData, nodeElement) {
+            // Clear previous selection
+            if (selectedNode) {
+                g.selectAll('.node').each(function(d) {
+                    const node = d3.select(this);
+                    node.classed('selected', false);
+                    // Restore original color if not highlighted
+                    if (!node.classed('highlighted')) {
+                        node.attr('fill', getOriginalNodeColor(d))
+                            .attr('stroke', '#333')
+                            .attr('stroke-width', 2);
+                    }
+                });
+            }
+            
+            // Set new selection with direct color changes (Safari compatible)
+            selectedNode = nodeData;
+            const selectedElement = d3.select(nodeElement);
+            selectedElement
+                .classed('selected', true)
+                .attr('fill', brightenColor(getOriginalNodeColor(nodeData), 1.2))
+                .attr('stroke', '#FFD700')
+                .attr('stroke-width', 3);
+        }
+        
+        // Close popup with escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closePopup();
+            }
+        });
+        
+        // Close popup when clicking outside
+        document.addEventListener('click', function(e) {
+            const popup = document.getElementById('popup-card');
+            
+            // Check if clicking on a node
+            const clickedOnNode = e.target.closest('.node-group');
+            
+            if (!popup.classList.contains('hidden') && !popup.contains(e.target)) {
+                // Check if click is on a node (to allow opening new popups)
+                if (!clickedOnNode) {
+                    closePopup();
+                }
+            } else if (popup.classList.contains('hidden') && !clickedOnNode) {
+                // If popup is already hidden but we have selection, clear everything when clicking elsewhere
+                clearSelection();
+                clearHighlighting(); // Also clear trajectory highlighting
+            }
+        });
+
+        // Text wrapping function for node names
+        function wrapText(selection, text, width, fontSize) {
+            // Handle different text types - Tibetan doesn't use spaces like English
+            let words;
+            if (text.match(/[\u0F00-\u0FFF]/)) {
+                // Tibetan text - break more carefully
+                words = text.split(/[\s་།]+/).filter(w => w.trim());
+            } else if (text.match(/[\u4E00-\u9FFF]/)) {
+                // Chinese text - can break between characters if needed
+                words = text.split(/\s+/);
+            } else {
+                // English/Latin text
+                words = text.split(/\s+/);
+            }
+            
+            const lineHeight = fontSize * 1.2; // Better line spacing for readability
+            let line = [];
+            let lineNumber = 0;
+            const maxLines = 3; // Limit to 3 lines to fit in node
+            
+            // Clear any existing text
+            selection.selectAll('.node-text').remove();
+            
+            // Create text element
+            const textElement = selection.append('text')
+                .attr('class', 'node-text')
+                .attr('text-anchor', 'middle')
+                .attr('font-size', fontSize + 'px')
+                .attr('font-weight', 'bold')
+                .attr('fill', '#333');
+            
+            let tspan = textElement.append('tspan')
+                .attr('x', 0)
+                .text(''); // Start empty
+            
+            const tspans = []; // Keep track of all tspans for positioning
+            tspans.push(tspan);
+            
+            for (let i = 0; i < words.length; i++) {
+                const word = words[i];
+                line.push(word);
+                tspan.text(line.join(' '));
+                
+                // Check if line is too wide
+                const textLength = tspan.node() ? tspan.node().getComputedTextLength() : 0;
+                if (textLength > width && line.length > 1) {
+                    // Remove the last word and create new line
+                    line.pop();
+                    tspan.text(line.join(' '));
+                    
+                    if (lineNumber < maxLines - 1) {
+                        line = [word];
+                        lineNumber++;
+                        tspan = textElement.append('tspan')
+                            .attr('x', 0)
+                            .text(word);
+                        tspans.push(tspan);
+                        
+                        // Check if even the single word is too long
+                        const singleWordLength = tspan.node() ? tspan.node().getComputedTextLength() : 0;
+                        if (singleWordLength > width) {
+                            // Truncate the word itself
+                            let truncatedWord = word;
+                            while (truncatedWord.length > 3 && tspan.node().getComputedTextLength() > width) {
+                                truncatedWord = truncatedWord.substring(0, truncatedWord.length - 1);
+                                tspan.text(truncatedWord + '...');
+                            }
+                        }
+                    } else {
+                        // Truncate with ellipsis if we exceed max lines
+                        const currentText = tspan.text();
+                        if (currentText.length > 3) {
+                            tspan.text(currentText.substring(0, currentText.length - 3) + '...');
+                        }
+                        break;
+                    }
+                } else if (textLength > width && line.length === 1) {
+                    // Single word is too long, truncate it
+                    let truncatedText = line[0];
+                    while (truncatedText.length > 3 && tspan.node().getComputedTextLength() > width) {
+                        truncatedText = truncatedText.substring(0, truncatedText.length - 1);
+                        tspan.text(truncatedText + '...');
+                    }
+                }
+            }
+            
+            // Center text vertically in the upper portion of node, leaving space for dates
+            const totalLines = lineNumber + 1;
+            const totalTextHeight = totalLines * lineHeight;
+            
+            // Calculate center position for text block (in upper portion, leaving space for dates)
+            const textAreaCenter = -8; // Center of upper text area (above the date)
+            const startY = textAreaCenter - (totalTextHeight / 2) + (lineHeight / 2);
+            
+            // Position all tspans using absolute y coordinates
+            tspans.forEach((tspan, i) => {
+                tspan.attr('y', startY + (i * lineHeight));
+            });
+        }
+
+        // Store initial transform for recenter functionality
+        let initialTransform = null;
+
+        // Center the view on blue nodes (Mind to Mind transmission)
+        function centerViewOnBlueNodes() {
+            if (!graphData || !graphData.nodes) return;
+            
+            // Find blue nodes (Mind to Mind transmission)
+            const blueNodes = graphData.nodes.filter(node => 
+                node.transmissionMode === 'Mind to Mind'
+            );
+            
+            if (blueNodes.length === 0) {
+                console.log('No blue nodes found, using default zoom');
+                const transform = d3.zoomIdentity.translate(0, 0).scale(0.5);
+                initialTransform = transform; // Store for recenter
+                svg.call(zoom.transform, transform);
+                return;
+            }
+            
+            console.log(`Found ${blueNodes.length} blue nodes, calculating bounding box`);
+            
+            // Calculate bounding box of blue nodes
+            const xPositions = blueNodes.map(n => n.x).filter(x => x !== undefined && !isNaN(x));
+            const yPositions = blueNodes.map(n => n.y).filter(y => y !== undefined && !isNaN(y));
+            
+            if (xPositions.length === 0 || yPositions.length === 0) {
+                console.log('Blue nodes have invalid positions, using default zoom');
+                const transform = d3.zoomIdentity.translate(0, 0).scale(0.5);
+                initialTransform = transform; // Store for recenter
+                svg.call(zoom.transform, transform);
+                return;
+            }
+            
+            const minX = Math.min(...xPositions) - 100; // Add padding
+            const maxX = Math.max(...xPositions) + 100;
+            const minY = Math.min(...yPositions) - 50;
+            const maxY = Math.max(...yPositions) + 50;
+            
+            const centerX = (minX + maxX) / 2;
+            const centerY = (minY + maxY) / 2;
+            const contentWidth = maxX - minX;
+            const contentHeight = maxY - minY;
+            
+            // Calculate scale to fit blue nodes in viewport with some margin
+            const scaleX = (width * 0.8) / contentWidth;
+            const scaleY = (height * 0.8) / contentHeight;
+            const scale = Math.min(scaleX, scaleY, 1.5); // Cap at 1.5x zoom for readability
+            
+            // Calculate translation to center the blue nodes
+            const translateX = width / 2 - centerX * scale;
+            const translateY = height / 2 - centerY * scale;
+            
+            // Apply the transform
+            const transform = d3.zoomIdentity
+                .translate(translateX, translateY)
+                .scale(scale);
+            
+            initialTransform = transform; // Store for recenter functionality
+            svg.call(zoom.transform, transform);
+            
+            console.log(`Centered on blue nodes: scale=${scale.toFixed(2)}, translate=(${translateX.toFixed(0)}, ${translateY.toFixed(0)})`);
+            console.log(`Blue node bounds: x[${minX.toFixed(0)}, ${maxX.toFixed(0)}], y[${minY.toFixed(0)}, ${maxY.toFixed(0)}]`);
+        }
+
+        // Recenter view function
+        function recenterView() {
+            if (initialTransform) {
+                svg.transition()
+                    .duration(750)
+                    .call(zoom.transform, initialTransform);
+            } else {
+                // Fallback: recalculate initial view
+                centerViewOnBlueNodes();
+            }
+        }
+
+        // Initialize the application
+        async function initializeApp() {
+            try {
+                // Load CSV data and image manifest in parallel for faster startup
+                const [csvData] = await Promise.all([
+                    loadCSVData(),
+                    loadImageManifest() // Preload manifest on app startup
+                ]);
+
+                if (!csvData) {
+                    console.error('Failed to load CSV data');
+                    return;
+                }
+
+                // Parse data and build graph
+                const rawData = parseCSV(csvData);
+                graphData = buildGraphData(rawData);
+                
+                // Initialize compressed ordinal layer mapping
+                ordinalLayerMapping = createOrdinalLayerMapping(graphData.nodes);
+                console.log('Ordinal layer mapping created:', ordinalLayerMapping);
+            
+            // Apply lineage-based layout with chronological constraints
+            assignVerticalPositions(graphData.nodes, graphData.links);
+            applyLineageBasedLayout(graphData.nodes, graphData.links);
+            
+            // Debug: Check everything step by step
+            console.log('=== COMPLETE DEBUG ===');
+            console.log(`Total nodes: ${graphData.nodes.length}`);
+            console.log(`Total links: ${graphData.links.length}`);
+            
+            // Check if nodes have coordinates
+            const nodesWithCoords = graphData.nodes.filter(n => n.x !== undefined && n.y !== undefined);
+            console.log(`Nodes with coordinates: ${nodesWithCoords.length}`);
+            
+            // Sample coordinate check
+            graphData.nodes.slice(0, 5).forEach(node => {
+                console.log(`${node.name}: x=${node.x}, y=${node.y}, treeX=${node.treeX}, treeY=${node.treeY}`);
+            });
+            
+            // Check if any nodes are positioned
+            const xCoords = graphData.nodes.map(n => n.x).filter(x => x !== undefined && !isNaN(x));
+            const yCoords = graphData.nodes.map(n => n.y).filter(y => y !== undefined && !isNaN(y));
+            
+            if (xCoords.length > 0 && yCoords.length > 0) {
+                console.log(`X range: ${Math.min(...xCoords)} to ${Math.max(...xCoords)}`);
+                console.log(`Y range: ${Math.min(...yCoords)} to ${Math.max(...yCoords)}`);
+            } else {
+                console.error('ERROR: No valid coordinates found!');
+            }
+
+            // Initial render
+            renderVisualization(graphData);
+
+            // Center view on blue nodes (Mind to Mind transmission)
+            centerViewOnBlueNodes();
+            
+            console.log('Initial view centering complete');
+            } catch (error) {
+                console.error('Error initializing app:', error);
+            }
+        }
+
+        function filterData(filter) {
+            if (filter === 'all') {
+                return graphData;
+            }
+
+            const filteredNodes = graphData.nodes.filter(node => {
+                // Include nodes with "All lineages" (shared ancestors)
+                if (node.lineage === 'All lineages') {
+                    return true;
+                }
+                
+                // Include nodes that belong to this specific lineage
+                const matchesPrimaryLineage = node.primaryLineage === filter;
+                const matchesLineageField = node.lineage && node.lineage.includes(filter);
+                
+                return matchesPrimaryLineage || matchesLineageField;
+            });
+            
+            const filteredNodeIds = new Set(filteredNodes.map(node => node.id));
+            const filteredLinks = graphData.links.filter(link => 
+                filteredNodeIds.has(link.source) && filteredNodeIds.has(link.target)
+            );
+
+            // Debug: Show filtering results  
+            const ancestorNodes = filteredNodes.filter(n => n.lineage === 'All lineages');
+            console.log(`Filtered to ${filter}: ${filteredNodes.length} nodes (${ancestorNodes.length} shared), ${filteredLinks.length} links`);
+            return {
+                nodes: filteredNodes,
+                links: filteredLinks
+            };
+        }
+
+        function renderVisualization(data) {
+            // Clear previous visualization
+            g.selectAll('*').remove();
+
+            // Calculate positions
+            const levelGroups = d3.groups(data.nodes, d => d.level);
+            const maxLevel = d3.max(levelGroups, d => d[0]);
+
+            // Use existing algorithmic positioning for all views
+            convertAlgorithmicPositionsToPixels(data, width, height);
+            
+            // For filtered views, just recenter horizontally while preserving vertical layout
+            if (currentFilter !== 'all') {
+                recenterFilteredLayoutSimple(data, width);
+                autoZoomToFitLineage(data, width, height);
+            }
+            
+            function convertAlgorithmicPositionsToPixels(data, width, height) {
+                const nodes = data.nodes;
+                
+                // Grid configuration - enhanced spacing for better vertical resolution
+                const gridWidth = 400;  // Increased horizontal pixels per unit
+                const gridHeight = 160; // Increased vertical space between generations (was 120px)
+                const baseX = 100;      // larger left margin
+                const baseY = 50;       // top margin
+                
+                // Convert tree positions to pixel coordinates - FIXED scaling
+                nodes.forEach(node => {
+                    let xPos, yPos;
+                    
+                    if (typeof node.treeX === 'number' && !isNaN(node.treeX)) {
+                        // Use D3 tree coordinates directly (already processed for overlaps)
+                        xPos = node.treeX / 100; // Light scaling for viewport
+                    } else {
+                        // Fallback: simple column by lineage (Vairocana left, Vimalamitra center, Padmasambhava right)
+                        if (node.primaryLineage === 'Vairocana' || node.lineage?.includes('Vairocana')) {
+                            xPos = 2; // Left position
+                        } else if (node.primaryLineage === 'Vimalamitra' || node.lineage?.includes('Vimalamitra')) {
+                            xPos = 6; // Center position
+                        } else if (node.primaryLineage === 'Padmasambhava' || node.lineage?.includes('Padmasambhava')) {
+                            xPos = 10; // Right position
+                        } else {
+                            xPos = 6; // Center for shared entities (same as Vimalamitra)
+                        }
+                    }
+                    
+                    if (typeof node.treeY === 'number' && !isNaN(node.treeY)) {
+                        // Use chronological Y coordinates directly with new spacing
+                        yPos = node.treeY / 140; // Convert to layer units (matches 140px spacing from chronological constraints)
+                    } else {
+                        yPos = node.level || 0; // Fallback to timeLayer
+                    }
+                    
+                    node.x = baseX + (xPos * gridWidth);
+                    node.y = baseY + (yPos * gridHeight);
+                    
+                    // Debug key nodes
+                    if (['Samantabhadra', 'Vimalamitra', 'Śākyamuni Buddha'].includes(node.name)) {
+                        console.log(`${node.name}: treeX=${node.treeX} -> scaled=${xPos} -> pixel (${node.x}, ${node.y})`);
+                    }
+                });
+            }
+            
+            
+            // Auto-zoom to fit filtered lineage nicely in viewport
+            function autoZoomToFitLineage(data, width, height) {
+                const nodes = data.nodes;
+                if (nodes.length === 0) return;
+                
+                // Calculate bounding box of all nodes
+                const xPositions = nodes.map(n => n.x);
+                const yPositions = nodes.map(n => n.y);
+                const minX = Math.min(...xPositions) - 100; // Add padding
+                const maxX = Math.max(...xPositions) + 100;
+                const minY = Math.min(...yPositions) - 50;
+                const maxY = Math.max(...yPositions) + 50;
+                
+                const contentWidth = maxX - minX;
+                const contentHeight = maxY - minY;
+                
+                // Calculate scale to fit content in viewport with some margin
+                const scaleX = (width * 0.9) / contentWidth;
+                const scaleY = (height * 0.9) / contentHeight;
+                const scale = Math.min(scaleX, scaleY, 1.2); // Cap at 1.2x zoom
+                
+                // Calculate translation to center the content
+                const centerX = (minX + maxX) / 2;
+                const centerY = (minY + maxY) / 2;
+                const translateX = width / 2 - centerX * scale;
+                const translateY = height / 2 - centerY * scale;
+                
+                // Apply the transform with smooth transition
+                const transform = d3.zoomIdentity
+                    .translate(translateX, translateY)
+                    .scale(scale);
+                
+                svg.transition()
+                    .duration(750)
+                    .call(zoom.transform, transform);
+                
+                console.log(`Auto-zoomed to ${currentFilter}: scale=${scale.toFixed(2)}, translate=(${translateX.toFixed(0)}, ${translateY.toFixed(0)})`);
+            }
+            
+            // Center lineage-specific branch under shared ancestors
+            function recenterFilteredLayoutSimple(data, width) {
+                const nodes = data.nodes;
+                if (nodes.length === 0) return;
+                
+                // Step 1: Use CSV lineage data to identify shared ancestors vs lineage-specific nodes
+                const ancestorNodes = nodes.filter(n => n.lineage === 'All lineages');
+                const lineageNodes = nodes.filter(n => n.lineage !== 'All lineages');
+                
+                if (ancestorNodes.length === 0 || lineageNodes.length === 0) return;
+                
+                // Step 2: Calculate center point of shared ancestors
+                const ancestorXPositions = ancestorNodes.map(n => n.x);
+                const ancestorMinX = Math.min(...ancestorXPositions);
+                const ancestorMaxX = Math.max(...ancestorXPositions);
+                const ancestorCenter = (ancestorMinX + ancestorMaxX) / 2;
+                
+                // Step 3: Calculate current center of lineage-specific nodes
+                const lineageXPositions = lineageNodes.map(n => n.x);
+                const lineageMinX = Math.min(...lineageXPositions);
+                const lineageMaxX = Math.max(...lineageXPositions);
+                const lineageCurrentCenter = (lineageMinX + lineageMaxX) / 2;
+                
+                // Step 4: Calculate offset to center lineage branch under ancestors
+                const xOffset = ancestorCenter - lineageCurrentCenter;
+                
+                // Step 5: Apply offset only to lineage-specific nodes (keep ancestors as-is)
+                lineageNodes.forEach(node => {
+                    node.x += xOffset;
+                });
+                
+                console.log(`Centered ${currentFilter} branch under ancestors: shifted ${xOffset.toFixed(0)}px`);
+            }
+            
+            // Calculate optimal layout specifically for filtered lineages
+            function calculateOptimalLineageLayout(data, width, height, filter) {
+                console.log(`Calculating optimal layout for ${filter} lineage`);
+                
+                const nodes = data.nodes;
+                const links = data.links;
+                const centerX = width / 2;  // Define centerX at the top for all uses
+                
+                if (nodes.length === 0) return;
+                
+                // Step 1: Separate shared ancestors from lineage-specific nodes
+                const sharedAncestors = new Set([
+                    'Samantabhadra/Samantabhadrī', 'Buddhas of the Five Families', 
+                    'Supreme Emanation Blessing', 'Sublime Wisdom Emanation (Vajradhara)',
+                    'Vajrasattva', 'Vajrapāṇi', 'Cheu Nangwa Dampa Samkyi Mikhyapa', 
+                    'Śākyamuni Buddha', 'Garab Dorje', 'Mañjuśrimitra', 'Śrī Siṃha'
+                ]);
+                
+                const ancestorNodes = nodes.filter(n => sharedAncestors.has(n.id));
+                const lineageNodes = nodes.filter(n => !sharedAncestors.has(n.id));
+                
+                // Step 2: Create D3 hierarchy for lineage-specific nodes only
+                const lineageHierarchy = buildOptimalHierarchy(lineageNodes, links, filter);
+                
+                // Step 3: Apply D3 tree layout with full viewport width
+                const treeLayout = d3.tree()
+                    .size([width * 0.8, height * 0.7]) // Use most of viewport
+                    .separation((a, b) => {
+                        // More space between siblings for better readability
+                        return a.parent === b.parent ? 2 : 3;
+                    });
+                
+                if (lineageHierarchy && lineageNodes.length > 0) {
+                    const hierarchy = d3.hierarchy(lineageHierarchy);
+                    const layoutNodes = treeLayout(hierarchy);
+                    
+                    // Step 4: Apply D3 positions to lineage nodes, centered horizontally
+                    const startY = 200; // Leave space for shared ancestors
+                    
+                    layoutNodes.each(d => {
+                        const originalNode = lineageNodes.find(n => n.id === d.data.id);
+                        if (originalNode && d.data.id !== 'artificial-root') {
+                            originalNode.x = centerX + (d.x - width * 0.4); // Center the tree
+                            originalNode.y = startY + d.y;
+                        }
+                    });
+                } else if (lineageNodes.length > 0) {
+                    // Fallback: If no hierarchy could be built, position lineage nodes in a simple column
+                    const startY = 200;
+                    const spacing = 80;
+                    
+                    lineageNodes.forEach((node, index) => {
+                        node.x = centerX;
+                        node.y = startY + (index * spacing);
+                    });
+                    
+                    console.log(`Used fallback positioning for ${lineageNodes.length} lineage nodes`);
+                }
+                
+                // Step 5: Position shared ancestors at the top, centered and spread horizontally
+                const ancestorStartY = 50;
+                const ancestorSpacing = Math.min(200, width * 0.8 / Math.max(ancestorNodes.length, 1));
+                const ancestorStartX = centerX - ((ancestorNodes.length - 1) * ancestorSpacing) / 2;
+                
+                ancestorNodes.forEach((node, index) => {
+                    node.x = ancestorStartX + (index * ancestorSpacing);
+                    node.y = ancestorStartY + (node.timeLayer * 40); // Maintain some chronological order
+                });
+                
+                // Step 6: Ensure all nodes have final x,y coordinates for rendering
+                // Convert any remaining positioning to final coordinates
+                nodes.forEach(node => {
+                    if (node.x === undefined || node.y === undefined) {
+                        console.warn(`Node ${node.name} missing final position - using fallback`);
+                        // Fallback positioning
+                        node.x = centerX;
+                        node.y = 100;
+                    }
+                });
+                
+                // Debug: Check final positions
+                const nodesWithPositions = nodes.filter(n => n.x !== undefined && n.y !== undefined);
+                console.log(`Optimal layout complete: ${nodesWithPositions.length}/${nodes.length} nodes positioned`);
+                
+                if (nodesWithPositions.length < nodes.length) {
+                    console.warn(`Warning: ${nodes.length - nodesWithPositions.length} nodes still missing positions!`);
+                }
+            }
+            
+            // Build optimal hierarchy for a specific lineage
+            function buildOptimalHierarchy(nodes, links, filter) {
+                if (nodes.length === 0) return null;
+                
+                // Create maps for building tree structure
+                const nodeMap = new Map(nodes.map(n => [n.id, { ...n, children: [] }]));
+                const hasParent = new Set();
+                
+                // Build parent-child relationships within this lineage
+                links.forEach(link => {
+                    const parent = nodeMap.get(link.source);
+                    const child = nodeMap.get(link.target);
+                    if (parent && child) {
+                        parent.children.push(child);
+                        hasParent.add(link.target);
+                    }
+                });
+                
+                // Find root nodes (nodes with no parents in this filtered set)
+                const roots = nodes
+                    .filter(n => !hasParent.has(n.id))
+                    .map(n => nodeMap.get(n.id));
+                
+                console.log(`Found ${roots.length} root nodes for ${filter}`);
+                
+                // Create single root or artificial root
+                if (roots.length === 1) {
+                    return roots[0];
+                } else if (roots.length > 1) {
+                    return {
+                        id: 'artificial-root',
+                        name: `${filter} Lineage Root`,
+                        children: roots
+                    };
+                }
+                
+                return null;
+            }
+
+            // Create century lines for time reference (only for linear time sections)
+            const centuryLines = calculateCenturyLines(data.nodes);
+            const centuryGroup = g.append('g').attr('class', 'century-lines');
+            
+            // Calculate boundaries from ALL visible nodes after filtering
+            const nodeXPositions = data.nodes.map(n => n.x).filter(x => x !== undefined && !isNaN(x));
+            
+            if (nodeXPositions.length === 0) return; // No nodes to work with
+            
+            const leftmostNodeX = Math.min(...nodeXPositions);
+            const rightmostNodeX = Math.max(...nodeXPositions);
+            
+            // Assume nodes are positioned at their center, calculate actual centers
+            const nodeWidth = 180; // From CSS - should match actual node width
+            const leftmostNodeCenterX = leftmostNodeX + (nodeWidth / 2);
+            const rightmostNodeCenterX = rightmostNodeX + (nodeWidth / 2);
+            
+            // Position century text at fixed offset from leftmost node center
+            const centuryTextX = leftmostNodeCenterX - 500;
+            
+            // Add horizontal century lines spanning from leftmost to rightmost node centers
+            centuryLines.forEach(line => {
+                const startX = leftmostNodeCenterX;
+                const endX = rightmostNodeCenterX;
+                const totalWidth = endX - startX;
+                const segments = 40; // More segments for smoother fade effect
+                
+                for (let i = 0; i < segments; i++) {
+                    const segmentWidth = totalWidth / segments;
+                    const x1 = startX + (i * segmentWidth);
+                    const x2 = startX + ((i + 1) * segmentWidth);
+                    
+                    // Calculate distance from center (0 at center, 1 at edges)
+                    const centerPoint = segments / 2;
+                    const distanceFromCenter = Math.abs(i - centerPoint) / centerPoint;
+                    // Create fade effect: solid at center (0.6), fade to transparent (0) at edges
+                    const opacity = 0.6 * (1 - distanceFromCenter);
+                    
+                    if (opacity > 0.02) { // Only draw segments with meaningful opacity
+                        centuryGroup.append('line')
+                            .attr('class', 'century-line-segment')
+                            .attr('x1', x1)
+                            .attr('x2', x2)
+                            .attr('y1', line.yPosition)
+                            .attr('y2', line.yPosition)
+                            .attr('stroke', '#999')
+                            .attr('stroke-width', 2)
+                            .attr('opacity', opacity);
+                    }
+                }
+            });
+            
+            // Add century labels using calculated position
+            centuryGroup.selectAll('.century-label')
+                .data(centuryLines)
+                .enter()
+                .append('text')
+                .attr('class', 'century-label')
+                .attr('x', centuryTextX)
+                .attr('y', d => d.yPosition + 8) // Slightly below the line
+                .attr('font-size', '32px')
+                .attr('font-family', 'Arial, sans-serif')
+                .attr('font-weight', 'bold')
+                .attr('fill', '#666')
+                .attr('opacity', 1)
+                .text(d => d.label);
+
+            // Create smooth curved links with arrowheads using optimal connection points
+            const links = g.selectAll('.link')
+                .data(data.links)
+                .enter()
+                .append('path')
+                .attr('class', d => {
+                    switch(d.type) {
+                        case 'emanation': return 'link emanation';
+                        case 'incarnation': return 'link incarnation';
+                        case 'family': return 'link family';
+                        default: return 'link teaching'; // Default for regular teaching relationships
+                    }
+                })
+                .attr('d', d => {
+                    const source = data.nodes.find(n => n.id === d.source);
+                    const target = data.nodes.find(n => n.id === d.target);
+                    if (!source || !target) return '';
+                    
+                    // Calculate optimal connection points instead of fixed bottom/top
+                    const connectionPoints = getOptimalConnectionPoints(source, target);
+                    const sourceX = connectionPoints.source.x;
+                    const sourceY = connectionPoints.source.y;
+                    const targetX = connectionPoints.target.x;
+                    const targetY = connectionPoints.target.y;
+                    
+                    // Calculate adaptive control points based on connection direction
+                    const deltaX = targetX - sourceX;
+                    const deltaY = targetY - sourceY;
+                    const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+                    
+                    // Adaptive control offset based on distance and direction
+                    let controlOffset = Math.min(distance * 0.3, 60); // 30% of distance, max 60px
+                    
+                    // Determine control point direction based on which sides are connected
+                    const sourceSide = connectionPoints.source.side;
+                    const targetSide = connectionPoints.target.side;
+                    
+                    let control1X, control1Y, control2X, control2Y;
+                    
+                    // Smart control point placement based on connection sides
+                    if (sourceSide.includes('top') || sourceSide.includes('bottom')) {
+                        // Vertical exit: control point moves vertically from source
+                        control1X = sourceX;
+                        control1Y = sourceSide.includes('bottom') ? sourceY + controlOffset : sourceY - controlOffset;
+                    } else {
+                        // Horizontal exit: control point moves horizontally from source  
+                        control1X = sourceSide.includes('right') ? sourceX + controlOffset : sourceX - controlOffset;
+                        control1Y = sourceY;
+                    }
+                    
+                    if (targetSide.includes('top') || targetSide.includes('bottom')) {
+                        // Vertical entry: control point moves vertically from target
+                        control2X = targetX;
+                        control2Y = targetSide.includes('top') ? targetY - controlOffset : targetY + controlOffset;
+                    } else {
+                        // Horizontal entry: control point moves horizontally from target
+                        control2X = targetSide.includes('left') ? targetX - controlOffset : targetX + controlOffset;
+                        control2Y = targetY;
+                    }
+                    
+                    return `M${sourceX},${sourceY} C${control1X},${control1Y} ${control2X},${control2Y} ${targetX},${targetY}`;
+                })
+                .attr('stroke', d => {
+                    const sourceNode = data.nodes.find(n => n.id === d.source);
+                    return sourceNode ? getTransmissionColor(sourceNode.transmissionMode) : '#666';
+                })
+                .attr('marker-end', d => {
+                    const sourceNode = data.nodes.find(n => n.id === d.source);
+                    return sourceNode ? getArrowheadMarker(sourceNode.transmissionMode) : 'url(#arrowhead-default)';
+                })
+                .attr('stroke-width', 2)
+                .attr('fill', 'none')
+                .attr('opacity', 0.8);
+
+            // Simplified rendering - no background zones or guides for now
+
+            // Create node groups
+            const invalidNodes = data.nodes.filter(n => n.x === undefined || n.y === undefined || isNaN(n.x) || isNaN(n.y));
+            if (invalidNodes.length > 0) {
+                console.warn(`${invalidNodes.length} nodes missing positions:`, invalidNodes.slice(0, 3).map(n => n.name));
+            }
+            console.log(`Rendering ${data.nodes.length - invalidNodes.length}/${data.nodes.length} positioned nodes`);
+            
+            const nodeGroups = g.selectAll('.node-group')
+                .data(data.nodes)
+                .enter()
+                .append('g')
+                .attr('class', 'node-group')
+                .attr('transform', d => {
+                    if (d.x === undefined || d.y === undefined || isNaN(d.x) || isNaN(d.y)) {
+                        console.warn(`Invalid position for ${d.name}: (${d.x}, ${d.y})`);
+                        return `translate(0, 0)`;
+                    }
+                    return `translate(${d.x}, ${d.y})`;
+                });
+
+            // Add node rectangles optimized for tree layout - wider and taller for text wrapping
+            nodeGroups.append('rect')
+                .attr('class', 'node')
+                .attr('x', -90) // Wider nodes to accommodate longer names
+                .attr('y', -35) // Taller to accommodate wrapped text
+                .attr('width', 180) // Increased width
+                .attr('height', 70) // Increased height for wrapped text
+                .attr('rx', 8)
+                .attr('fill', d => getTransmissionColor(d.transmissionMode))
+                .attr('stroke', '#333')
+                .attr('stroke-width', 2)
+                .attr('opacity', 0.95);
+
+            // Add node text (name) with proper wrapping
+            nodeGroups.each(function(d) {
+                const group = d3.select(this);
+                const displayName = getDisplayName ? getDisplayName(d) : d.name;
+                wrapText(group, displayName, 170, 13); // 170px width, 13px font size
+                
+                // Apply appropriate font class for Tibetan/Chinese
+                if (typeof currentLanguage !== 'undefined') {
+                    const textElements = group.selectAll('.node-text');
+                    if (currentLanguage === 'bo') {
+                        textElements.classed('tibetan-text', true);
+                    } else if (currentLanguage === 'zh') {
+                        textElements.classed('chinese-text', true);
+                    }
+                }
+            });
+
+            // Add node text (dates) - smaller dates, positioned at bottom with proper spacing
+            nodeGroups.append('text')
+                .attr('class', 'node-date')
+                .attr('y', 28) // Further down to create more separation from wrapped names
+                .attr('font-size', '9px')
+                .attr('text-anchor', 'middle')
+                .attr('fill', '#666')
+                .text(d => d.dates && d.dates !== 'N/A' ? d.dates : '');
+
+            // Add interaction events
+            nodeGroups
+                .on('click', function(event, d) {
+                    // Select the node with animation
+                    selectNode(d, this.querySelector('.node'));
+                    
+                    // Show popup and highlight trajectory together
+                    showPopup(d, event);
+                    highlightLineage(d);
+                })
+                .style('cursor', 'pointer');
+        }
+
+        function highlightLineage(node) {
+            // Reset all highlighting first
+            clearHighlighting();
+
+            // Build trajectory with distance information for ripple cascade
+            const trajectoryNodes = new Map();
+            trajectoryNodes.set(node.id, { distance: 0, node: node });
+            
+            // Find only ancestors - trace upward learning trajectory to Samantabhadra/Samantabhadri
+            function findAncestors(nodeId, distance) {
+                graphData.links.forEach(link => {
+                    if (link.target === nodeId && !trajectoryNodes.has(link.source)) {
+                        const ancestorNode = graphData.nodes.find(n => n.id === link.source);
+                        if (ancestorNode) {
+                            trajectoryNodes.set(link.source, { distance: distance + 1, node: ancestorNode });
+                            findAncestors(link.source, distance + 1);
+                        }
+                    }
+                });
+            }
+
+            // Only trace upward - no descendants highlighting
+            findAncestors(node.id, 0);
+
+            // Convert to set for compatibility with existing code
+            const connectedNodes = new Set(trajectoryNodes.keys());
+
+            // Reset all nodes to normal first
+            g.selectAll('.node-group').each(function(d) {
+                const nodeElement = d3.select(this).select('.node');
+                nodeElement
+                    .classed('highlighted', false)
+                    .attr('fill', getOriginalNodeColor(d))
+                    .attr('stroke', '#333')
+                    .attr('stroke-width', 2);
+            });
+
+            // Reset all links to normal first
+            g.selectAll('.link').each(function(d) {
+                const linkElement = d3.select(this);
+                linkElement.classed('highlighted', false);
+                // Reset to normal arrow markers
+                const sourceNode = graphData.nodes.find(n => n.id === d.source);
+                if (sourceNode) {
+                    const normalMarker = getArrowheadMarker(sourceNode.transmissionMode);
+                    linkElement.attr('marker-end', normalMarker);
+                }
+            });
+
+            // Create ripple cascade effect
+            createRippleCascade(trajectoryNodes, node.id);
+        }
+
+        function createRippleCascade(trajectoryNodes, clickedNodeId) {
+            // Clear any existing ripple timeouts first
+            activeRippleTimeouts.forEach(timeoutId => clearTimeout(timeoutId));
+            activeRippleTimeouts = [];
+            
+            // Sort nodes by distance for proper cascade order
+            const sortedNodes = Array.from(trajectoryNodes.entries())
+                .sort(([,a], [,b]) => a.distance - b.distance);
+
+            // Apply animations and highlighting with staggered timing
+            sortedNodes.forEach(([nodeId, nodeInfo], index) => {
+                const delay = index * 120; // 120ms delay between each node for better visibility
+                const isMainNode = nodeId === clickedNodeId;
+                
+                const timeoutId = setTimeout(() => {
+                    // Find the node element and apply node highlighting
+                    g.selectAll('.node-group').each(function(d) {
+                        if (d.id === nodeId) {
+                            const nodeGroup = d3.select(this);
+                            const nodeRect = nodeGroup.select('.node');
+                            
+                            // Apply highlighting effects with animation
+                            const originalColor = getOriginalNodeColor(d);
+                            const brightnessFactor = isMainNode ? 1.5 : 1.2;
+                            const strokeColor = isMainNode ? '#FFD700' : '#ff6b35';
+                            const strokeWidth = isMainNode ? 4 : 3;
+                            
+                            const brightColor = brightenColor(originalColor, brightnessFactor);
+                            
+                            // Apply highlighting
+                            nodeRect
+                                .classed('highlighted', true)
+                                .transition()
+                                .duration(200)
+                                .attr('fill', brightColor)
+                                .attr('stroke', strokeColor)
+                                .attr('stroke-width', strokeWidth);
+                            
+                            // Remove any existing animation classes
+                            nodeRect.classed('trajectory-ripple main-node-ripple', false);
+                            
+                            // Force reflow to ensure class removal takes effect
+                            nodeRect.node().offsetHeight;
+                            
+                            // Add appropriate animation class
+                            if (isMainNode) {
+                                nodeRect.classed('main-node-ripple', true);
+                            } else {
+                                nodeRect.classed('trajectory-ripple', true);
+                            }
+                            
+                            // Remove animation class after animation completes
+                            const cleanupTimeoutId = setTimeout(() => {
+                                nodeRect.classed('trajectory-ripple main-node-ripple', false);
+                            }, 600); // Match animation duration
+                            activeRippleTimeouts.push(cleanupTimeoutId);
+                        }
+                    });
+
+                    // Highlight the incoming link (from teacher to this student) with slight delay for flow effect
+                    setTimeout(() => {
+                        g.selectAll('.link').each(function(linkData) {
+                            if (linkData.target === nodeId) {
+                                const linkElement = d3.select(this);
+                                
+                                // Highlight the link
+                                linkElement.classed('highlighted', true);
+                                
+                                // Switch to highlighted arrow marker with Safari force-redraw
+                                const sourceNode = graphData.nodes.find(n => n.id === linkData.source);
+                                if (sourceNode) {
+                                    const highlightedMarker = getHighlightedArrowheadMarker(sourceNode.transmissionMode);
+                                    linkElement
+                                        .transition()
+                                        .duration(150)
+                                        .attr('marker-end', highlightedMarker);
+                                    
+                                    // Force Safari to redraw the marker
+                                    const linkNode = linkElement.node();
+                                    if (linkNode) {
+                                        linkNode.style.display = 'none';
+                                        linkNode.offsetHeight; // Force reflow
+                                        linkNode.style.display = '';
+                                    }
+                                }
+                            }
+                        });
+                    }, 50); // Small delay so link follows the node
+                }, delay);
+                
+                // Store timeout ID so we can cancel it if needed
+                activeRippleTimeouts.push(timeoutId);
+            });
+        }
+
+        // Normalization function for diacritical marks and special characters
+        function normalizeText(text) {
+            return text
+                .toLowerCase()
+                // Sanskrit/Tibetan diacritical marks
+                .replace(/[āàáâãäå]/g, 'a')
+                .replace(/[èéêë]/g, 'e')
+                .replace(/[ìíîï]/g, 'i')
+                .replace(/[òóôõö]/g, 'o')
+                .replace(/[ùúûü]/g, 'u')
+                .replace(/[ýÿ]/g, 'y')
+                .replace(/[ñń]/g, 'n')
+                .replace(/[ç]/g, 'c')
+                .replace(/[ś]/g, 's')
+                .replace(/[ṭ]/g, 't')
+                .replace(/[ḍ]/g, 'd')
+                .replace(/[ṇ]/g, 'n')
+                .replace(/[ṁṃ]/g, 'm')
+                .replace(/[ṛ]/g, 'r')
+                .replace(/[ḷ]/g, 'l')
+                .replace(/[ḥ]/g, 'h')
+                // Additional common transliteration characters
+                .replace(/[ī]/g, 'i')
+                .replace(/[ū]/g, 'u')
+                .replace(/[ṅ]/g, 'n')
+                .replace(/[ś]/g, 's')
+                .replace(/[ḻ]/g, 'l')
+                // Remove special characters and convert to filename-safe format
+                .replace(/[^\w\s-]/g, '')  // Remove special chars except word chars, spaces, hyphens
+                .replace(/\s+/g, '-')      // Replace spaces with hyphens
+                .replace(/-+/g, '-')       // Collapse multiple hyphens
+                .replace(/^-|-$/g, '');    // Remove leading/trailing hyphens
+        }
+
+        // Image manifest system
+        let imageManifest = null;
+        let manifestLoadPromise = null;
+
+        // Load image manifest once on page load
+        async function loadImageManifest() {
+            if (manifestLoadPromise) {
+                return manifestLoadPromise;
+            }
+
+            manifestLoadPromise = (async () => {
+                try {
+                    console.log('Loading image manifest...');
+                    const response = await fetch('./image-manifest.json');
+                    if (response.ok) {
+                        imageManifest = await response.json();
+                        console.log(`✅ Image manifest loaded: ${Object.keys(imageManifest).length} nodes with images`);
+                        return imageManifest;
+                    } else {
+                        console.warn('⚠️ Image manifest not found, falling back to individual image checking');
+                        return null;
+                    }
+                } catch (error) {
+                    console.warn('⚠️ Failed to load image manifest:', error);
+                    return null;
+                }
+            })();
+
+            return manifestLoadPromise;
+        }
+
+        // Image loading system - now uses manifest for instant lookup
+        async function loadNodeImages(nodeName) {
+            const normalizedName = normalizeText(nodeName);
+
+            // Ensure manifest is loaded
+            const manifest = await loadImageManifest();
+
+            if (manifest && manifest[normalizedName]) {
+                // Instant lookup from manifest - no network requests!
+                return manifest[normalizedName];
+            }
+
+            // Fallback to old method if manifest not available or node not found
+            console.log(`No images found in manifest for: ${normalizedName}`);
+            return [];
+        }
+
+        // Image carousel display function
+        function displayImageCarousel(container, images) {
+            // Clear container first to prevent flashing
+            container.innerHTML = '';
+            
+            if (images.length === 0) {
+                container.style.display = 'none';
+                return;
+            }
+
+            container.style.display = 'block';
+            
+            if (images.length === 1) {
+                // Single image - simple display, no dots
+                container.innerHTML = `
+                    <div class="image-carousel">
+                        <img src="${images[0]}" alt="Node image" class="carousel-image" 
+                             onload="this.style.opacity='1'" 
+                             onerror="this.parentElement.parentElement.style.display='none'"
+                             style="opacity:0; transition: opacity 0.3s ease;">
+                    </div>
+                `;
+            } else {
+                // Multiple images - full carousel with dots
+                let carouselHTML = `
+                    <div class="image-carousel">
+                        <div class="carousel-container">
+                            ${images.map((img, index) => `
+                                <img src="${img}" alt="Node image" class="carousel-image" 
+                                     onload="this.style.opacity='1'" 
+                                     onerror="this.style.display='none'"
+                                     style="opacity:0; transition: opacity 0.3s ease;">
+                            `).join('')}
+                        </div>
+                        <button class="carousel-nav carousel-prev" onclick="prevImage()">&lt;</button>
+                        <button class="carousel-nav carousel-next" onclick="nextImage()">&gt;</button>
+                    </div>
+                    <div class="carousel-dots">
+                        ${images.map((_, index) => `<span class="carousel-dot ${index === 0 ? 'active' : ''}" onclick="goToImage(${index})"></span>`).join('')}
+                    </div>
+                `;
+                container.innerHTML = carouselHTML;
+                
+                // Initialize carousel state
+                window.currentImageIndex = 0;
+                window.totalImages = images.length;
+            }
+        }
+
+        // Carousel navigation functions
+        function prevImage() {
+            if (window.totalImages <= 1) return;
+            window.currentImageIndex = (window.currentImageIndex - 1 + window.totalImages) % window.totalImages;
+            updateCarousel();
+        }
+
+        function nextImage() {
+            if (window.totalImages <= 1) return;
+            window.currentImageIndex = (window.currentImageIndex + 1) % window.totalImages;
+            updateCarousel();
+        }
+
+        function goToImage(index) {
+            window.currentImageIndex = index;
+            updateCarousel();
+        }
+
+        function updateCarousel() {
+            const container = document.querySelector('.carousel-container');
+            const dots = document.querySelectorAll('.carousel-dot');
+            
+            if (container) {
+                container.style.transform = `translateX(-${window.currentImageIndex * 100}%)`;
+            }
+            
+            dots.forEach((dot, index) => {
+                dot.classList.toggle('active', index === window.currentImageIndex);
+            });
+        }
+
+        // Advanced search functionality
+        let searchResults = [];
+        let currentSearchIndex = -1;
+        let searchHighlightClass = 'search-highlight';
+
+        // Add search highlight styles with flash animation
+        const searchStyles = `
+            @keyframes flash-highlight {
+                0% { stroke: #ff6b35; stroke-width: 3px; opacity: 1; }
+                50% { stroke: #ff0000; stroke-width: 5px; opacity: 1; }
+                100% { stroke: inherit; stroke-width: inherit; opacity: 1; }
+            }
+            .search-flash .node {
+                animation: flash-highlight 0.8s ease-in-out;
+            }
+            .search-highlight .node {
+                stroke: #ff6b35 !important;
+                stroke-width: 3px !important;
+                opacity: 1 !important;
+            }
+        `;
+        if (!document.getElementById('search-styles')) {
+            const styleSheet = document.createElement('style');
+            styleSheet.id = 'search-styles';
+            styleSheet.textContent = searchStyles;
+            document.head.appendChild(styleSheet);
+        }
+
+        const searchInput = d3.select('#search');
+        searchInput.on('input', function() {
+            performSearch(this.value);
+        });
+
+        function performSearch(searchTerm) {
+            const normalizedSearchTerm = normalizeText(searchTerm.trim());
+            
+            // Clear previous search
+            clearSearchHighlights();
+            searchResults = [];
+            currentSearchIndex = -1;
+            
+            if (normalizedSearchTerm === '') {
+                hideSearchNavigation();
+                return;
+            }
+            
+            // Find all matching nodes
+            g.selectAll('.node-group').each(function(d) {
+                const normalizedName = normalizeText(d.name);
+                const normalizedTibetan = normalizeText(d.tibetan);
+                const normalizedNameTibetan = normalizeText(d.nameTibetan);
+                const normalizedNameChinese = normalizeText(d.nameChinese);
+                
+                const isMatch = normalizedName.includes(normalizedSearchTerm) || 
+                               normalizedTibetan.includes(normalizedSearchTerm) ||
+                               normalizedNameTibetan.includes(normalizedSearchTerm) ||
+                               normalizedNameChinese.includes(normalizedSearchTerm);
+                
+                if (isMatch) {
+                    searchResults.push({
+                        element: this,
+                        data: d
+                    });
+                    d3.select(this).classed('search-highlight', true);
+                } else {
+                    d3.select(this).style('opacity', 0.3);
+                }
+            });
+            
+            // Update navigation UI
+            if (searchResults.length > 0) {
+                showSearchNavigation();
+                currentSearchIndex = 0;
+                highlightCurrentResult();
+                zoomToCurrentResult();
+            } else {
+                hideSearchNavigation();
+            }
+        }
+
+        function showSearchNavigation() {
+            document.getElementById('search-navigation').style.display = 'flex';
+            updateSearchCounter();
+            updateNavigationButtons();
+        }
+
+        function hideSearchNavigation() {
+            document.getElementById('search-navigation').style.display = 'none';
+            g.selectAll('.node-group').style('opacity', 1);
+        }
+
+        function updateSearchCounter() {
+            const counter = document.getElementById('search-counter');
+            if (searchResults.length > 0) {
+                counter.textContent = `${currentSearchIndex + 1} / ${searchResults.length}`;
+            } else {
+                counter.textContent = '0 / 0';
+            }
+        }
+
+        function updateNavigationButtons() {
+            const prevBtn = document.getElementById('search-prev');
+            const nextBtn = document.getElementById('search-next');
+            
+            prevBtn.disabled = currentSearchIndex <= 0;
+            nextBtn.disabled = currentSearchIndex >= searchResults.length - 1;
+        }
+
+        function clearSearchHighlights() {
+            g.selectAll('.node-group')
+                .classed('search-highlight', false)
+                .classed('search-flash', false)
+                .style('opacity', 1);
+        }
+
+        function highlightCurrentResult() {
+            // Clear previous flash animations
+            g.selectAll('.search-flash').classed('search-flash', false);
+            
+            // Flash animate current result
+            if (currentSearchIndex >= 0 && currentSearchIndex < searchResults.length) {
+                const element = d3.select(searchResults[currentSearchIndex].element);
+                element.classed('search-flash', true);
+                
+                // Remove flash class after animation completes
+                setTimeout(() => {
+                    element.classed('search-flash', false);
+                }, 800);
+            }
+        }
+
+        function zoomToCurrentResult() {
+            if (currentSearchIndex < 0 || currentSearchIndex >= searchResults.length) return;
+            
+            const result = searchResults[currentSearchIndex];
+            const nodeData = result.data;
+            
+            // Get node position - use the actual positioned coordinates
+            const nodeX = nodeData.x || 0;
+            const nodeY = nodeData.y || 0;
+            
+            // Get actual container dimensions
+            const containerRect = svg.node().getBoundingClientRect();
+            const containerWidth = containerRect.width;
+            const containerHeight = containerRect.height;
+            
+            const scale = 1.5; // Zoom level
+            const translateX = containerWidth / 2 - nodeX * scale;
+            const translateY = containerHeight / 2 - nodeY * scale;
+            
+            // Apply smooth transition
+            svg.transition()
+                .duration(750)
+                .call(zoom.transform, d3.zoomIdentity
+                    .translate(translateX, translateY)
+                    .scale(scale)
+                );
+        }
+
+        function nextSearchResult() {
+            if (currentSearchIndex < searchResults.length - 1) {
+                currentSearchIndex++;
+                highlightCurrentResult();
+                zoomToCurrentResult();
+                updateSearchCounter();
+                updateNavigationButtons();
+            }
+        }
+
+        function previousSearchResult() {
+            if (currentSearchIndex > 0) {
+                currentSearchIndex--;
+                highlightCurrentResult();
+                zoomToCurrentResult();
+                updateSearchCounter();
+                updateNavigationButtons();
+            }
+        }
+
+        // Keyboard navigation for search
+        document.addEventListener('keydown', function(e) {
+            if (searchResults.length > 0 && document.getElementById('search-navigation').style.display !== 'none') {
+                if (e.key === 'ArrowDown' || e.key === 'Enter') {
+                    e.preventDefault();
+                    nextSearchResult();
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    previousSearchResult();
+                } else if (e.key === 'Escape') {
+                    document.getElementById('search').value = '';
+                    performSearch('');
+                }
+            }
+        });
+
+        // Filter functionality
+        document.getElementById('lineage-filter').addEventListener('change', function() {
+            currentFilter = this.value;
+            const filteredData = filterData(currentFilter);
+            renderVisualization(filteredData);
+        });
+
+        // Flash Card Quiz System
+        class FlashCardQuiz {
+            constructor() {
+                this.questions = [];
+                this.currentQuestionIndex = 0;
+                this.score = 0;
+                this.streak = 0;
+                this.totalQuestions = 0;
+                this.isQuizActive = false;
+            }
+
+            // Generate quiz questions from the graph data
+            generateQuestions() {
+                const questions = [];
+                
+                // Get all nodes with relationships
+                const nodesWithTeachers = graphData.nodes.filter(node => 
+                    node.id !== 'Samantabhadra / Samantabhadrī' && 
+                    graphData.links.some(link => link.target === node.id)
+                );
+                
+                const nodesWithStudents = graphData.nodes.filter(node => 
+                    graphData.links.some(link => link.source === node.id)
+                );
+
+                // Generate "Who taught X?" questions
+                nodesWithTeachers.forEach(student => {
+                    const teachers = graphData.links
+                        .filter(link => link.target === student.id)
+                        .map(link => link.source);
+                    
+                    if (teachers.length > 0) {
+                        // Get 3 wrong answers
+                        const wrongAnswers = this.getRandomWrongAnswers(teachers[0], 3);
+                        if (wrongAnswers.length >= 3) {
+                            questions.push({
+                                type: 'teacher',
+                                question: `Who taught ${student.name}?`,
+                                correctAnswer: teachers[0],
+                                wrongAnswers: wrongAnswers,
+                                studentName: student.name
+                            });
+                        }
+                    }
+                });
+
+                // Generate "Who did X teach?" questions  
+                nodesWithStudents.forEach(teacher => {
+                    const students = graphData.links
+                        .filter(link => link.source === teacher.id)
+                        .map(link => link.target);
+                    
+                    if (students.length > 0) {
+                        // Pick a random student as the correct answer
+                        const correctStudent = students[Math.floor(Math.random() * students.length)];
+                        const wrongAnswers = this.getRandomWrongAnswers(correctStudent, 3);
+                        
+                        if (wrongAnswers.length >= 3) {
+                            questions.push({
+                                type: 'student',
+                                question: `Who did ${teacher.name} teach?`,
+                                correctAnswer: correctStudent,
+                                wrongAnswers: wrongAnswers,
+                                teacherName: teacher.name
+                            });
+                        }
+                    }
+                });
+
+                // Shuffle questions and limit to reasonable number
+                return this.shuffleArray(questions).slice(0, 20);
+            }
+
+            // Get random wrong answers excluding the correct one
+            getRandomWrongAnswers(correctAnswer, count) {
+                const allNames = graphData.nodes
+                    .map(node => node.id)
+                    .filter(name => name !== correctAnswer && name !== 'Samantabhadra / Samantabhadrī');
+                
+                return this.shuffleArray(allNames).slice(0, count);
+            }
+
+            // Shuffle array utility
+            shuffleArray(array) {
+                const shuffled = [...array];
+                for (let i = shuffled.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+                }
+                return shuffled;
+            }
+
+            // Start the quiz
+            startQuiz() {
+                this.questions = this.generateQuestions();
+                this.currentQuestionIndex = 0;
+                this.score = 0;
+                this.streak = 0;
+                this.totalQuestions = this.questions.length;
+                this.isQuizActive = true;
+
+                document.getElementById('flashcard-mode').classList.remove('hidden');
+                this.showQuestion();
+            }
+
+            // Show current question
+            showQuestion() {
+                if (this.currentQuestionIndex >= this.questions.length) {
+                    this.showResults();
+                    return;
+                }
+
+                const question = this.questions[this.currentQuestionIndex];
+                document.getElementById('question-text').textContent = question.question;
+                
+                // Create answer choices
+                const choices = [question.correctAnswer, ...question.wrongAnswers];
+                const shuffledChoices = this.shuffleArray(choices);
+                
+                const choicesContainer = document.getElementById('answer-choices');
+                choicesContainer.innerHTML = '';
+
+                shuffledChoices.forEach((choice, index) => {
+                    const choiceElement = document.createElement('div');
+                    choiceElement.className = 'answer-choice';
+                    choiceElement.textContent = choice;
+                    choiceElement.onclick = () => this.selectAnswer(choice, choiceElement);
+                    choicesContainer.appendChild(choiceElement);
+                });
+
+                // Update score display
+                document.getElementById('current-score').textContent = `Score: ${this.score}/${this.currentQuestionIndex}`;
+                document.getElementById('streak-display').textContent = `Streak: ${this.streak}`;
+
+                // Hide next button
+                document.getElementById('next-question').classList.add('hidden');
+                document.getElementById('restart-quiz').classList.add('hidden');
+            }
+
+            // Handle answer selection
+            selectAnswer(selectedAnswer, selectedElement) {
+                const question = this.questions[this.currentQuestionIndex];
+                const isCorrect = selectedAnswer === question.correctAnswer;
+                
+                // Disable all choices
+                const allChoices = document.querySelectorAll('.answer-choice');
+                allChoices.forEach(choice => {
+                    choice.classList.add('disabled');
+                    choice.onclick = null;
+                    
+                    if (choice.textContent === question.correctAnswer) {
+                        choice.classList.add('correct');
+                    } else if (choice === selectedElement && !isCorrect) {
+                        choice.classList.add('incorrect');
+                    }
+                });
+
+                // Update score
+                if (isCorrect) {
+                    this.score++;
+                    this.streak++;
+                } else {
+                    this.streak = 0;
+                }
+
+                this.currentQuestionIndex++;
+                
+                // Update score display
+                document.getElementById('current-score').textContent = `Score: ${this.score}/${this.currentQuestionIndex}`;
+                document.getElementById('streak-display').textContent = `Streak: ${this.streak}`;
+
+                // Show next button or results
+                if (this.currentQuestionIndex < this.questions.length) {
+                    document.getElementById('next-question').classList.remove('hidden');
+                } else {
+                    setTimeout(() => this.showResults(), 1500);
+                }
+            }
+
+            // Show next question
+            nextQuestion() {
+                this.showQuestion();
+            }
+
+            // Show final results
+            showResults() {
+                const percentage = Math.round((this.score / this.totalQuestions) * 100);
+                let message = `Quiz Complete!\n\nFinal Score: ${this.score}/${this.totalQuestions} (${percentage}%)`;
+                
+                if (percentage >= 90) message += '\n🏆 Excellent! You know your Buddhist lineage very well!';
+                else if (percentage >= 70) message += '\n🎉 Great job! You have a good grasp of the relationships!';
+                else if (percentage >= 50) message += '\n👍 Not bad! Keep studying the lineage connections!';
+                else message += '\n📚 Keep learning! The Buddhist lineage is complex and takes time to master.';
+
+                document.getElementById('question-text').innerHTML = message.replace(/\n/g, '<br>');
+                document.getElementById('answer-choices').innerHTML = '';
+                document.getElementById('next-question').classList.add('hidden');
+                document.getElementById('restart-quiz').classList.remove('hidden');
+            }
+
+            // Close quiz
+            closeQuiz() {
+                document.getElementById('flashcard-mode').classList.add('hidden');
+                this.isQuizActive = false;
+            }
+
+            // Restart quiz
+            restartQuiz() {
+                this.startQuiz();
+            }
+        }
+
+        // Initialize quiz system
+        const flashCardQuiz = new FlashCardQuiz();
+
+        // Quiz event listeners
+        document.getElementById('quiz-mode-btn').addEventListener('click', () => {
+            flashCardQuiz.startQuiz();
+        });
+
+        document.getElementById('close-flashcard').addEventListener('click', () => {
+            flashCardQuiz.closeQuiz();
+        });
+
+        document.getElementById('next-question').addEventListener('click', () => {
+            flashCardQuiz.nextQuestion();
+        });
+
+        document.getElementById('restart-quiz').addEventListener('click', () => {
+            flashCardQuiz.restartQuiz();
+        });
+
+        // Close quiz with escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && flashCardQuiz.isQuizActive) {
+                flashCardQuiz.closeQuiz();
+            }
+        });
+
+        // Language management
+        let currentLanguage = 'en';
+
+        // UI translations
+        const uiTranslations = {
+            en: {
+                controls: 'Controls',
+                language: 'Language:',
+                hide: 'Hide',
+                show: 'Show',
+                searchPlaceholder: 'Search for a teacher...',
+                allLineages: 'All Lineages',
+                startQuiz: 'Start Quiz',
+                recenterView: 'Recenter view',
+                legend: 'Legend',
+                mindToMind: 'Mind to Mind',
+                symbolic: 'Symbolic',
+                aural: 'Aural',
+                dates: 'Dates',
+                close: 'Close',
+                clickNode: 'Click node: View details & highlight lineage',
+                clickElsewhere: 'Click elsewhere: Close popup'
+            },
+            bo: {
+                controls: 'ཚོད་འཛིན།',
+                language: 'སྐད་ཡིག་:',
+                hide: 'སྦ།',
+                show: 'སྟོན།', 
+                searchPlaceholder: 'སློབ་དཔོན་འཚོལ་ཞིབ་བྱེད།',
+                allLineages: 'བརྒྱུད་པ་ཚང་མ།',
+                startQuiz: 'བརྟག་དཔྱད་འགོ་ཚུགས།',
+                recenterView: 'དཀྱིལ་དུ་སླར་གཞི་འདེགས།',
+                legend: 'དེབ་འདེམས།',
+                mindToMind: 'སེམས་ནས་སེམས།',
+                symbolic: 'བརྡ་སྟོན།',
+                aural: 'རྣ་བའི་བརྒྱུད་པ།',
+                dates: 'ལོ་ཚིགས།',
+                close: 'རྒྱག',
+                clickNode: 'སྐྱེ་བོ་ལ་མནན་ན། རྒྱས་བཤད་དང་བརྒྱུད་པ་གསལ་བཤད།',
+                clickElsewhere: 'གཞན་དུ་མནན་ན། སྒོ་རྒྱག'
+            },
+            zh: {
+                controls: '控制',
+                language: '语言:',
+                hide: '隐藏',
+                show: '显示',
+                searchPlaceholder: '搜索上师...',
+                allLineages: '所有传承',
+                startQuiz: '开始测验',
+                recenterView: '重新居中',
+                legend: '图例',
+                mindToMind: '心传心',
+                symbolic: '象征传承',
+                aural: '耳传承',
+                dates: '日期',
+                close: '关闭',
+                clickNode: '点击节点：查看详情和高亮传承',
+                clickElsewhere: '点击其他地方：关闭弹窗'
+            }
+        };
+
+        // Initialize language from localStorage or default to English
+        function initializeLanguage() {
+            const saved = localStorage.getItem('dzogchen-language');
+            if (saved && ['en', 'bo', 'zh'].includes(saved)) {
+                currentLanguage = saved;
+                document.getElementById('language-select').value = saved;
+            }
+            updateLanguage();
+        }
+
+        // Change language function
+        function changeLanguage(lang) {
+            currentLanguage = lang;
+            localStorage.setItem('dzogchen-language', lang);
+            updateLanguage();
+        }
+
+        // Update all UI elements with selected language
+        function updateLanguage() {
+            const translations = uiTranslations[currentLanguage];
+            
+            // Update UI elements
+            document.querySelector('.controls-header span').textContent = translations.controls;
+            document.querySelector('.language-label').textContent = translations.language;
+            document.getElementById('search').placeholder = translations.searchPlaceholder;
+            
+            // Update filter dropdown
+            document.querySelector('#lineage-filter option[value="all"]').textContent = translations.allLineages;
+            document.getElementById('quiz-mode-btn').textContent = translations.startQuiz;
+            
+            // Update legend
+            document.querySelector('#legend h4').textContent = translations.legend;
+            
+            // Update toggle buttons
+            const toggleBtns = document.querySelectorAll('.toggle-btn');
+            toggleBtns.forEach(btn => {
+                if (btn.textContent === 'Hide' || btn.textContent === 'སྦ།' || btn.textContent === '隐藏') {
+                    btn.textContent = translations.hide;
+                } else {
+                    btn.textContent = translations.show;
+                }
+            });
+            
+            // Update usage instructions
+            document.getElementById('click-node-text').textContent = translations.clickNode;
+            document.getElementById('click-elsewhere-text').textContent = translations.clickElsewhere;
+
+            // Update nodes and refresh display if data is loaded
+            if (typeof graphData !== 'undefined' && graphData.nodes) {
+                updateNodeDisplay();
+                refreshVisualization();
+            }
+        }
+
+        // Get display name based on current language
+        function getDisplayName(nodeData) {
+            switch (currentLanguage) {
+                case 'bo': return nodeData.nameTibetan || nodeData.name;
+                case 'zh': return nodeData.nameChinese || nodeData.name;
+                default: return nodeData.name;
+            }
+        }
+
+        // Get display description based on current language
+        function getDisplayDescription(nodeData) {
+            switch (currentLanguage) {
+                case 'bo': return nodeData.descriptionTibetan || nodeData.description;
+                case 'zh': return nodeData.descriptionChinese || nodeData.description;
+                default: return nodeData.description;
+            }
+        }
+
+        // Update node display for current language
+        function updateNodeDisplay() {
+            if (!graphData || !graphData.nodes) return;
+            
+            // Re-wrap text for all nodes with the current language
+            g.selectAll('.node-group').each(function(d) {
+                const group = d3.select(this);
+                const displayName = getDisplayName(d);
+                
+                // Remove existing text and re-wrap
+                group.selectAll('.node-text').remove();
+                wrapText(group, displayName, 170, 13);
+                
+                // Apply appropriate font class for Tibetan/Chinese
+                const textElements = group.selectAll('.node-text');
+                textElements.classed('tibetan-text', currentLanguage === 'bo');
+                textElements.classed('chinese-text', currentLanguage === 'zh');
+            });
+        }
+
+        // Refresh the entire visualization
+        function refreshVisualization() {
+            if (!graphData || !graphData.nodes) return;
+            
+            // Update node display with proper wrapping
+            updateNodeDisplay();
+        }
+
+        // Start the application
+        initializeApp().then(() => {
+            // Initialize language after data is loaded
+            initializeLanguage();
+        });
+    </script>
+</body>
+</html>
