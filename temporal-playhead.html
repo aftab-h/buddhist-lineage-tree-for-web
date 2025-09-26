@@ -348,6 +348,7 @@
         let isPlaying = false;
         let playInterval;
         let animationSpeed = 1;
+        let zoomBehavior; // Global zoom behavior reference
 
         // Filters
         let currentFilter = 'all';
@@ -384,13 +385,13 @@
                 .style('opacity', 0);
 
             // Setup zoom
-            const zoom = d3.zoom()
+            zoomBehavior = d3.zoom()
                 .scaleExtent([0.1, 4])
                 .on('zoom', (event) => {
                     svg.select('.main-group').attr('transform', event.transform);
                 });
 
-            svg.call(zoom);
+            svg.call(zoomBehavior);
 
             // Add click-away functionality to clear traceback
             svg.on('click', function(event) {
@@ -1144,8 +1145,68 @@
                 console.log(`  ${i + 1}. ${node.name} (${node.transmission}) - Position: ${node.position}`);
             });
 
+            // Auto-zoom to fit entire traceback path
+            autoZoomToFitTraceback(path.nodes);
+
             // Animate the traceback flow step by step with clicked node ID
             animateTracebackFlow(path, clickedNode.id);
+        }
+
+        function autoZoomToFitTraceback(tracebackNodes) {
+            if (tracebackNodes.length === 0 || !zoomBehavior) return;
+
+            // Add small delay to ensure node positions are available
+            setTimeout(() => {
+                // Get bounding box of all traceback nodes using the node data directly
+                const nodePositions = [];
+
+                nodeElements.each(function(d) {
+                    // Check if this node is in our traceback path
+                    const isInTraceback = tracebackNodes.some(node => node.id === d.id);
+                    if (isInTraceback && d.x !== undefined && d.y !== undefined) {
+                        nodePositions.push({ x: d.x, y: d.y });
+                        console.log(`Node ${d.id}: x=${d.x}, y=${d.y}`);
+                    }
+                });
+
+                if (nodePositions.length === 0) {
+                    console.log('No valid node positions found for auto-zoom');
+                    return;
+                }
+
+                // Calculate bounding box
+                const minX = Math.min(...nodePositions.map(p => p.x));
+                const maxX = Math.max(...nodePositions.map(p => p.x));
+                const minY = Math.min(...nodePositions.map(p => p.y));
+                const maxY = Math.max(...nodePositions.map(p => p.y));
+
+                // Add padding around the bounding box
+                const padding = 100;
+                const boundsWidth = maxX - minX + (padding * 2);
+                const boundsHeight = maxY - minY + (padding * 2);
+                const centerX = (minX + maxX) / 2;
+                const centerY = (minY + maxY) / 2;
+
+                // Calculate scale to fit bounds in viewport
+                const scaleX = width / boundsWidth;
+                const scaleY = height / boundsHeight;
+                const scale = Math.min(scaleX, scaleY, 2); // Cap at 2x zoom
+
+                // Calculate translation to center the bounds
+                const translateX = width / 2 - centerX * scale;
+                const translateY = height / 2 - centerY * scale;
+
+                // Apply smooth zoom transition using the global zoom behavior
+                const transform = d3.zoomIdentity
+                    .translate(translateX, translateY)
+                    .scale(scale);
+
+                svg.transition()
+                    .duration(1000) // 1 second smooth zoom
+                    .call(zoomBehavior.transform, transform);
+
+                console.log(`Auto-zoomed to fit ${nodePositions.length} nodes: scale=${scale.toFixed(2)}, center=(${centerX.toFixed(0)}, ${centerY.toFixed(0)})`);
+            }, 100); // Small delay to ensure positions are updated
         }
 
         // Perfect cascade animation copied from index.html
@@ -1348,6 +1409,14 @@
         document.addEventListener('click', function(event) {
             // Only clear if clicking outside of nodes and controls
             if (!event.target.closest('.node') && !event.target.closest('.controls') && !event.target.closest('circle')) {
+                clearTraceback();
+            }
+        });
+
+        // Add Escape key listener to clear traceback (same as clicking off)
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape' && tracebackActive) {
+                console.log('Escape key pressed - clearing traceback');
                 clearTraceback();
             }
         });
