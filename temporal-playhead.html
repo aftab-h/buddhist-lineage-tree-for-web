@@ -97,27 +97,31 @@
             filter: drop-shadow(0 0 10px #ffff00);
         }
 
+        /* Base traced link style */
         .link.traced {
             stroke: #ffff00 !important;
             stroke-width: 4px !important;
             opacity: 1 !important;
             filter: drop-shadow(0 0 8px #ffff00);
-            stroke-dasharray: 10 5;
-            animation: flowBack 1.5s linear infinite;
         }
 
-        @keyframes flowBack {
-            0% {
-                stroke-dashoffset: 15;
-            }
-            100% {
-                stroke-dashoffset: 0;
-            }
+        /* Preserve relationship-specific dash patterns when highlighted */
+        .link.teaching.traced {
+            stroke-dasharray: none; /* Solid line for teaching */
         }
 
-        .link.traced.flowing {
-            animation: flowBack 1.2s ease-in-out infinite;
+        .link.incarnation.traced {
+            stroke-dasharray: 4,4; /* Larger dots for incarnation when highlighted */
         }
+
+        .link.family.traced {
+            stroke-dasharray: 10,6; /* Larger dashes for family when highlighted */
+        }
+
+        .link.emanation.traced {
+            stroke-dasharray: 2,2; /* Small dots for emanation when highlighted */
+        }
+
 
         .node.dimmed {
             opacity: 0.2 !important;
