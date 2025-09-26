@@ -506,10 +506,173 @@
             margin-right: 8px;
         }
 
+        /* Slim Playback Bar */
+        #playback-bar {
+            position: fixed;
+            top: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1001;
+            background: rgba(20, 20, 20, 0.9);
+            padding: 8px 16px;
+            border-radius: 20px;
+            border: 1px solid #333;
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        #playback-bar .controls-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        #playback-bar .playback-btn {
+            width: 24px;
+            height: 24px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        #playback-bar .playback-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        #playback-bar .playback-btn svg {
+            width: 14px;
+            height: 14px;
+            fill: #fff;
+        }
+
+        #playback-bar .timeline-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 200px;
+        }
+
+        #playback-bar .timeline {
+            flex: 1;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 2px;
+            position: relative;
+            cursor: pointer;
+        }
+
+        #playback-bar .timeline::-webkit-slider-thumb {
+            appearance: none;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #4a90e2;
+            cursor: pointer;
+        }
+
+        #playback-bar .time-display {
+            font-size: 11px;
+            color: #ccc;
+            min-width: 60px;
+            text-align: center;
+        }
+
+        #playback-bar .settings-btn {
+            width: 20px;
+            height: 20px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            margin-left: 8px;
+        }
+
+        #playback-bar .settings-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        #playback-bar .settings-btn svg {
+            width: 12px;
+            height: 12px;
+            fill: #ccc;
+        }
+
+        .playback-settings-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 8px;
+            background: rgba(20, 20, 20, 0.95);
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 12px;
+            min-width: 180px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(10px);
+            display: none;
+        }
+
+        .playback-settings-dropdown.show {
+            display: block;
+        }
+
+        .playback-settings-dropdown label {
+            display: block;
+            color: #fff;
+            font-size: 12px;
+            margin-bottom: 6px;
+        }
+
+        .playback-settings-dropdown input[type="range"] {
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 2px;
+            margin-bottom: 8px;
+        }
+
         /* Mobile responsive styles */
         @media (max-width: 768px) {
-            #controls-icon {
+            #playback-bar {
                 top: 10px;
+                padding: 6px 12px;
+                gap: 8px;
+                max-width: calc(100vw - 20px);
+            }
+
+            #playback-bar .timeline-container {
+                min-width: 120px;
+            }
+
+            #playback-bar .time-display {
+                min-width: 40px;
+                font-size: 10px;
+            }
+
+            #playback-bar .playback-btn {
+                width: 20px;
+                height: 20px;
+            }
+
+            #playback-bar .playback-btn svg {
+                width: 12px;
+                height: 12px;
+            }
+
+            #controls-icon {
+                top: 60px;
                 left: 10px;
                 width: 44px;
                 height: 44px;
@@ -524,7 +687,7 @@
 
             .controls {
                 position: fixed;
-                top: 65px;
+                top: 115px;
                 left: 5px;
                 right: 5px;
                 width: auto;
@@ -587,23 +750,6 @@
         <svg id="visualization"></svg>
 
         <div class="controls">
-            <div class="control-group">
-                <label>Time Playhead</label>
-                <input type="range" id="timeSlider" min="0" max="100" value="100" class="time-playhead">
-                <div class="time-display" id="timeDisplay">Year: 2000</div>
-            </div>
-
-            <div class="control-group">
-                <label>Play Controls</label>
-                <button onclick="playTime()">▶ Play</button>
-                <button onclick="pauseTime()">⏸ Pause</button>
-                <button onclick="resetTime()">⏮ Reset</button>
-            </div>
-
-            <div class="control-group">
-                <label>Animation Speed</label>
-                <input type="range" id="speedSlider" min="0.1" max="3" step="0.1" value="1">
-            </div>
 
             <div class="control-group">
                 <label>Layout Force</label>
@@ -630,6 +776,43 @@
                 <label>Layout Mode</label>
                 <button onclick="setLayoutMode('circular')" class="active" id="circular-btn">Circular</button>
                 <button onclick="setLayoutMode('linear')" id="linear-btn">Linear</button>
+            </div>
+        </div>
+
+        <!-- Slim Playback Bar -->
+        <div id="playback-bar">
+            <div class="controls-group">
+                <button class="playback-btn" onclick="resetTime()" title="Reset">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M12,5V1L7,6L12,11V7A6,6 0 0,1 18,13A6,6 0 0,1 12,19A6,6 0 0,1 6,13H4A8,8 0 0,0 12,21A8,8 0 0,0 20,13A8,8 0 0,0 12,5Z"/>
+                    </svg>
+                </button>
+                <button class="playback-btn" onclick="playTime()" id="play-btn" title="Play">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M8,5.14V19.14L19,12.14L8,5.14Z"/>
+                    </svg>
+                </button>
+                <button class="playback-btn" onclick="pauseTime()" id="pause-btn" title="Pause" style="display: none;">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M14,19H18V5H14M6,19H10V5H6V19Z"/>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="timeline-container">
+                <input type="range" id="timeSlider" min="0" max="100" value="100" class="timeline">
+                <div class="time-display" id="timeDisplay">2000</div>
+            </div>
+
+            <button class="settings-btn" onclick="togglePlaybackSettings()" title="Settings">
+                <svg viewBox="0 0 24 24">
+                    <path d="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.66 15.5,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.5,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.05 4.34,5.27L2.34,8.73C2.22,8.95 2.27,9.22 2.46,9.37L4.57,11C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.22,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.03 4.95,18.95L7.44,17.94C7.96,18.34 8.5,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.5,18.68 16.04,18.34 16.56,17.94L19.05,18.95C19.27,19.03 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z"/>
+                </svg>
+            </button>
+
+            <div class="playback-settings-dropdown" id="playback-settings">
+                <label>Animation Speed</label>
+                <input type="range" id="speedSlider" min="0.1" max="3" step="0.1" value="1">
             </div>
         </div>
 
@@ -1819,6 +2002,11 @@
             }
 
             legend.classList.toggle('show');
+        }
+
+        function togglePlaybackSettings() {
+            const dropdown = document.getElementById('playback-settings');
+            dropdown.classList.toggle('show');
         }
 
         // Mobile-first behavior - panels start hidden
