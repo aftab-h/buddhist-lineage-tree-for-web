@@ -409,6 +409,89 @@
             margin-top: 5px;
         }
 
+        /* Search functionality styles */
+        .search-container {
+            position: relative;
+            margin-bottom: 10px;
+        }
+
+        #search {
+            width: 100%;
+            padding: 8px 80px 8px 10px;
+            border: 1px solid #555;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+            background: #444;
+            color: #fff;
+        }
+
+        #search:focus {
+            outline: none;
+            border-color: #4a90e2;
+            box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+        }
+
+        .search-navigation {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            background: rgba(68, 68, 68, 0.9);
+            padding: 2px 6px;
+            border-radius: 4px;
+            border: 1px solid #666;
+        }
+
+        .search-nav-btn {
+            background: none;
+            border: none;
+            font-size: 16px;
+            font-weight: bold;
+            color: #ccc;
+            cursor: pointer;
+            padding: 2px 6px;
+            border-radius: 2px;
+            line-height: 1;
+        }
+
+        .search-nav-btn:hover {
+            background: #555;
+            color: #fff;
+        }
+
+        .search-nav-btn:disabled {
+            color: #666;
+            cursor: not-allowed;
+        }
+
+        .search-counter {
+            font-size: 11px;
+            color: #ccc;
+            min-width: 30px;
+            text-align: center;
+        }
+
+        /* Search highlight styles */
+        @keyframes flash-highlight {
+            0% { stroke: #ff6b35; stroke-width: 3px; opacity: 1; }
+            50% { stroke: #ff0000; stroke-width: 5px; opacity: 1; }
+            100% { stroke: inherit; stroke-width: inherit; opacity: 1; }
+        }
+
+        .search-flash .node {
+            animation: flash-highlight 0.8s ease-in-out;
+        }
+
+        .search-highlight .node {
+            stroke: #ff6b35 !important;
+            stroke-width: 3px !important;
+            opacity: 1 !important;
+        }
+
         /* Time playhead styles */
         .time-playhead {
             background: linear-gradient(90deg, #4a90e2 0%, #27ae60 50%, #9b59b6 100%);
@@ -763,6 +846,18 @@
         <svg id="visualization"></svg>
 
         <div class="controls">
+
+            <div class="control-group">
+                <label>Search Teachers</label>
+                <div class="search-container">
+                    <input type="text" id="search" placeholder="Search for a teacher...">
+                    <div class="search-navigation" id="search-navigation" style="display: none;">
+                        <button id="search-prev" class="search-nav-btn" onclick="previousSearchResult()">‹</button>
+                        <span id="search-counter" class="search-counter">0 / 0</span>
+                        <button id="search-next" class="search-nav-btn" onclick="nextSearchResult()">›</button>
+                    </div>
+                </div>
+            </div>
 
             <div class="control-group">
                 <label>Layout Force</label>
@@ -2083,8 +2178,169 @@
             // No additional initialization needed
         }
 
+        // Search functionality
+        let searchResults = [];
+        let currentSearchIndex = -1;
+
+        // Initialize search when page loads
+        function initializeSearch() {
+            const searchInput = document.getElementById('search');
+            searchInput.addEventListener('input', function() {
+                performSearch(this.value);
+            });
+        }
+
+        function performSearch(searchTerm) {
+            const normalizedSearchTerm = normalizeText(searchTerm.trim());
+
+            // Clear previous search
+            clearSearchHighlights();
+            searchResults = [];
+            currentSearchIndex = -1;
+
+            if (normalizedSearchTerm === '') {
+                hideSearchNavigation();
+                return;
+            }
+
+            // Find all matching nodes
+            nodeElements.each(function(d) {
+                const normalizedName = normalizeText(d.name);
+                const normalizedWylie = normalizeText(d.wylie || '');
+                const normalizedTibetan = normalizeText(d.tibetan || '');
+                const normalizedChinese = normalizeText(d.chinese || '');
+
+                const isMatch = normalizedName.includes(normalizedSearchTerm) ||
+                               normalizedWylie.includes(normalizedSearchTerm) ||
+                               normalizedTibetan.includes(normalizedSearchTerm) ||
+                               normalizedChinese.includes(normalizedSearchTerm);
+
+                if (isMatch) {
+                    searchResults.push({
+                        element: this,
+                        data: d
+                    });
+                    d3.select(this.parentNode).classed('search-highlight', true);
+                } else {
+                    d3.select(this.parentNode).style('opacity', 0.3);
+                }
+            });
+
+            // Update navigation UI
+            if (searchResults.length > 0) {
+                showSearchNavigation();
+                currentSearchIndex = 0;
+                highlightCurrentResult();
+                zoomToCurrentResult();
+            } else {
+                hideSearchNavigation();
+            }
+        }
+
+        function showSearchNavigation() {
+            document.getElementById('search-navigation').style.display = 'flex';
+            updateSearchCounter();
+            updateNavigationButtons();
+        }
+
+        function hideSearchNavigation() {
+            document.getElementById('search-navigation').style.display = 'none';
+            nodeElements.each(function() {
+                d3.select(this.parentNode).style('opacity', 1);
+            });
+        }
+
+        function updateSearchCounter() {
+            const counter = document.getElementById('search-counter');
+            if (searchResults.length > 0) {
+                counter.textContent = `${currentSearchIndex + 1} / ${searchResults.length}`;
+            } else {
+                counter.textContent = '0 / 0';
+            }
+        }
+
+        function updateNavigationButtons() {
+            const prevBtn = document.getElementById('search-prev');
+            const nextBtn = document.getElementById('search-next');
+
+            prevBtn.disabled = currentSearchIndex <= 0;
+            nextBtn.disabled = currentSearchIndex >= searchResults.length - 1;
+        }
+
+        function clearSearchHighlights() {
+            nodeElements.each(function() {
+                d3.select(this.parentNode)
+                    .classed('search-highlight', false)
+                    .classed('search-flash', false)
+                    .style('opacity', 1);
+            });
+        }
+
+        function highlightCurrentResult() {
+            // Clear previous flash animations
+            d3.selectAll('.search-flash').classed('search-flash', false);
+
+            // Flash animate current result
+            if (currentSearchIndex >= 0 && currentSearchIndex < searchResults.length) {
+                const element = d3.select(searchResults[currentSearchIndex].element.parentNode);
+                element.classed('search-flash', true);
+
+                // Remove flash class after animation completes
+                setTimeout(() => {
+                    element.classed('search-flash', false);
+                }, 800);
+            }
+        }
+
+        function zoomToCurrentResult() {
+            if (currentSearchIndex < 0 || currentSearchIndex >= searchResults.length) return;
+
+            const result = searchResults[currentSearchIndex];
+            const nodeData = result.data;
+
+            // Get node position
+            const nodeX = nodeData.x || 0;
+            const nodeY = nodeData.y || 0;
+
+            // Calculate zoom transform to center on this node
+            const scale = 1.5; // Zoom level
+            const translateX = width / 2 - nodeX * scale;
+            const translateY = height / 2 - nodeY * scale;
+
+            const transform = d3.zoomIdentity
+                .translate(translateX, translateY)
+                .scale(scale);
+
+            svg.transition()
+                .duration(500)
+                .call(zoomBehavior.transform, transform);
+        }
+
+        function nextSearchResult() {
+            if (currentSearchIndex < searchResults.length - 1) {
+                currentSearchIndex++;
+                highlightCurrentResult();
+                zoomToCurrentResult();
+                updateSearchCounter();
+                updateNavigationButtons();
+            }
+        }
+
+        function previousSearchResult() {
+            if (currentSearchIndex > 0) {
+                currentSearchIndex--;
+                highlightCurrentResult();
+                zoomToCurrentResult();
+                updateSearchCounter();
+                updateNavigationButtons();
+            }
+        }
+
         // Initialize when page loads
-        document.addEventListener('DOMContentLoaded', init);
+        document.addEventListener('DOMContentLoaded', function() {
+            init();
+            initializeSearch();
+        });
 
         // Add body click listener to clear traceback and close popup
         document.addEventListener('click', function(event) {
@@ -2115,6 +2371,14 @@
                 const popup = document.getElementById('popup-card');
                 if (popup && !popup.classList.contains('hidden')) {
                     closePopup();
+                }
+
+                // Clear search highlights if any
+                if (searchResults.length > 0) {
+                    clearSearchHighlights();
+                    searchResults = [];
+                    currentSearchIndex = -1;
+                    hideSearchNavigation();
                 }
             }
         });
@@ -2363,8 +2627,27 @@
             });
         }
 
-        // Add Escape key listener to clear traceback AND close popup
+        // Add keyboard navigation for search and other functions
         document.addEventListener('keydown', function(event) {
+            // Search navigation when search is active
+            if (searchResults.length > 0 && document.getElementById('search-navigation').style.display !== 'none') {
+                if (event.key === 'ArrowDown' || event.key === 'Enter') {
+                    event.preventDefault();
+                    nextSearchResult();
+                    return;
+                } else if (event.key === 'ArrowUp') {
+                    event.preventDefault();
+                    previousSearchResult();
+                    return;
+                } else if (event.key === 'Escape') {
+                    event.preventDefault();
+                    document.getElementById('search').value = '';
+                    performSearch('');
+                    return;
+                }
+            }
+
+            // General escape key handling
             if (event.key === 'Escape') {
                 let handled = false;
 
