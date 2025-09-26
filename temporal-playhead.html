@@ -889,11 +889,14 @@
                         return Math.max(4, Math.min(12, connections * 1.2 + 4));
                     })
                     .attr('class', d => `node ${d.transmission.toLowerCase().replace(/\s+/g, '-')}`)
-                    .call(drag(simulation))
-                    .on('mouseover', showTooltip)
-                    .on('mouseout', hideTooltip)
                     .call(node => node.append('title').text(d => d.name))
                 );
+
+            // CRITICAL: Apply drag handlers and event listeners to ALL nodes (new and existing)
+            nodeElements
+                .call(drag(simulation))
+                .on('mouseover', showTooltip)
+                .on('mouseout', hideTooltip);
 
             // Update links with enter/exit pattern
             linkElements = linkElements
