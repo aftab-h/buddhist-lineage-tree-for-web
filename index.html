@@ -303,17 +303,67 @@
             opacity: 0.1 !important;
         }
 
-        /* Controls */
+        /* Controls Icon */
+        #controls-icon {
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            z-index: 1001;
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        #controls-icon:hover {
+            background: rgba(255, 255, 255, 1);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            transform: scale(1.05);
+        }
+
+        #controls-icon svg {
+            width: 20px;
+            height: 20px;
+            fill: #555;
+            transition: fill 0.2s ease;
+        }
+
+        #controls-icon:hover svg {
+            fill: #333;
+        }
+
+        /* Controls Panel */
         .controls {
             position: fixed;
-            top: 20px;
-            left: 20px;
+            top: 70px;
+            left: 10px;
+            z-index: 1000;
             background: rgba(20, 20, 20, 0.9);
-            padding: 15px;
-            border-radius: 8px;
-            border: 1px solid #333;
+            padding: 16px;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
             backdrop-filter: blur(10px);
+            max-width: calc(100vw - 20px);
+            box-sizing: border-box;
+            transform: translateX(-100%);
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             min-width: 250px;
+            border: 1px solid #333;
+        }
+
+        .controls.show {
+            transform: translateX(0);
+            opacity: 1;
+            visibility: visible;
         }
 
         .control-group {
@@ -345,6 +395,7 @@
         .control-group button.active {
             background: #4a90e2;
             border-color: #357abd;
+            color: #fff;
         }
 
         .control-group input[type="range"] {
@@ -367,16 +418,66 @@
             color: #4a90e2;
         }
 
-        /* Legend */
+        /* Legend Icon */
+        #legend-icon {
+            position: fixed;
+            bottom: 15px;
+            right: 15px;
+            z-index: 1001;
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        #legend-icon:hover {
+            background: rgba(255, 255, 255, 1);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            transform: scale(1.05);
+        }
+
+        #legend-icon svg {
+            width: 20px;
+            height: 20px;
+            fill: #555;
+            transition: fill 0.2s ease;
+        }
+
+        #legend-icon:hover svg {
+            fill: #333;
+        }
+
+        /* Legend Panel */
         .legend {
             position: fixed;
-            bottom: 20px;
-            right: 20px;
+            bottom: 70px;
+            right: 10px;
+            z-index: 1000;
             background: rgba(20, 20, 20, 0.9);
             padding: 15px;
             border-radius: 8px;
-            border: 1px solid #333;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             backdrop-filter: blur(10px);
+            max-width: calc(50vw - 15px);
+            box-sizing: border-box;
+            transform: translateY(100%);
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid #333;
+        }
+
+        .legend.show {
+            transform: translateY(0);
+            opacity: 1;
+            visibility: visible;
         }
 
         .legend h4 {
@@ -396,6 +497,44 @@
             height: 12px;
             border-radius: 50%;
             margin-right: 8px;
+        }
+
+        /* Mobile responsive styles */
+        @media (max-width: 768px) {
+            #controls-icon {
+                top: 10px;
+                left: 10px;
+                width: 44px;
+                height: 44px;
+            }
+
+            #legend-icon {
+                bottom: 10px;
+                right: 10px;
+                width: 44px;
+                height: 44px;
+            }
+
+            .controls {
+                position: fixed;
+                top: 65px;
+                left: 5px;
+                right: 5px;
+                width: auto;
+                max-width: none;
+                padding: 12px;
+                background: rgba(20, 20, 20, 0.95);
+            }
+
+            .legend {
+                position: fixed;
+                bottom: 65px;
+                right: 5px;
+                left: 5px;
+                max-width: none;
+                padding: 10px;
+                background: rgba(20, 20, 20, 0.95);
+            }
         }
 
 
@@ -430,8 +569,13 @@
 
 <body>
     <div id="container">
-        <svg id="visualization"></svg>
+        <div id="controls-icon" onclick="toggleControls()">
+            <svg viewBox="0 0 24 24">
+                <path d="M7,5H21V7H7V5M7,13V11H21V13H7M4,4.5A1.5,1.5 0 0,1 5.5,6A1.5,1.5 0 0,1 4,7.5A1.5,1.5 0 0,1 2.5,6A1.5,1.5 0 0,1 4,4.5M4,10.5A1.5,1.5 0 0,1 5.5,12A1.5,1.5 0 0,1 4,13.5A1.5,1.5 0 0,1 2.5,12A1.5,1.5 0 0,1 4,10.5M7,19V17H21V19H7M4,16.5A1.5,1.5 0 0,1 5.5,18A1.5,1.5 0 0,1 4,19.5A1.5,1.5 0 0,1 2.5,18A1.5,1.5 0 0,1 4,16.5Z"/>
+            </svg>
+        </div>
 
+        <svg id="visualization"></svg>
 
         <div class="controls">
             <div class="control-group">
@@ -478,6 +622,12 @@
                 <button onclick="setLayoutMode('circular')" class="active" id="circular-btn">Circular</button>
                 <button onclick="setLayoutMode('linear')" id="linear-btn">Linear</button>
             </div>
+        </div>
+
+        <div id="legend-icon" onclick="toggleLegend()">
+            <svg viewBox="0 0 24 24">
+                <path d="M19,3H5C3.9,3 3,3.9 3,5V19C3,20.1 3.9,21 5,21H19C20.1,21 21,20.1 21,19V5C21,3.9 20.1,3 19,3M5,19V5H19V19H5M17,17H7V15H17V17M17,13H7V11H17V13M17,9H7V7H17V9Z"/>
+            </svg>
         </div>
 
         <div class="legend">
@@ -1619,6 +1769,37 @@
                 });
         }
 
+        // Panel management functions
+        function toggleControls() {
+            const controls = document.querySelector('.controls');
+            const legend = document.querySelector('.legend');
+
+            // Close legend if open
+            if (legend.classList.contains('show')) {
+                legend.classList.remove('show');
+            }
+
+            controls.classList.toggle('show');
+        }
+
+        function toggleLegend() {
+            const legend = document.querySelector('.legend');
+            const controls = document.querySelector('.controls');
+
+            // Close controls if open
+            if (controls.classList.contains('show')) {
+                controls.classList.remove('show');
+            }
+
+            legend.classList.toggle('show');
+        }
+
+        // Mobile-first behavior - panels start hidden
+        function initMobileBehavior() {
+            // Panels are hidden by default via CSS transform and opacity
+            // No additional initialization needed
+        }
+
         // Initialize when page loads
         document.addEventListener('DOMContentLoaded', init);
 
@@ -1627,10 +1808,21 @@
             // Check if clicking on a node or control element
             const clickedOnNode = event.target.closest('.node') || event.target.closest('circle');
             const clickedOnControls = event.target.closest('.controls');
+            const clickedOnControlsIcon = event.target.closest('#controls-icon');
+            const clickedOnLegend = event.target.closest('.legend');
+            const clickedOnLegendIcon = event.target.closest('#legend-icon');
             const clickedOnPopup = event.target.closest('.popup-card');
 
+            // Close panels if clicking outside
+            if (!clickedOnControls && !clickedOnControlsIcon) {
+                document.querySelector('.controls').classList.remove('show');
+            }
+            if (!clickedOnLegend && !clickedOnLegendIcon) {
+                document.querySelector('.legend').classList.remove('show');
+            }
+
             // Only clear/close if clicking outside of interactive elements
-            if (!clickedOnNode && !clickedOnControls && !clickedOnPopup) {
+            if (!clickedOnNode && !clickedOnControls && !clickedOnPopup && !clickedOnControlsIcon && !clickedOnLegend && !clickedOnLegendIcon) {
                 // Clear traceback
                 if (tracebackActive) {
                     clearTraceback();
