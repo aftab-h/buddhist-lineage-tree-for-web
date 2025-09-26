@@ -1074,24 +1074,30 @@
             }
         }
 
-        // Traceback functionality
-        function findPathToSource(targetNode) {
+        // Traceback functionality - finds ALL paths to primordial sources
+        function findAllPathsToSource(targetNode) {
+            const allPaths = { nodes: new Set(), links: new Set() };
+            const currentPath = [];
+            const currentLinks = [];
             const visited = new Set();
-            const path = [];
-            const pathLinks = [];
 
             function dfs(node) {
-                if (visited.has(node.id)) return false;
+                if (visited.has(node.id)) return;
+
                 visited.add(node.id);
-                path.push(node);
+                currentPath.push(node);
+                allPaths.nodes.add(node);
 
                 console.log(`DFS visiting: "${node.id}", incarnationOf:`, node.incarnationOf);
 
                 // Check if we reached a primordial source
-                if (node.name.toLowerCase().includes('samantabhadra') ||
+                const isPrimordialSource = node.name.toLowerCase().includes('samantabhadra') ||
                     node.name.toLowerCase().includes('samantabhadri') ||
-                    (node.teachers.length === 0 && node.incarnationOf.length === 0)) {
-                    return true;
+                    (node.teachers.length === 0 && node.incarnationOf.length === 0);
+
+                if (isPrimordialSource) {
+                    console.log(`Reached primordial source: ${node.id}`);
+                    // This is a valid endpoint, but continue exploring other relationships
                 }
 
                 // Collect all possible next nodes to explore
@@ -1100,7 +1106,7 @@
                 // Add teachers (teaching relationships)
                 for (const teacherName of node.teachers) {
                     const teacher = nodes.find(n => n.id === teacherName.trim());
-                    if (teacher) {
+                    if (teacher && !visited.has(teacher.id)) {
                         const link = links.find(l =>
                             (l.source.id === teacher.id || l.source === teacher.id) &&
                             (l.target.id === node.id || l.target === node.id) &&
@@ -1118,7 +1124,7 @@
                     for (const incarnationName of node.incarnationOf) {
                         const incarnation = nodes.find(n => n.id === incarnationName.trim());
                         console.log(`Looking for incarnation "${incarnationName.trim()}", found:`, incarnation ? incarnation.id : 'NOT FOUND');
-                        if (incarnation) {
+                        if (incarnation && !visited.has(incarnation.id)) {
                             const link = links.find(l =>
                                 (l.source.id === incarnation.id || l.source === incarnation.id) &&
                                 (l.target.id === node.id || l.target === node.id) &&
@@ -1134,7 +1140,7 @@
 
                 // Add emanation relationships - find masters who emanated AS this node
                 const emanatedFromNodes = nodes.filter(n =>
-                    n.emanatedAs && n.emanatedAs.some(name => name.trim() === node.id)
+                    n.emanatedAs && n.emanatedAs.some(name => name.trim() === node.id) && !visited.has(n.id)
                 );
 
                 if (emanatedFromNodes.length > 0) {
@@ -1150,28 +1156,33 @@
                     }
                 }
 
-                // Try all possible next nodes
+                // Explore ALL possible next nodes (not just the first successful one)
                 for (const nextNodeInfo of nextNodes) {
-                    pathLinks.push(nextNodeInfo.link);
+                    currentLinks.push(nextNodeInfo.link);
+                    allPaths.links.add(nextNodeInfo.link);
 
-                    if (dfs(nextNodeInfo.node)) {
-                        return true;
-                    }
+                    console.log(`Following ${nextNodeInfo.type} relationship from "${node.id}" to "${nextNodeInfo.node.id}"`);
+                    dfs(nextNodeInfo.node);
 
-                    // Remove link if this path didn't work
-                    pathLinks.pop();
+                    currentLinks.pop();
                 }
 
-                // If we get here, no path was found from this node
-                path.pop();
-                visited.delete(node.id); // Allow revisiting this node from other paths
-                return false;
+                currentPath.pop();
+                visited.delete(node.id);
             }
 
-            if (dfs(targetNode)) {
-                return { nodes: [...path], links: [...pathLinks] };
-            }
-            return { nodes: [], links: [] };
+            dfs(targetNode);
+
+            // Convert Sets back to Arrays for compatibility with existing code
+            return {
+                nodes: Array.from(allPaths.nodes),
+                links: Array.from(allPaths.links)
+            };
+        }
+
+        // Legacy function name for compatibility
+        function findPathToSource(targetNode) {
+            return findAllPathsToSource(targetNode);
         }
 
         function activateTraceback(clickedNode) {
@@ -1194,16 +1205,31 @@
             animateTracebackFlow(path);
         }
 
-        function animateTracebackFlow(path) {
-            const { nodes: pathNodes, links: pathLinks } = path;
-            const animationDelay = 250; // milliseconds between each step (faster flow)
+        function animateTracebackFlow(allPaths) {
+            const { nodes: pathNodes, links: pathLinks } = allPaths;
+            const stepDelay = 300; // milliseconds between each traceback step
 
             // First dim all elements
             nodeElements.classed('dimmed', true);
             linkElements.classed('dimmed', true);
 
-            // Animate each step in the path with flowing effect
-            pathNodes.forEach((node, index) => {
+            console.log(`Starting traceback animation for ${pathNodes.length} nodes and ${pathLinks.length} links`);
+
+            // Sort nodes by their time position (DESCENDING - from recent to ancient for proper traceback flow)
+            const sortedNodes = [...pathNodes].sort((a, b) => b.position - a.position);
+
+            // Create a map of which links connect to each node (for synchronized animation)
+            const nodeToLinks = new Map();
+            pathLinks.forEach(link => {
+                const targetId = link.target.id || link.target;
+                if (!nodeToLinks.has(targetId)) {
+                    nodeToLinks.set(targetId, []);
+                }
+                nodeToLinks.get(targetId).push(link);
+            });
+
+            // Animate each traceback step: highlight node + its outgoing links simultaneously
+            sortedNodes.forEach((node, index) => {
                 const timeoutId = setTimeout(() => {
                     // Add this node to traced set and highlight it
                     tracedNodes.add(node.id);
@@ -1239,10 +1265,11 @@
                             return Math.max(4, Math.min(12, connections * 1.2 + 4));
                         });
 
-                    // If there's a link to the previous node, animate it with flowing effect
-                    if (index > 0) {
-                        const linkToHighlight = pathLinks[index - 1];
-                        if (linkToHighlight) {
+                    // Simultaneously highlight the links that emanate FROM this node (traceback direction)
+                    const nodeLinks = nodeToLinks.get(node.id) || [];
+                    nodeLinks.forEach((linkToHighlight, linkIndex) => {
+                        // Small delay for each link to create flowing effect
+                        const linkTimeoutId = setTimeout(() => {
                             tracedLinks.add(linkToHighlight);
 
                             // Find link by matching source and target IDs
@@ -1254,41 +1281,48 @@
                                 return sourceId === pathSourceId && targetId === pathTargetId;
                             });
 
-                            console.log('Found link element:', linkElement.size(), 'for source:', linkToHighlight.source.id, 'target:', linkToHighlight.target.id);
-
                             if (linkElement.size() > 0) {
-                                console.log('Applying styles to link element');
+                                console.log(`Animating ${linkToHighlight.type} link from "${linkToHighlight.source.id || linkToHighlight.source}" to "${linkToHighlight.target.id || linkToHighlight.target}"`);
+
+                                // Different colors for different relationship types
+                                let linkColor = '#ffff00'; // Default yellow
+                                if (linkToHighlight.type === 'incarnation') {
+                                    linkColor = '#ff6b6b'; // Red for incarnation
+                                } else if (linkToHighlight.type === 'emanation') {
+                                    linkColor = '#4ecdc4'; // Teal for emanation
+                                } else if (linkToHighlight.type === 'family') {
+                                    linkColor = '#45b7d1'; // Blue for family
+                                }
+
                                 linkElement
                                     .classed('dimmed', false)
                                     .classed('traced', true)
-                                    .style('stroke', '#ffff00')
-                                    .style('stroke-width', '5px')
+                                    .style('stroke', linkColor)
+                                    .style('stroke-width', '4px')
                                     .style('opacity', '1');
 
-                                // Add shadow effect after a brief delay
+                                // Add shadow effect immediately
                                 setTimeout(() => {
-                                    linkElement.style('filter', 'drop-shadow(0 0 8px #ffff00)');
+                                    linkElement.style('filter', `drop-shadow(0 0 8px ${linkColor})`);
+                                }, 25);
+
+                                // Add a flowing particle effect shortly after
+                                setTimeout(() => {
+                                    createFlowingParticle(linkElement.node(), linkToHighlight, linkColor);
                                 }, 50);
-                            } else {
-                                console.log('No link element found!');
                             }
+                        }, linkIndex * 100); // Stagger multiple links from same node
 
-                            // Add a flowing particle effect (only if link element was found)
-                            if (linkElement.size() > 0) {
-                                setTimeout(() => {
-                                    createFlowingParticle(linkElement.node(), linkToHighlight);
-                                }, 100);
-                            }
-                        }
-                    }
+                        tracebackTimeouts.push(linkTimeoutId);
+                    });
 
-                }, index * animationDelay);
+                }, index * stepDelay);
 
                 tracebackTimeouts.push(timeoutId);
             });
         }
 
-        function createFlowingParticle(linkElement, linkData) {
+        function createFlowingParticle(linkElement, linkData, color = '#ffff00') {
             if (!linkElement || !linkData.source || !linkData.target) return;
 
             const sourceX = linkData.source.x || 0;
@@ -1296,24 +1330,25 @@
             const targetX = linkData.target.x || 0;
             const targetY = linkData.target.y || 0;
 
-            // Create a flowing particle (small circle) that moves along the link
+            // For traceback, particles should flow FROM target TO source (backward along transmission)
+            // This shows the flow of lineage tracing back to its origins
             const particle = svg.select('.main-group')
                 .append('circle')
                 .attr('r', 3)
-                .attr('fill', '#ffff00')
+                .attr('fill', color)
                 .attr('opacity', 0.8)
-                .attr('cx', sourceX)
-                .attr('cy', sourceY)
-                .style('filter', 'drop-shadow(0 0 6px #ffff00)')
+                .attr('cx', targetX)  // Start at target (more recent node)
+                .attr('cy', targetY)
+                .style('filter', `drop-shadow(0 0 6px ${color})`)
                 .style('pointer-events', 'none');
 
-            // Animate particle along the link
+            // Animate particle flowing backward (from student to teacher, from incarnation to previous life)
             particle
                 .transition()
                 .duration(600)
                 .ease(d3.easeQuadOut)
-                .attr('cx', targetX)
-                .attr('cy', targetY)
+                .attr('cx', sourceX)  // Flow to source (older node)
+                .attr('cy', sourceY)
                 .style('opacity', 0)
                 .remove();
         }
