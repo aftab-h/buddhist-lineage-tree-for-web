@@ -798,7 +798,27 @@
             // Make a shallow copy to protect against mutation, while
             // recycling old nodes to preserve position and velocity.
             const old = new Map(nodeElements.data().map(d => [d.id, d]));
-            const updatedNodes = visibleNodes.map(d => ({...old.get(d.id), ...d}));
+            const updatedNodes = visibleNodes.map(d => {
+                const oldNode = old.get(d.id);
+                if (oldNode) {
+                    // Preserve existing node with its position
+                    return {...oldNode, ...d};
+                } else {
+                    // New node - set good initial position to prevent fly-in effect
+                    const newNode = {...d};
+                    if (layoutMode === 'circular') {
+                        // For circular mode, start near center with small random offset
+                        newNode.x = centerX + (Math.random() - 0.5) * 100;
+                        newNode.y = centerY + (Math.random() - 0.5) * 100;
+                    } else {
+                        // For linear mode, start at appropriate Y position based on time
+                        const yScale = createNormalizedTimeScale(nodes);
+                        newNode.x = centerX + (Math.random() - 0.5) * 200;
+                        newNode.y = yScale(d.position);
+                    }
+                    return newNode;
+                }
+            });
             const updatedLinks = visibleLinks.map(d => ({...d}));
 
             // Update nodes with enter/exit pattern
