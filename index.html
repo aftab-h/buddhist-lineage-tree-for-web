@@ -586,8 +586,8 @@
         }
 
         #playback-bar .settings-btn {
-            width: 20px;
-            height: 20px;
+            width: 24px;
+            height: 24px;
             background: transparent;
             border: none;
             cursor: pointer;
@@ -604,8 +604,8 @@
         }
 
         #playback-bar .settings-btn svg {
-            width: 12px;
-            height: 12px;
+            width: 14px;
+            height: 14px;
             fill: #ccc;
         }
 
@@ -647,32 +647,45 @@
         @media (max-width: 768px) {
             #playback-bar {
                 top: 10px;
-                padding: 6px 12px;
+                padding: 8px 12px;
                 gap: 8px;
-                max-width: calc(100vw - 20px);
+                max-width: calc(100vw - 120px); /* Leave space for control icons (60px each side) */
+                left: 60px; /* Offset from left to avoid control icon */
+                transform: translateX(0); /* Remove centering transform */
             }
 
             #playback-bar .timeline-container {
-                min-width: 120px;
+                min-width: 100px;
+                flex: 1; /* Allow timeline to shrink/grow as needed */
             }
 
             #playback-bar .time-display {
-                min-width: 40px;
-                font-size: 10px;
+                min-width: 60px;
+                font-size: 9px;
+            }
+
+            #playback-bar .settings-btn {
+                width: 28px;
+                height: 28px;
+            }
+
+            #playback-bar .settings-btn svg {
+                width: 16px;
+                height: 16px;
             }
 
             #playback-bar .playback-btn {
-                width: 20px;
-                height: 20px;
+                width: 28px;
+                height: 28px;
             }
 
             #playback-bar .playback-btn svg {
-                width: 12px;
-                height: 12px;
+                width: 16px;
+                height: 16px;
             }
 
             #controls-icon {
-                top: 60px;
+                top: 10px;
                 left: 10px;
                 width: 44px;
                 height: 44px;
@@ -687,7 +700,7 @@
 
             .controls {
                 position: fixed;
-                top: 115px;
+                top: 65px;
                 left: 5px;
                 right: 5px;
                 width: auto;
@@ -801,7 +814,7 @@
 
             <div class="timeline-container">
                 <input type="range" id="timeSlider" min="0" max="100" value="100" class="timeline">
-                <div class="time-display" id="timeDisplay">2000</div>
+                <div class="time-display" id="timeDisplay">Year: 2000</div>
             </div>
 
             <button class="settings-btn" onclick="togglePlaybackSettings()" title="Settings">
@@ -1515,7 +1528,7 @@
             const maxPosition = Math.max(...nodes.map(n => n.position));
             const minPosition = Math.min(...nodes.map(n => n.position));
             const currentYear = Math.round(minPosition + (currentTime / 100) * (maxPosition - minPosition));
-            document.getElementById('timeDisplay').textContent = `Time Position: ${currentYear}`;
+            document.getElementById('timeDisplay').textContent = `Year: ${currentYear}`;
         }
 
         function showTooltip(event, d) {
