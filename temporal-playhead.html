@@ -88,6 +88,44 @@
             stroke-dasharray: 1,1;
         }
 
+        /* Traceback highlighting styles */
+        .node.traced {
+            stroke: #ffff00 !important;
+            stroke-width: 3px !important;
+            opacity: 1 !important;
+            filter: drop-shadow(0 0 10px #ffff00);
+        }
+
+        .link.traced {
+            stroke: #ffff00 !important;
+            stroke-width: 4px !important;
+            opacity: 1 !important;
+            filter: drop-shadow(0 0 8px #ffff00);
+            stroke-dasharray: 10 5;
+            animation: flowBack 1.5s linear infinite;
+        }
+
+        @keyframes flowBack {
+            0% {
+                stroke-dashoffset: 15;
+            }
+            100% {
+                stroke-dashoffset: 0;
+            }
+        }
+
+        .link.traced.flowing {
+            animation: flowBack 1.2s ease-in-out infinite;
+        }
+
+        .node.dimmed {
+            opacity: 0.2 !important;
+        }
+
+        .link.dimmed {
+            opacity: 0.1 !important;
+        }
+
         /* Controls */
         .controls {
             position: fixed;
@@ -315,6 +353,10 @@
         let currentLineageFilter = 'all';
         let layoutMode = 'circular'; // 'linear' or 'circular'
         let densitySensitivity = 1.0;
+        let tracebackActive = false;
+        let tracedNodes = new Set();
+        let tracedLinks = new Set();
+        let tracebackTimeouts = []; // Track animation timeouts
 
         // Dimensions
         const width = window.innerWidth;
@@ -344,6 +386,13 @@
                 });
 
             svg.call(zoom);
+
+            // Add click-away functionality to clear traceback
+            svg.on('click', function(event) {
+                if (event.target === this) {
+                    clearTraceback();
+                }
+            });
 
             // Create main group for all elements
             svg.append('g').attr('class', 'main-group');
@@ -833,6 +882,10 @@
                     .call(drag(simulation))
                     .on('mouseover', showTooltip)
                     .on('mouseout', hideTooltip)
+                    .on('click', function(event, d) {
+                        event.stopPropagation();
+                        activateTraceback(d);
+                    })
                     .call(node => node.append('title').text(d => d.name))
                 );
 
@@ -846,6 +899,11 @@
             simulation.nodes(updatedNodes);
             simulation.force('link').links(updatedLinks);
             simulation.alpha(1).restart();
+
+            // Reapply traceback highlighting if active
+            if (tracebackActive) {
+                applyTracebackHighlighting();
+            }
         }
 
         // Add drag functionality
@@ -991,8 +1049,270 @@
             }
         }
 
+        // Traceback functionality
+        function findPathToSource(targetNode) {
+            const visited = new Set();
+            const path = [];
+            const pathLinks = [];
+
+            function dfs(node) {
+                if (visited.has(node.id)) return false;
+                visited.add(node.id);
+                path.push(node);
+
+                // Check if we reached a primordial source
+                if (node.name.toLowerCase().includes('samantabhadra') ||
+                    node.name.toLowerCase().includes('samantabhadri') ||
+                    node.teachers.length === 0) {
+                    return true;
+                }
+
+                // Try each teacher
+                for (const teacherName of node.teachers) {
+                    const teacher = nodes.find(n => n.id === teacherName.trim());
+                    if (teacher) {
+                        // Find the link between this node and teacher
+                        const link = links.find(l =>
+                            (l.source.id === teacher.id || l.source === teacher.id) &&
+                            (l.target.id === node.id || l.target === node.id) &&
+                            l.type === 'teaching'
+                        );
+                        if (link) pathLinks.push(link);
+
+                        if (dfs(teacher)) {
+                            return true;
+                        }
+
+                        // Remove link if path didn't work
+                        if (link) pathLinks.pop();
+                    }
+                }
+
+                path.pop();
+                return false;
+            }
+
+            if (dfs(targetNode)) {
+                return { nodes: [...path], links: [...pathLinks] };
+            }
+            return { nodes: [], links: [] };
+        }
+
+        function activateTraceback(clickedNode) {
+            clearTraceback();
+            tracebackActive = true;
+
+            const path = findPathToSource(clickedNode);
+
+            if (path.nodes.length === 0) {
+                console.log(`No path found from ${clickedNode.name}`);
+                return;
+            }
+
+            console.log(`Traceback from ${clickedNode.name} found ${path.nodes.length} nodes in path`);
+
+            // Animate the traceback flow step by step
+            animateTracebackFlow(path);
+        }
+
+        function animateTracebackFlow(path) {
+            const { nodes: pathNodes, links: pathLinks } = path;
+            const animationDelay = 400; // milliseconds between each step
+
+            // First dim all elements
+            nodeElements.classed('dimmed', true);
+            linkElements.classed('dimmed', true);
+
+            // Animate each step in the path with flowing effect
+            pathNodes.forEach((node, index) => {
+                const timeoutId = setTimeout(() => {
+                    // Add this node to traced set and highlight it
+                    tracedNodes.add(node.id);
+
+                    // Highlight the node with dramatic pulse effect
+                    nodeElements
+                        .filter(d => d.id === node.id)
+                        .classed('dimmed', false)
+                        .classed('traced', true)
+                        .transition()
+                        .duration(150)
+                        .style('opacity', 1)
+                        .attr('r', d => {
+                            const connections = d.teachers.length + d.students.length;
+                            const baseRadius = Math.max(4, Math.min(12, connections * 1.2 + 4));
+                            return baseRadius * 1.5; // Bigger pulse
+                        })
+                        .transition()
+                        .duration(300)
+                        .attr('r', d => {
+                            const connections = d.teachers.length + d.students.length;
+                            return Math.max(4, Math.min(12, connections * 1.2 + 4));
+                        });
+
+                    // If there's a link to the previous node, animate it with flowing effect
+                    if (index > 0) {
+                        const linkToHighlight = pathLinks[index - 1];
+                        if (linkToHighlight) {
+                            tracedLinks.add(linkToHighlight);
+
+                            // Find link by matching source and target IDs
+                            const linkElement = linkElements.filter(d => {
+                                const sourceId = d.source.id || d.source;
+                                const targetId = d.target.id || d.target;
+                                const pathSourceId = linkToHighlight.source.id || linkToHighlight.source;
+                                const pathTargetId = linkToHighlight.target.id || linkToHighlight.target;
+                                return sourceId === pathSourceId && targetId === pathTargetId;
+                            });
+
+                            console.log('Found link element:', linkElement.size(), 'for source:', linkToHighlight.source.id, 'target:', linkToHighlight.target.id);
+
+                            if (linkElement.size() > 0) {
+                                console.log('Applying styles to link element');
+                                linkElement
+                                    .classed('dimmed', false)
+                                    .classed('traced', true)
+                                    .style('stroke', '#ffff00')
+                                    .style('stroke-width', '5px')
+                                    .style('opacity', '1');
+
+                                // Add shadow effect after a brief delay
+                                setTimeout(() => {
+                                    linkElement.style('filter', 'drop-shadow(0 0 8px #ffff00)');
+                                }, 50);
+                            } else {
+                                console.log('No link element found!');
+                            }
+
+                            // Add a flowing particle effect (only if link element was found)
+                            if (linkElement.size() > 0) {
+                                setTimeout(() => {
+                                    createFlowingParticle(linkElement.node(), linkToHighlight);
+                                }, 100);
+                            }
+                        }
+                    }
+
+                }, index * animationDelay);
+
+                tracebackTimeouts.push(timeoutId);
+            });
+        }
+
+        function createFlowingParticle(linkElement, linkData) {
+            if (!linkElement || !linkData.source || !linkData.target) return;
+
+            const sourceX = linkData.source.x || 0;
+            const sourceY = linkData.source.y || 0;
+            const targetX = linkData.target.x || 0;
+            const targetY = linkData.target.y || 0;
+
+            // Create a flowing particle (small circle) that moves along the link
+            const particle = svg.select('.main-group')
+                .append('circle')
+                .attr('r', 3)
+                .attr('fill', '#ffff00')
+                .attr('opacity', 0.8)
+                .attr('cx', sourceX)
+                .attr('cy', sourceY)
+                .style('filter', 'drop-shadow(0 0 6px #ffff00)')
+                .style('pointer-events', 'none');
+
+            // Animate particle along the link
+            particle
+                .transition()
+                .duration(600)
+                .ease(d3.easeQuadOut)
+                .attr('cx', targetX)
+                .attr('cy', targetY)
+                .style('opacity', 0)
+                .remove();
+        }
+
+        function clearTraceback() {
+            tracebackActive = false;
+
+            // Clear all pending timeouts to stop animation
+            tracebackTimeouts.forEach(timeoutId => clearTimeout(timeoutId));
+            tracebackTimeouts = [];
+
+            // Stop all transitions
+            nodeElements.interrupt();
+            linkElements.interrupt();
+
+            // Remove all particles
+            svg.selectAll('circle[fill="#ffff00"]').remove();
+
+            tracedNodes.clear();
+            tracedLinks.clear();
+
+            // Remove all traceback classes and reset styles
+            nodeElements
+                .classed('traced', false)
+                .classed('dimmed', false)
+                .style('opacity', null)
+                .attr('r', d => {
+                    const connections = d.teachers.length + d.students.length;
+                    return Math.max(4, Math.min(12, connections * 1.2 + 4));
+                });
+
+            linkElements
+                .classed('traced', false)
+                .classed('dimmed', false)
+                .classed('flowing', false)
+                .style('opacity', null)
+                .style('stroke', null)
+                .style('stroke-width', null)
+                .style('filter', null)
+                .style('stroke-dasharray', null)
+                .style('animation', null);
+
+            console.log('Traceback cleared');
+        }
+
+        function applyTracebackHighlighting() {
+            if (!tracebackActive) return;
+
+            // Highlight traced nodes, dim others
+            nodeElements
+                .classed('traced', d => tracedNodes.has(d.id))
+                .classed('dimmed', d => !tracedNodes.has(d.id));
+
+            // Highlight traced links using ID matching, dim others
+            linkElements
+                .each(function(d) {
+                    const isTraced = [...tracedLinks].some(tracedLink => {
+                        const sourceId = d.source.id || d.source;
+                        const targetId = d.target.id || d.target;
+                        const tracedSourceId = tracedLink.source.id || tracedLink.source;
+                        const tracedTargetId = tracedLink.target.id || tracedLink.target;
+                        return sourceId === tracedSourceId && targetId === tracedTargetId;
+                    });
+
+                    if (isTraced) {
+                        d3.select(this)
+                            .classed('dimmed', false)
+                            .classed('traced', true)
+                            .style('stroke', '#ffff00')
+                            .style('stroke-width', '4px')
+                            .style('opacity', '1');
+                    } else {
+                        d3.select(this)
+                            .classed('dimmed', true)
+                            .classed('traced', false);
+                    }
+                });
+        }
+
         // Initialize when page loads
         document.addEventListener('DOMContentLoaded', init);
+
+        // Add body click listener to clear traceback
+        document.addEventListener('click', function(event) {
+            // Only clear if clicking outside of nodes and controls
+            if (!event.target.closest('.node') && !event.target.closest('.controls') && !event.target.closest('circle')) {
+                clearTraceback();
+            }
+        });
     </script>
 </body>
 </html>
