@@ -800,12 +800,12 @@
                         <path d="M12,5V1L7,6L12,11V7A6,6 0 0,1 18,13A6,6 0 0,1 12,19A6,6 0 0,1 6,13H4A8,8 0 0,0 12,21A8,8 0 0,0 20,13A8,8 0 0,0 12,5Z"/>
                     </svg>
                 </button>
-                <button class="playback-btn" onclick="playTime()" id="play-btn" title="Play">
+                <button class="playback-btn" onclick="togglePlayPause()" id="play-btn" title="Play">
                     <svg viewBox="0 0 24 24">
                         <path d="M8,5.14V19.14L19,12.14L8,5.14Z"/>
                     </svg>
                 </button>
-                <button class="playback-btn" onclick="pauseTime()" id="pause-btn" title="Pause" style="display: none;">
+                <button class="playback-btn" onclick="togglePlayPause()" id="pause-btn" title="Pause" style="display: none;">
                     <svg viewBox="0 0 24 24">
                         <path d="M14,19H18V5H14M6,19H10V5H6V19Z"/>
                     </svg>
@@ -1550,9 +1550,21 @@
         }
 
         // Control functions
+        function togglePlayPause() {
+            if (isPlaying) {
+                pauseTime();
+            } else {
+                playTime();
+            }
+        }
+
         function playTime() {
             if (!isPlaying) {
                 isPlaying = true;
+                // Show pause button, hide play button
+                document.getElementById('play-btn').style.display = 'none';
+                document.getElementById('pause-btn').style.display = 'flex';
+
                 playInterval = setInterval(() => {
                     currentTime += animationSpeed;
                     if (currentTime > 100) {
@@ -1571,6 +1583,9 @@
             if (playInterval) {
                 clearInterval(playInterval);
             }
+            // Show play button, hide pause button
+            document.getElementById('play-btn').style.display = 'flex';
+            document.getElementById('pause-btn').style.display = 'none';
         }
 
         function resetTime() {
