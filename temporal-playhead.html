@@ -122,6 +122,178 @@
             stroke-dasharray: 2,2; /* Small dots for emanation when highlighted */
         }
 
+        /* Popup card styles */
+        .popup-card {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            max-width: 350px;
+            max-height: 80vh;
+            overflow-y: auto;
+            z-index: 1500;
+            border: 1px solid #e0e0e0;
+            animation: popupFadeIn 0.2s ease-out;
+        }
+
+        .popup-card.hidden {
+            display: none;
+        }
+
+        @keyframes popupFadeIn {
+            0% {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .popup-header {
+            padding: 15px 15px 10px 15px;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .popup-header h3 {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .popup-close {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: #666;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .popup-close:hover {
+            color: #333;
+            background: #f0f0f0;
+            border-radius: 3px;
+        }
+
+        .popup-body {
+            padding: 15px;
+        }
+
+        /* Image carousel styles */
+        .popup-images {
+            margin-bottom: 15px;
+        }
+
+        .image-carousel {
+            position: relative;
+            width: 100%;
+            border-radius: 6px;
+            background: #f5f5f5;
+            overflow: hidden;
+        }
+
+        .carousel-container {
+            display: flex;
+            transition: transform 0.3s ease;
+            min-height: 200px;
+        }
+
+        .carousel-image {
+            width: 100%;
+            max-width: 100%;
+            height: auto;
+            max-height: 300px;
+            object-fit: contain;
+            flex-shrink: 0;
+            display: block;
+            margin: auto 0;
+        }
+
+        .carousel-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: none;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            transition: opacity 0.2s;
+        }
+
+        .carousel-nav:hover {
+            background: rgba(0, 0, 0, 0.7);
+        }
+
+        .carousel-prev {
+            left: 10px;
+        }
+
+        .carousel-next {
+            right: 10px;
+        }
+
+        .carousel-dots {
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+            margin-top: 8px;
+        }
+
+        .carousel-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #ddd;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .carousel-dot.active {
+            background: #007bff;
+        }
+
+        .carousel-dot:hover {
+            background: #0056b3;
+        }
+
+        #popup-tibetan {
+            font-family: 'Noto Sans Tibetan', sans-serif;
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 10px;
+            font-style: italic;
+        }
+
+        #popup-dates {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        #popup-description {
+            font-size: 14px;
+            line-height: 1.5;
+            color: #333;
+        }
 
         .node.dimmed {
             opacity: 0.2 !important;
@@ -337,6 +509,20 @@
                 <span style="margin-right: 8px;">···</span> Emanation
             </div>
         </div>
+
+        <!-- Popup card for node details -->
+        <div id="popup-card" class="popup-card hidden">
+            <div class="popup-header">
+                <h3 id="popup-title"></h3>
+                <button class="popup-close" onclick="closePopup()">&times;</button>
+            </div>
+            <div class="popup-body">
+                <div id="popup-images" class="popup-images"></div>
+                <div id="popup-tibetan"></div>
+                <div id="popup-dates"></div>
+                <div id="popup-description"></div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -363,6 +549,12 @@
         let tracedNodes = new Set();
         let tracedLinks = new Set();
         let tracebackTimeouts = []; // Track animation timeouts
+
+        // Popup variables
+        let currentPopupNode = null;
+        let currentPopupData = null;
+        let imageManifest = null;
+        let manifestLoadPromise = null;
 
         // Drag tracking for click vs drag detection
         let dragStart = { x: 0, y: 0 };
@@ -498,7 +690,15 @@
                     students: (d.Gave_Teachings_To || '').split(';').filter(s => s.trim()),
                     incarnationOf: (d.Incarnation_Of || '').split(';').filter(i => i.trim()),
                     familyFrom: (d.Family_Received_From || '').split(';').filter(f => f.trim()),
-                    emanatedAs: (d['Eminated as'] || '').split(';').filter(e => e.trim())
+                    emanatedAs: (d['Eminated as'] || '').split(';').filter(e => e.trim()),
+                    // Additional popup fields
+                    wylie: d.Name_Wylie_Tibetan || '',
+                    tibetan: d.Name_Tibetan || '',
+                    chinese: d.Name_Chinese || '',
+                    dates: d.Dates || '',
+                    description: d.Description_English || '',
+                    descriptionTibetan: d.Description_Tibetan || '',
+                    descriptionChinese: d.Description_Chinese || ''
                 };
             });
 
@@ -951,9 +1151,14 @@
                 d.fx = null;
                 d.fy = null;
 
-                // If no significant dragging occurred, treat as a click and trigger traceback
+                // If no significant dragging occurred, treat as a click
                 if (!isDragging) {
-                    console.log('Node clicked (not dragged) - triggering traceback for:', d.name);
+                    console.log('Node clicked (not dragged) - triggering traceback and popup for:', d.name);
+
+                    // Show popup with node information
+                    showPopup(d, event);
+
+                    // Trigger traceback animation
                     activateTraceback(d);
                 }
             }
@@ -1425,11 +1630,205 @@
             }
         });
 
-        // Add Escape key listener to clear traceback (same as clicking off)
+        // Popup functionality
+        function showPopup(data, event) {
+            const popup = document.getElementById('popup-card');
+            const title = document.getElementById('popup-title');
+            const imagesContainer = document.getElementById('popup-images');
+            const tibetan = document.getElementById('popup-tibetan');
+            const dates = document.getElementById('popup-dates');
+            const description = document.getElementById('popup-description');
+
+            // Store current popup info
+            currentPopupData = data;
+            currentPopupNode = event.target;
+
+            // Set content
+            title.textContent = data.name || data.id;
+
+            // Clear and hide images container initially
+            imagesContainer.innerHTML = '';
+            imagesContainer.style.display = 'none';
+
+            // Load images asynchronously
+            loadNodeImages(data.name || data.id).then(images => {
+                if (images.length > 0) {
+                    displayImageCarousel(imagesContainer, images);
+                } else {
+                    imagesContainer.style.display = 'none';
+                }
+            }).catch(error => {
+                console.log('Error loading images:', error);
+                imagesContainer.style.display = 'none';
+            });
+
+            // Tibetan/Wylie name
+            const wylieName = data.wylie || '';
+            if (wylieName && wylieName !== 'N/A' && wylieName.trim()) {
+                tibetan.innerHTML = `<em>Wylie:</em> ${wylieName}`;
+                tibetan.style.display = 'block';
+            } else {
+                tibetan.style.display = 'none';
+            }
+
+            // Dates
+            const dateInfo = data.dates || '';
+            if (dateInfo && dateInfo !== 'N/A' && dateInfo.toString().trim()) {
+                dates.innerHTML = `<strong>Dates:</strong> ${dateInfo}`;
+                dates.style.display = 'block';
+            } else {
+                dates.style.display = 'none';
+            }
+
+            // Description
+            const desc = data.description || '';
+            if (desc && desc.trim()) {
+                description.innerHTML = desc;
+                description.style.display = 'block';
+            } else {
+                description.style.display = 'none';
+            }
+
+            // Show popup
+            popup.classList.remove('hidden');
+        }
+
+        function closePopup() {
+            const popup = document.getElementById('popup-card');
+            popup.classList.add('hidden');
+            currentPopupNode = null;
+            currentPopupData = null;
+        }
+
+        // Text normalization for image filenames (copied from original)
+        function normalizeText(text) {
+            if (!text || typeof text !== 'string') return '';
+
+            return text.toLowerCase()
+                .replace(/\//g, '-')
+                .replace(/\./g, '')
+                .replace(/[āàáâãäå]/g, 'a')
+                .replace(/[èéêë]/g, 'e')
+                .replace(/[ìíîï]/g, 'i')
+                .replace(/[òóôõö]/g, 'o')
+                .replace(/[ùúûü]/g, 'u')
+                .replace(/[ýÿ]/g, 'y')
+                .replace(/[ñń]/g, 'n')
+                .replace(/[ç]/g, 'c')
+                .replace(/[ś]/g, 's')
+                .replace(/[ṭ]/g, 't')
+                .replace(/[ḍ]/g, 'd')
+                .replace(/[ṇ]/g, 'n')
+                .replace(/[ṁṃ]/g, 'm')
+                .replace(/[ṛ]/g, 'r')
+                .replace(/[ḷ]/g, 'l')
+                .replace(/[ḥ]/g, 'h')
+                .replace(/[ī]/g, 'i')
+                .replace(/[ū]/g, 'u')
+                .replace(/[ṅ]/g, 'n')
+                .replace(/[ḻ]/g, 'l')
+                .replace(/[^\w\s-]/g, '')
+                .replace(/\s+/g, '-')
+                .replace(/-+/g, '-')
+                .replace(/^-|-$/g, '');
+        }
+
+        // Image loading system
+        async function loadNodeImages(nodeName) {
+            const normalizedName = normalizeText(nodeName);
+
+            // For now, return empty array - will implement manifest system later
+            // This is just to prevent errors
+            return [];
+        }
+
+        function displayImageCarousel(container, images) {
+            container.innerHTML = '';
+
+            if (images.length === 0) {
+                container.style.display = 'none';
+                return;
+            }
+
+            container.style.display = 'block';
+
+            if (images.length === 1) {
+                container.innerHTML = `
+                    <div class="image-carousel">
+                        <img src="${images[0]}" alt="Node image" class="carousel-image"
+                             onload="this.style.opacity='1'"
+                             onerror="this.parentElement.parentElement.style.display='none'"
+                             style="opacity:0; transition: opacity 0.3s ease;">
+                    </div>
+                `;
+            } else {
+                let carouselHTML = `
+                    <div class="image-carousel">
+                        <div class="carousel-container">
+                            ${images.map((img, index) => `
+                                <img src="${img}" alt="Node image" class="carousel-image"
+                                     onload="this.style.opacity='1'"
+                                     onerror="this.style.display='none'"
+                                     style="opacity:0; transition: opacity 0.3s ease;">
+                            `).join('')}
+                        </div>
+                        <button class="carousel-nav carousel-prev" onclick="prevImage()">&lt;</button>
+                        <button class="carousel-nav carousel-next" onclick="nextImage()">&gt;</button>
+                    </div>
+                    <div class="carousel-dots">
+                        ${images.map((_, index) => `<span class="carousel-dot ${index === 0 ? 'active' : ''}" onclick="goToImage(${index})"></span>`).join('')}
+                    </div>
+                `;
+                container.innerHTML = carouselHTML;
+
+                window.currentImageIndex = 0;
+                window.totalImages = images.length;
+            }
+        }
+
+        // Carousel navigation functions
+        function prevImage() {
+            if (window.totalImages <= 1) return;
+            window.currentImageIndex = (window.currentImageIndex - 1 + window.totalImages) % window.totalImages;
+            updateCarousel();
+        }
+
+        function nextImage() {
+            if (window.totalImages <= 1) return;
+            window.currentImageIndex = (window.currentImageIndex + 1) % window.totalImages;
+            updateCarousel();
+        }
+
+        function goToImage(index) {
+            window.currentImageIndex = index;
+            updateCarousel();
+        }
+
+        function updateCarousel() {
+            const container = document.querySelector('.carousel-container');
+            const dots = document.querySelectorAll('.carousel-dot');
+
+            if (container) {
+                const translateX = -window.currentImageIndex * 100;
+                container.style.transform = `translateX(${translateX}%)`;
+            }
+
+            dots.forEach((dot, index) => {
+                dot.classList.toggle('active', index === window.currentImageIndex);
+            });
+        }
+
+        // Add Escape key listener to clear traceback AND close popup
         document.addEventListener('keydown', function(event) {
-            if (event.key === 'Escape' && tracebackActive) {
-                console.log('Escape key pressed - clearing traceback');
-                clearTraceback();
+            if (event.key === 'Escape') {
+                if (tracebackActive) {
+                    console.log('Escape key pressed - clearing traceback');
+                    clearTraceback();
+                }
+                if (currentPopupData) {
+                    console.log('Escape key pressed - closing popup');
+                    closePopup();
+                }
             }
         });
     </script>
