@@ -1085,81 +1085,86 @@
                 visited.add(node.id);
                 path.push(node);
 
+                console.log(`DFS visiting: "${node.id}", incarnationOf:`, node.incarnationOf);
+
                 // Check if we reached a primordial source
                 if (node.name.toLowerCase().includes('samantabhadra') ||
                     node.name.toLowerCase().includes('samantabhadri') ||
-                    node.teachers.length === 0) {
+                    (node.teachers.length === 0 && node.incarnationOf.length === 0)) {
                     return true;
                 }
 
-                // Try each teacher (teaching relationships)
+                // Collect all possible next nodes to explore
+                const nextNodes = [];
+
+                // Add teachers (teaching relationships)
                 for (const teacherName of node.teachers) {
                     const teacher = nodes.find(n => n.id === teacherName.trim());
                     if (teacher) {
-                        // Find the teaching link between this node and teacher
                         const link = links.find(l =>
                             (l.source.id === teacher.id || l.source === teacher.id) &&
                             (l.target.id === node.id || l.target === node.id) &&
                             l.type === 'teaching'
                         );
-                        if (link) pathLinks.push(link);
-
-                        if (dfs(teacher)) {
-                            return true;
+                        if (link) {
+                            nextNodes.push({ node: teacher, link: link, type: 'teaching' });
                         }
-
-                        // Remove link if path didn't work
-                        if (link) pathLinks.pop();
                     }
                 }
 
-                // Try incarnation relationships (previous incarnations)
-                if (node.incarnation_of && node.incarnation_of.length > 0) {
-                    for (const incarnationName of node.incarnation_of) {
+                // Add incarnation relationships (previous incarnations)
+                if (node.incarnationOf && node.incarnationOf.length > 0) {
+                    console.log(`Checking incarnations for node "${node.id}":`, node.incarnationOf);
+                    for (const incarnationName of node.incarnationOf) {
                         const incarnation = nodes.find(n => n.id === incarnationName.trim());
+                        console.log(`Looking for incarnation "${incarnationName.trim()}", found:`, incarnation ? incarnation.id : 'NOT FOUND');
                         if (incarnation) {
-                            // Find the incarnation link
                             const link = links.find(l =>
                                 (l.source.id === incarnation.id || l.source === incarnation.id) &&
                                 (l.target.id === node.id || l.target === node.id) &&
                                 l.type === 'incarnation'
                             );
-                            if (link) pathLinks.push(link);
-
-                            if (dfs(incarnation)) {
-                                return true;
+                            console.log(`Looking for incarnation link from "${incarnation.id}" to "${node.id}", found:`, link ? 'YES' : 'NO');
+                            if (link) {
+                                nextNodes.push({ node: incarnation, link: link, type: 'incarnation' });
                             }
-
-                            // Remove link if path didn't work
-                            if (link) pathLinks.pop();
                         }
                     }
                 }
 
-                // Try emanation relationships (what this master emanated from)
-                if (node.emanated_from && node.emanated_from.length > 0) {
-                    for (const emanationName of node.emanated_from) {
-                        const emanation = nodes.find(n => n.id === emanationName.trim());
-                        if (emanation) {
-                            // Find the emanation link
-                            const link = links.find(l =>
-                                (l.source.id === emanation.id || l.source === emanation.id) &&
-                                (l.target.id === node.id || l.target === node.id) &&
-                                l.type === 'emanation'
-                            );
-                            if (link) pathLinks.push(link);
+                // Add emanation relationships - find masters who emanated AS this node
+                const emanatedFromNodes = nodes.filter(n =>
+                    n.emanatedAs && n.emanatedAs.some(name => name.trim() === node.id)
+                );
 
-                            if (dfs(emanation)) {
-                                return true;
-                            }
-
-                            // Remove link if path didn't work
-                            if (link) pathLinks.pop();
+                if (emanatedFromNodes.length > 0) {
+                    for (const emanationSource of emanatedFromNodes) {
+                        const link = links.find(l =>
+                            (l.source.id === emanationSource.id || l.source === emanationSource.id) &&
+                            (l.target.id === node.id || l.target === node.id) &&
+                            l.type === 'emanation'
+                        );
+                        if (link) {
+                            nextNodes.push({ node: emanationSource, link: link, type: 'emanation' });
                         }
                     }
                 }
 
+                // Try all possible next nodes
+                for (const nextNodeInfo of nextNodes) {
+                    pathLinks.push(nextNodeInfo.link);
+
+                    if (dfs(nextNodeInfo.node)) {
+                        return true;
+                    }
+
+                    // Remove link if this path didn't work
+                    pathLinks.pop();
+                }
+
+                // If we get here, no path was found from this node
                 path.pop();
+                visited.delete(node.id); // Allow revisiting this node from other paths
                 return false;
             }
 
