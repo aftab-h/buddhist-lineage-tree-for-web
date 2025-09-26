@@ -192,7 +192,7 @@
 
         .time-label {
             fill: #888;
-            font-size: 10px;
+            font-size: 24px;
             text-anchor: middle;
         }
 
@@ -671,7 +671,6 @@
                         .attr('x', margin.left - 35)
                         .attr('y', y + 4)
                         .attr('class', 'time-label')
-                        .style('font-size', '12px')
                         .style('fill', '#aaa')
                         .text(marker.year > 0 ? `${marker.year} CE` : `${Math.abs(marker.year)} BCE`);
 
