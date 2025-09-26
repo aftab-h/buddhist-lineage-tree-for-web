@@ -1600,7 +1600,7 @@
             currentFilter = mode;
 
             // Update button states
-            document.querySelectorAll('.controls .control-group:nth-child(5) button').forEach(btn => {
+            document.querySelectorAll('.controls .control-group:nth-child(2) button').forEach(btn => {
                 btn.classList.remove('active');
             });
             event.target.classList.add('active');
@@ -1612,7 +1612,7 @@
             currentLineageFilter = lineage;
 
             // Update button states
-            document.querySelectorAll('.controls .control-group:nth-child(6) button').forEach(btn => {
+            document.querySelectorAll('.controls .control-group:nth-child(3) button').forEach(btn => {
                 btn.classList.remove('active');
             });
             event.target.classList.add('active');
@@ -1625,7 +1625,7 @@
                 layoutMode = mode;
 
                 // Update button states
-                document.querySelectorAll('.controls .control-group:nth-child(7) button').forEach(btn => {
+                document.querySelectorAll('.controls .control-group:nth-child(4) button').forEach(btn => {
                     btn.classList.remove('active');
                 });
                 document.getElementById(mode === 'linear' ? 'linear-btn' : 'circular-btn').classList.add('active');
