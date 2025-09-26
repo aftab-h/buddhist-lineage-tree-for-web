@@ -358,6 +358,10 @@
         let tracedLinks = new Set();
         let tracebackTimeouts = []; // Track animation timeouts
 
+        // Drag tracking for click vs drag detection
+        let dragStart = { x: 0, y: 0 };
+        let isDragging = false;
+
         // Dimensions
         const width = window.innerWidth;
         const height = window.innerHeight;
@@ -882,10 +886,6 @@
                     .call(drag(simulation))
                     .on('mouseover', showTooltip)
                     .on('mouseout', hideTooltip)
-                    .on('click', function(event, d) {
-                        event.stopPropagation();
-                        activateTraceback(d);
-                    })
                     .call(node => node.append('title').text(d => d.name))
                 );
 
@@ -912,17 +912,36 @@
                 if (!event.active) simulation.alphaTarget(0.3).restart();
                 d.fx = d.x;
                 d.fy = d.y;
+
+                // Track initial position for click vs drag detection
+                dragStart = { x: event.x, y: event.y };
+                isDragging = false;
             }
 
             function dragged(event, d) {
                 d.fx = event.x;
                 d.fy = event.y;
+
+                // Check if we've moved enough to consider this a drag
+                const distance = Math.sqrt(
+                    Math.pow(event.x - dragStart.x, 2) +
+                    Math.pow(event.y - dragStart.y, 2)
+                );
+                if (distance > 5) {
+                    isDragging = true;
+                }
             }
 
             function dragended(event, d) {
                 if (!event.active) simulation.alphaTarget(0);
                 d.fx = null;
                 d.fy = null;
+
+                // If no significant dragging occurred, treat as a click and trigger traceback
+                if (!isDragging) {
+                    console.log('Node clicked (not dragged) - triggering traceback for:', d.name);
+                    activateTraceback(d);
+                }
             }
 
             return d3.drag()
@@ -1117,7 +1136,7 @@
 
         function animateTracebackFlow(path) {
             const { nodes: pathNodes, links: pathLinks } = path;
-            const animationDelay = 400; // milliseconds between each step
+            const animationDelay = 250; // milliseconds between each step
 
             // First dim all elements
             nodeElements.classed('dimmed', true);
