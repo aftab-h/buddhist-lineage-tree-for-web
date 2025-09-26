@@ -1074,109 +1074,49 @@
             }
         }
 
-        // Traceback functionality - finds ALL paths to primordial sources
+        // Perfect traceback algorithm copied from index.html
         function findAllPathsToSource(targetNode) {
-            const allPaths = { nodes: new Set(), links: new Set() };
-            const currentPath = [];
-            const currentLinks = [];
-            const visited = new Set();
+            // Build trajectory with distance information for perfect cascade (like original)
+            const trajectoryNodes = new Map();
+            trajectoryNodes.set(targetNode.id, { distance: 0, node: targetNode });
 
-            function dfs(node) {
-                if (visited.has(node.id)) return;
-
-                visited.add(node.id);
-                currentPath.push(node);
-                allPaths.nodes.add(node);
-
-                console.log(`DFS visiting: "${node.id}", incarnationOf:`, node.incarnationOf);
-
-                // Check if we reached a primordial source
-                const isPrimordialSource = node.name.toLowerCase().includes('samantabhadra') ||
-                    node.name.toLowerCase().includes('samantabhadri') ||
-                    (node.teachers.length === 0 && node.incarnationOf.length === 0);
-
-                if (isPrimordialSource) {
-                    console.log(`Reached primordial source: ${node.id}`);
-                    // This is a valid endpoint, but continue exploring other relationships
-                }
-
-                // Collect all possible next nodes to explore
-                const nextNodes = [];
-
-                // Add teachers (teaching relationships)
-                for (const teacherName of node.teachers) {
-                    const teacher = nodes.find(n => n.id === teacherName.trim());
-                    if (teacher && !visited.has(teacher.id)) {
-                        const link = links.find(l =>
-                            (l.source.id === teacher.id || l.source === teacher.id) &&
-                            (l.target.id === node.id || l.target === node.id) &&
-                            l.type === 'teaching'
-                        );
-                        if (link) {
-                            nextNodes.push({ node: teacher, link: link, type: 'teaching' });
-                        }
-                    }
-                }
-
-                // Add incarnation relationships (previous incarnations)
-                if (node.incarnationOf && node.incarnationOf.length > 0) {
-                    console.log(`Checking incarnations for node "${node.id}":`, node.incarnationOf);
-                    for (const incarnationName of node.incarnationOf) {
-                        const incarnation = nodes.find(n => n.id === incarnationName.trim());
-                        console.log(`Looking for incarnation "${incarnationName.trim()}", found:`, incarnation ? incarnation.id : 'NOT FOUND');
-                        if (incarnation && !visited.has(incarnation.id)) {
-                            const link = links.find(l =>
-                                (l.source.id === incarnation.id || l.source === incarnation.id) &&
-                                (l.target.id === node.id || l.target === node.id) &&
-                                l.type === 'incarnation'
-                            );
-                            console.log(`Looking for incarnation link from "${incarnation.id}" to "${node.id}", found:`, link ? 'YES' : 'NO');
-                            if (link) {
-                                nextNodes.push({ node: incarnation, link: link, type: 'incarnation' });
+            // Find all ancestors - trace upward through ALL relationship types
+            function findAncestors(nodeId, distance) {
+                // ALL relationship types: teaching, incarnation, emanation, family
+                links.forEach(link => {
+                    if (link.target.id === nodeId || link.target === nodeId) {
+                        const sourceId = link.source.id || link.source;
+                        if (!trajectoryNodes.has(sourceId)) {
+                            const ancestorNode = nodes.find(n => n.id === sourceId);
+                            if (ancestorNode) {
+                                console.log(`Found ${link.type} relationship: ${sourceId} -> ${nodeId} at distance ${distance + 1}`);
+                                trajectoryNodes.set(sourceId, { distance: distance + 1, node: ancestorNode });
+                                findAncestors(sourceId, distance + 1);
                             }
                         }
                     }
-                }
-
-                // Add emanation relationships - find masters who emanated AS this node
-                const emanatedFromNodes = nodes.filter(n =>
-                    n.emanatedAs && n.emanatedAs.some(name => name.trim() === node.id) && !visited.has(n.id)
-                );
-
-                if (emanatedFromNodes.length > 0) {
-                    for (const emanationSource of emanatedFromNodes) {
-                        const link = links.find(l =>
-                            (l.source.id === emanationSource.id || l.source === emanationSource.id) &&
-                            (l.target.id === node.id || l.target === node.id) &&
-                            l.type === 'emanation'
-                        );
-                        if (link) {
-                            nextNodes.push({ node: emanationSource, link: link, type: 'emanation' });
-                        }
-                    }
-                }
-
-                // Explore ALL possible next nodes (not just the first successful one)
-                for (const nextNodeInfo of nextNodes) {
-                    currentLinks.push(nextNodeInfo.link);
-                    allPaths.links.add(nextNodeInfo.link);
-
-                    console.log(`Following ${nextNodeInfo.type} relationship from "${node.id}" to "${nextNodeInfo.node.id}"`);
-                    dfs(nextNodeInfo.node);
-
-                    currentLinks.pop();
-                }
-
-                currentPath.pop();
-                visited.delete(node.id);
+                });
             }
 
-            dfs(targetNode);
+            // Trace upward through all relationships
+            findAncestors(targetNode.id, 0);
 
-            // Convert Sets back to Arrays for compatibility with existing code
+            // Convert to arrays and include the links in the trajectory
+            const trajectoryLinks = [];
+            links.forEach(link => {
+                const sourceId = link.source.id || link.source;
+                const targetId = link.target.id || link.target;
+
+                // Include link if both nodes are in trajectory
+                if (trajectoryNodes.has(sourceId) && trajectoryNodes.has(targetId)) {
+                    trajectoryLinks.push(link);
+                }
+            });
+
             return {
-                nodes: Array.from(allPaths.nodes),
-                links: Array.from(allPaths.links)
+                nodes: Array.from(trajectoryNodes.values()).map(item => item.node),
+                links: trajectoryLinks,
+                trajectoryMap: trajectoryNodes // Keep distance info for perfect timing
             };
         }
 
@@ -1201,122 +1141,87 @@
                 console.log(`  ${i + 1}. ${node.name} (${node.transmission}) - Position: ${node.position}`);
             });
 
-            // Animate the traceback flow step by step
-            animateTracebackFlow(path);
+            // Animate the traceback flow step by step with clicked node ID
+            animateTracebackFlow(path, clickedNode.id);
         }
 
-        function animateTracebackFlow(allPaths) {
-            const { nodes: pathNodes, links: pathLinks } = allPaths;
-            const stepDelay = 300; // milliseconds between each traceback step
+        // Perfect cascade animation copied from index.html
+        function animateTracebackFlow(allPaths, clickedNodeId) {
+            const { trajectoryMap } = allPaths; // Use the distance-based map for perfect timing
 
             // First dim all elements
             nodeElements.classed('dimmed', true);
             linkElements.classed('dimmed', true);
 
-            console.log(`Starting traceback animation for ${pathNodes.length} nodes and ${pathLinks.length} links`);
+            console.log(`Starting perfect traceback cascade for ${trajectoryMap.size} nodes`);
 
-            // Sort nodes by their time position (DESCENDING - from recent to ancient for proper traceback flow)
-            const sortedNodes = [...pathNodes].sort((a, b) => b.position - a.position);
+            // Create perfect ripple cascade effect (exactly like original)
+            createRippleCascade(trajectoryMap, clickedNodeId);
+        }
 
-            // Create a map of which links connect to each node (for synchronized animation)
-            const nodeToLinks = new Map();
-            pathLinks.forEach(link => {
-                const targetId = link.target.id || link.target;
-                if (!nodeToLinks.has(targetId)) {
-                    nodeToLinks.set(targetId, []);
-                }
-                nodeToLinks.get(targetId).push(link);
-            });
+        function createRippleCascade(trajectoryNodes, clickedNodeId) {
+            // Clear any existing ripple timeouts first
+            tracebackTimeouts.forEach(timeoutId => clearTimeout(timeoutId));
+            tracebackTimeouts = [];
 
-            // Animate each traceback step: highlight node + its outgoing links simultaneously
-            sortedNodes.forEach((node, index) => {
+            // Sort nodes by distance for proper cascade order (EXACTLY like original)
+            const sortedNodes = Array.from(trajectoryNodes.entries())
+                .sort(([,a], [,b]) => a.distance - b.distance);
+
+            // Apply animations and highlighting with staggered timing (PERFECT original timing)
+            sortedNodes.forEach(([nodeId, nodeInfo], index) => {
+                const delay = index * 120; // EXACT 120ms delay from original - PERFECT timing
+                const isMainNode = nodeId === clickedNodeId;
+
                 const timeoutId = setTimeout(() => {
-                    // Add this node to traced set and highlight it
-                    tracedNodes.add(node.id);
-                    console.log(`Step ${index + 1}: Highlighting node "${node.name}" (${node.transmission}) at position ${node.position}`);
+                    // Add this node to traced set
+                    tracedNodes.add(nodeId);
+                    console.log(`Cascade step ${index + 1}: Highlighting node "${nodeInfo.node.name}" at distance ${nodeInfo.distance}`);
 
-                    // Highlight the node with dramatic pulse effect
-                    nodeElements
-                        .filter(d => d.id === node.id)
-                        .classed('dimmed', false)
-                        .classed('traced', true)
-                        .transition()
-                        .duration(150)
-                        .style('opacity', 1)
-                        .attr('r', d => {
-                            // Special handling for Samantabhadra/Samantabhadri
-                            if (d.name.toLowerCase().includes('samantabhadra') ||
-                                d.name.toLowerCase().includes('samantabhadri')) {
-                                return 20; // Bigger pulse for primordial Buddha
-                            }
-                            const connections = d.teachers.length + d.students.length;
-                            const baseRadius = Math.max(4, Math.min(12, connections * 1.2 + 4));
-                            return baseRadius * 1.5; // Bigger pulse
-                        })
-                        .transition()
-                        .duration(300)
-                        .attr('r', d => {
-                            // Return to large size for Samantabhadra/Samantabhadri
-                            if (d.name.toLowerCase().includes('samantabhadra') ||
-                                d.name.toLowerCase().includes('samantabhadri')) {
-                                return 16;
-                            }
-                            const connections = d.teachers.length + d.students.length;
-                            return Math.max(4, Math.min(12, connections * 1.2 + 4));
-                        });
+                    // Find the node element and apply highlighting (like original)
+                    nodeElements.filter(d => d.id === nodeId).each(function(d) {
+                        const nodeElement = d3.select(this);
 
-                    // Simultaneously highlight the links that emanate FROM this node (traceback direction)
-                    const nodeLinks = nodeToLinks.get(node.id) || [];
-                    nodeLinks.forEach((linkToHighlight, linkIndex) => {
-                        // Small delay for each link to create flowing effect
-                        const linkTimeoutId = setTimeout(() => {
-                            tracedLinks.add(linkToHighlight);
+                        // Apply highlighting effects with animation (like original)
+                        const brightnessFactor = isMainNode ? 1.5 : 1.2;
+                        const strokeColor = isMainNode ? '#FFD700' : '#ff6b35';
+                        const strokeWidth = isMainNode ? 4 : 3;
 
-                            // Find link by matching source and target IDs
-                            const linkElement = linkElements.filter(d => {
-                                const sourceId = d.source.id || d.source;
-                                const targetId = d.target.id || d.target;
-                                const pathSourceId = linkToHighlight.source.id || linkToHighlight.source;
-                                const pathTargetId = linkToHighlight.target.id || linkToHighlight.target;
-                                return sourceId === pathSourceId && targetId === pathTargetId;
-                            });
+                        // Apply highlighting
+                        nodeElement
+                            .classed('dimmed', false)
+                            .classed('traced', true)
+                            .transition()
+                            .duration(200) // EXACT duration from original
+                            .style('opacity', 1)
+                            .attr('stroke', strokeColor)
+                            .attr('stroke-width', strokeWidth);
+                    });
 
-                            if (linkElement.size() > 0) {
-                                console.log(`Animating ${linkToHighlight.type} link from "${linkToHighlight.source.id || linkToHighlight.source}" to "${linkToHighlight.target.id || linkToHighlight.target}"`);
+                    // Highlight the incoming links with EXACT 50ms delay (like original)
+                    setTimeout(() => {
+                        linkElements.each(function(linkData) {
+                            const targetId = linkData.target.id || linkData.target;
+                            if (targetId === nodeId) {
+                                const linkElement = d3.select(this);
+                                tracedLinks.add(linkData);
 
-                                // Different colors for different relationship types
-                                let linkColor = '#ffff00'; // Default yellow
-                                if (linkToHighlight.type === 'incarnation') {
-                                    linkColor = '#ff6b6b'; // Red for incarnation
-                                } else if (linkToHighlight.type === 'emanation') {
-                                    linkColor = '#4ecdc4'; // Teal for emanation
-                                } else if (linkToHighlight.type === 'family') {
-                                    linkColor = '#45b7d1'; // Blue for family
-                                }
-
+                                // Highlight the link maintaining its original style
                                 linkElement
                                     .classed('dimmed', false)
                                     .classed('traced', true)
-                                    .style('stroke', linkColor)
-                                    .style('stroke-width', '4px')
+                                    .transition()
+                                    .duration(150) // EXACT duration from original
                                     .style('opacity', '1');
 
-                                // Add shadow effect immediately
+                                // Add flowing particle effect
                                 setTimeout(() => {
-                                    linkElement.style('filter', `drop-shadow(0 0 8px ${linkColor})`);
+                                    createFlowingParticle(linkElement.node(), linkData);
                                 }, 25);
-
-                                // Add a flowing particle effect shortly after
-                                setTimeout(() => {
-                                    createFlowingParticle(linkElement.node(), linkToHighlight, linkColor);
-                                }, 50);
                             }
-                        }, linkIndex * 100); // Stagger multiple links from same node
-
-                        tracebackTimeouts.push(linkTimeoutId);
-                    });
-
-                }, index * stepDelay);
+                        });
+                    }, 50); // EXACT 50ms delay from original - PERFECT!
+                }, delay);
 
                 tracebackTimeouts.push(timeoutId);
             });
