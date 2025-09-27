@@ -457,6 +457,29 @@
             color: #fff;
         }
 
+        .control-group select {
+            background: rgba(60, 60, 60, 0.8);
+            color: #fff;
+            border: 1px solid #555;
+            border-radius: 4px;
+            padding: 8px 12px;
+            font-size: 14px;
+            min-width: 100px;
+            cursor: pointer;
+        }
+
+        .control-group select:focus {
+            outline: none;
+            border-color: #4a90e2;
+            box-shadow: 0 0 5px rgba(74, 144, 226, 0.3);
+        }
+
+        .control-group select option {
+            background: #444;
+            color: #fff;
+            padding: 4px 8px;
+        }
+
         .control-group input[type="range"] {
             width: 100%;
             margin-top: 5px;
@@ -882,6 +905,21 @@
                 background: rgba(20, 20, 20, 0.95);
                 border: 1px solid #333;
             }
+
+            /* Mobile popup card optimization */
+            .popup-card {
+                position: fixed;
+                top: auto;
+                bottom: 10px;
+                left: 10px;
+                right: 10px;
+                max-width: none;
+                max-height: 50vh; /* Only take up half the screen height */
+                width: auto;
+                border-radius: 12px 12px 0 0; /* Rounded top corners only */
+                overflow-y: auto;
+                box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3);
+            }
         }
 
 
@@ -967,9 +1005,11 @@
 
             <div class="control-group">
                 <label>Language</label>
-                <button onclick="setLanguage('english')" class="active" id="english-btn">English</button>
-                <button onclick="setLanguage('tibetan')" id="tibetan-btn">Tibetan</button>
-                <button onclick="setLanguage('chinese')" id="chinese-btn">Chinese</button>
+                <select id="language-select" onchange="setLanguage(this.value)">
+                    <option value="english">English</option>
+                    <option value="tibetan">Tibetan</option>
+                    <option value="chinese">Chinese</option>
+                </select>
             </div>
         </div>
 
@@ -1759,7 +1799,7 @@
                         return Math.max(4, Math.min(12, connections * 1.2 + 4));
                     })
                     .attr('class', d => `node ${d.transmission.toLowerCase().replace(/\s+/g, '-')}`)
-                    .call(node => node.append('title').text(d => d.name))
+                    .call(node => node.append('title').text(d => getDisplayName(d)))
                 );
 
             // CRITICAL: Apply drag handlers and event listeners to ALL nodes (new and existing)
@@ -1992,11 +2032,11 @@
             if (currentLanguage !== language) {
                 currentLanguage = language;
 
-                // Update button states
-                document.querySelectorAll('.controls .control-group:nth-child(6) button').forEach(btn => {
-                    btn.classList.remove('active');
-                });
-                document.getElementById(`${language}-btn`).classList.add('active');
+                // Update dropdown selection
+                const languageSelect = document.getElementById('language-select');
+                if (languageSelect) {
+                    languageSelect.value = language;
+                }
 
                 // Update all visible text elements
                 updateLanguageDisplay();
@@ -2016,8 +2056,8 @@
                 updatePopupLanguage(currentPopupData);
             }
 
-            // Update search placeholder
-            updateSearchPlaceholder();
+            // Update all UI language elements
+            updateAllUILanguage();
 
             // Apply language-specific styling to body
             document.body.className = document.body.className.replace(/\b(english|tibetan|chinese)-text\b/g, '');
@@ -2025,16 +2065,141 @@
             document.body.style.fontFamily = getCurrentLanguageFont();
         }
 
+        // UI Language translations
+        const uiTranslations = {
+            english: {
+                // Control Panel Labels
+                searchPlaceholder: 'Search teachers by name...',
+                filterTransmission: 'Filter by Transmission',
+                filterLineage: 'Filter by Lineage',
+                layoutMode: 'Layout Mode',
+                language: 'Language',
+                // Transmission Options
+                all: 'All',
+                mind: 'Mind',
+                symbolic: 'Symbolic',
+                aural: 'Aural',
+                // Layout Options
+                circular: 'Circular',
+                linear: 'Linear',
+                // Language Options
+                englishLang: 'English',
+                tibetanLang: 'Tibetan',
+                chineseLang: 'Chinese',
+                // Playback Controls
+                animationSpeed: 'Animation Speed',
+                reset: 'Reset',
+                // Popup Labels
+                dates: 'Dates',
+                wylie: 'Wylie',
+                links: 'Links'
+            },
+            tibetan: {
+                // Control Panel Labels
+                searchPlaceholder: 'སློབ་དཔོན་གྱི་མིང་ཅན་འཚོལ་ཞིབ།',
+                filterTransmission: 'སྐུ་གསུམ་གྱི་རྒྱུད་པས་དབྱེ་བ།',
+                filterLineage: 'བརྒྱུད་པས་དབྱེ་བ།',
+                layoutMode: 'གཞི་རྩའི་རྣམ་པ།',
+                language: 'སྐད་ཡིག',
+                // Transmission Options
+                all: 'ཀུན།',
+                mind: 'ཐུགས།',
+                symbolic: 'རྟགས།',
+                aural: 'སྙན།',
+                // Layout Options
+                circular: 'ཟླུམ་པོ།',
+                linear: 'ཐིག་ལེ།',
+                // Language Options
+                englishLang: 'དབྱིན་ཇི།',
+                tibetanLang: 'བོད་ཡིག',
+                chineseLang: 'རྒྱ་ཡིག',
+                // Playback Controls
+                animationSpeed: 'གཡོ་སྒྱུའི་མྱུར་ཚད།',
+                reset: 'བསྐྱར་སྒྲིག',
+                // Popup Labels
+                dates: 'ལོ་ཚིགས།',
+                wylie: 'ཝའི་ལི།',
+                links: 'འབྲེལ་ཐག'
+            },
+            chinese: {
+                // Control Panel Labels
+                searchPlaceholder: '按姓名搜索老师...',
+                filterTransmission: '按传承方式筛选',
+                filterLineage: '按传承谱系筛选',
+                layoutMode: '布局模式',
+                language: '语言',
+                // Transmission Options
+                all: '全部',
+                mind: '心传',
+                symbolic: '符号传',
+                aural: '耳传',
+                // Layout Options
+                circular: '圆形',
+                linear: '线性',
+                // Language Options
+                englishLang: '英语',
+                tibetanLang: '藏语',
+                chineseLang: '中文',
+                // Playback Controls
+                animationSpeed: '动画速度',
+                reset: '重置',
+                // Popup Labels
+                dates: '日期',
+                wylie: '威利转写',
+                links: '链接'
+            }
+        };
+
         function updateSearchPlaceholder() {
             const searchInput = document.getElementById('search-input');
             if (searchInput) {
-                const placeholders = {
-                    'english': 'Search teachers by name...',
-                    'tibetan': 'སློབ་དཔོན་གྱི་མིང་ཅན་འཚོལ་ཞིབ།',
-                    'chinese': '按姓名搜索老师...'
-                };
-                searchInput.placeholder = placeholders[currentLanguage] || placeholders['english'];
+                searchInput.placeholder = uiTranslations[currentLanguage].searchPlaceholder;
             }
+        }
+
+        function updateAllUILanguage() {
+            const t = uiTranslations[currentLanguage];
+
+            // Update control panel labels
+            const labels = document.querySelectorAll('.controls label');
+            if (labels[0]) labels[0].textContent = t.searchPlaceholder.replace('...', '').replace('按姓名搜索老师', '搜索老师').replace('སློབ་དཔོན་གྱི་མིང་ཅན་འཚོལ་ཞིབ།', 'འཚོལ་ཞིབ།');
+            if (labels[1]) labels[1].textContent = t.filterTransmission;
+            if (labels[2]) labels[2].textContent = t.filterLineage;
+            if (labels[3]) labels[3].textContent = t.layoutMode;
+            if (labels[4]) labels[4].textContent = t.language;
+
+            // Update transmission filter buttons
+            const transmissionBtns = document.querySelectorAll('.controls .control-group:nth-child(3) button');
+            if (transmissionBtns[0]) transmissionBtns[0].textContent = t.all;
+            if (transmissionBtns[1]) transmissionBtns[1].textContent = t.mind;
+            if (transmissionBtns[2]) transmissionBtns[2].textContent = t.symbolic;
+            if (transmissionBtns[3]) transmissionBtns[3].textContent = t.aural;
+
+            // Update lineage filter buttons
+            const lineageBtns = document.querySelectorAll('.controls .control-group:nth-child(4) button');
+            if (lineageBtns[0]) lineageBtns[0].textContent = t.all;
+            // Keep lineage names as they are (proper names)
+
+            // Update layout mode buttons
+            const layoutBtns = document.querySelectorAll('.controls .control-group:nth-child(5) button');
+            if (layoutBtns[0]) layoutBtns[0].textContent = t.circular;
+            if (layoutBtns[1]) layoutBtns[1].textContent = t.linear;
+
+            // Update language dropdown options
+            const langSelect = document.getElementById('language-select');
+            if (langSelect) {
+                const options = langSelect.querySelectorAll('option');
+                if (options[0]) options[0].textContent = t.englishLang;
+                if (options[1]) options[1].textContent = t.tibetanLang;
+                if (options[2]) options[2].textContent = t.chineseLang;
+            }
+
+            // Update playback controls
+            const speedLabel = document.querySelector('.playback-settings-dropdown label');
+            if (speedLabel) speedLabel.textContent = t.animationSpeed;
+
+            // Update search placeholder
+            updateSearchPlaceholder();
         }
 
         // Perfect traceback algorithm copied from index.html
@@ -2599,7 +2764,7 @@
             init();
             initializeSearch();
             // Initialize language display
-            updateSearchPlaceholder();
+            updateAllUILanguage();
         });
 
         // Add body click listener to clear traceback and close popup
