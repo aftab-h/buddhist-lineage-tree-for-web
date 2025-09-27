@@ -477,19 +477,45 @@
 
         /* Search highlight styles */
         @keyframes flash-highlight {
-            0% { stroke: #ff6b35; stroke-width: 3px; opacity: 1; }
-            50% { stroke: #ff0000; stroke-width: 5px; opacity: 1; }
-            100% { stroke: inherit; stroke-width: inherit; opacity: 1; }
+            0% {
+                stroke: #ffff00 !important;
+                stroke-width: 6px !important;
+                opacity: 1 !important;
+                filter: drop-shadow(0 0 15px #ffff00) brightness(1.5);
+            }
+            50% {
+                stroke: #ff4500 !important;
+                stroke-width: 8px !important;
+                opacity: 1 !important;
+                filter: drop-shadow(0 0 20px #ff4500) brightness(2);
+            }
+            100% {
+                stroke: #ffff00 !important;
+                stroke-width: 6px !important;
+                opacity: 1 !important;
+                filter: drop-shadow(0 0 15px #ffff00) brightness(1.5);
+            }
         }
 
         .search-flash .node {
-            animation: flash-highlight 0.8s ease-in-out;
+            animation: flash-highlight 1.2s ease-in-out infinite;
         }
 
         .search-highlight .node {
-            stroke: #ff6b35 !important;
-            stroke-width: 3px !important;
+            stroke: #00ff00 !important;
+            stroke-width: 8px !important;
             opacity: 1 !important;
+            filter: drop-shadow(0 0 25px #00ff00) brightness(3) saturate(2) !important;
+            fill: #ffffff !important;
+        }
+
+        /* Make current search result VERY obvious */
+        .search-current .node {
+            stroke: #ff0000 !important;
+            stroke-width: 12px !important;
+            opacity: 1 !important;
+            filter: drop-shadow(0 0 30px #ff0000) brightness(3) saturate(3) !important;
+            fill: #ffffff !important;
         }
 
         /* Time playhead styles */
@@ -2203,9 +2229,11 @@
                 return;
             }
 
-            // Find all matching nodes
-            nodeElements.each(function(d) {
-                const normalizedName = normalizeText(d.name);
+            // Find all matching nodes - search ALL nodes in visualization, not just current nodeElements
+            svg.selectAll('circle').each(function(d) {
+                if (!d) return; // Skip if no data
+
+                const normalizedName = normalizeText(d.name || '');
                 const normalizedWylie = normalizeText(d.wylie || '');
                 const normalizedTibetan = normalizeText(d.tibetan || '');
                 const normalizedChinese = normalizeText(d.chinese || '');
@@ -2220,9 +2248,13 @@
                         element: this,
                         data: d
                     });
-                    d3.select(this.parentNode).classed('search-highlight', true);
+                    // Highlight the matching node - apply directly to the circle element
+                    d3.select(this).classed('search-highlight', true);
                 } else {
-                    d3.select(this.parentNode).style('opacity', 0.3);
+                    // Dim non-matching nodes
+                    d3.select(this)
+                        .classed('search-highlight', false)
+                        .style('opacity', 0.2);
                 }
             });
 
@@ -2231,7 +2263,7 @@
                 showSearchNavigation();
                 currentSearchIndex = 0;
                 highlightCurrentResult();
-                zoomToCurrentResult();
+                // DO NOT auto-zoom - just highlight
             } else {
                 hideSearchNavigation();
             }
@@ -2245,9 +2277,7 @@
 
         function hideSearchNavigation() {
             document.getElementById('search-navigation').style.display = 'none';
-            nodeElements.each(function() {
-                d3.select(this.parentNode).style('opacity', 1);
-            });
+            svg.selectAll('circle').style('opacity', 1);
         }
 
         function updateSearchCounter() {
@@ -2263,32 +2293,38 @@
             const prevBtn = document.getElementById('search-prev');
             const nextBtn = document.getElementById('search-next');
 
-            prevBtn.disabled = currentSearchIndex <= 0;
-            nextBtn.disabled = currentSearchIndex >= searchResults.length - 1;
+            // Always enable buttons when there are search results (since we cycle infinitely)
+            const hasResults = searchResults.length > 0;
+            prevBtn.disabled = !hasResults;
+            nextBtn.disabled = !hasResults;
         }
 
         function clearSearchHighlights() {
-            nodeElements.each(function() {
-                d3.select(this.parentNode)
-                    .classed('search-highlight', false)
-                    .classed('search-flash', false)
-                    .style('opacity', 1);
-            });
+            svg.selectAll('circle')
+                .classed('search-highlight', false)
+                .classed('search-flash', false)
+                .classed('search-current', false)
+                .style('opacity', 1);
         }
 
         function highlightCurrentResult() {
-            // Clear previous flash animations
+            // Clear previous current highlights
+            d3.selectAll('.search-current').classed('search-current', false);
             d3.selectAll('.search-flash').classed('search-flash', false);
 
-            // Flash animate current result
+            // Make current result VERY visible
             if (currentSearchIndex >= 0 && currentSearchIndex < searchResults.length) {
-                const element = d3.select(searchResults[currentSearchIndex].element.parentNode);
+                const element = d3.select(searchResults[currentSearchIndex].element);
+
+                // Add bright highlighting - apply directly to the circle
+                element.classed('search-current', true);
                 element.classed('search-flash', true);
 
-                // Remove flash class after animation completes
+                // Flash for attention, then keep bright highlighting
                 setTimeout(() => {
                     element.classed('search-flash', false);
-                }, 800);
+                    // Keep search-current class for persistent bright highlighting
+                }, 3000); // Flash for 3 seconds
             }
         }
 
@@ -2302,8 +2338,8 @@
             const nodeX = nodeData.x || 0;
             const nodeY = nodeData.y || 0;
 
-            // Calculate zoom transform to center on this node
-            const scale = 1.5; // Zoom level
+            // Calculate zoom transform to center on this node - zoom in closer
+            const scale = 2.5; // Much closer zoom level
             const translateX = width / 2 - nodeX * scale;
             const translateY = height / 2 - nodeY * scale;
 
@@ -2312,28 +2348,31 @@
                 .scale(scale);
 
             svg.transition()
-                .duration(500)
+                .duration(800)
+                .ease(d3.easeCubicInOut)
                 .call(zoomBehavior.transform, transform);
         }
 
         function nextSearchResult() {
-            if (currentSearchIndex < searchResults.length - 1) {
-                currentSearchIndex++;
-                highlightCurrentResult();
-                zoomToCurrentResult();
-                updateSearchCounter();
-                updateNavigationButtons();
-            }
+            if (searchResults.length === 0) return;
+
+            // Cycle through results: after last result, go back to first
+            currentSearchIndex = (currentSearchIndex + 1) % searchResults.length;
+            highlightCurrentResult();
+            zoomToCurrentResult();
+            updateSearchCounter();
+            updateNavigationButtons();
         }
 
         function previousSearchResult() {
-            if (currentSearchIndex > 0) {
-                currentSearchIndex--;
-                highlightCurrentResult();
-                zoomToCurrentResult();
-                updateSearchCounter();
-                updateNavigationButtons();
-            }
+            if (searchResults.length === 0) return;
+
+            // Cycle through results: before first result, go to last
+            currentSearchIndex = (currentSearchIndex - 1 + searchResults.length) % searchResults.length;
+            highlightCurrentResult();
+            zoomToCurrentResult();
+            updateSearchCounter();
+            updateNavigationButtons();
         }
 
         // Initialize when page loads
@@ -2375,6 +2414,7 @@
 
                 // Clear search highlights if any
                 if (searchResults.length > 0) {
+                    document.getElementById('search').value = '';
                     clearSearchHighlights();
                     searchResults = [];
                     currentSearchIndex = -1;
