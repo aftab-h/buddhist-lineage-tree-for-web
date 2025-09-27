@@ -288,6 +288,23 @@
             font-style: italic;
         }
 
+        /* Language-specific text styling */
+        .tibetan-text {
+            font-family: 'Noto Sans Tibetan', sans-serif !important;
+            font-size: 16px;
+            line-height: 1.4;
+        }
+
+        .chinese-text {
+            font-family: 'Noto Sans SC', sans-serif !important;
+            font-size: 16px;
+            line-height: 1.4;
+        }
+
+        .english-text {
+            font-family: 'Arial', sans-serif !important;
+        }
+
         #popup-dates {
             font-size: 14px;
             color: #666;
@@ -947,6 +964,13 @@
                 <button onclick="setLayoutMode('circular')" class="active" id="circular-btn">Circular</button>
                 <button onclick="setLayoutMode('linear')" id="linear-btn">Linear</button>
             </div>
+
+            <div class="control-group">
+                <label>Language</label>
+                <button onclick="setLanguage('english')" class="active" id="english-btn">English</button>
+                <button onclick="setLanguage('tibetan')" id="tibetan-btn">Tibetan</button>
+                <button onclick="setLanguage('chinese')" id="chinese-btn">Chinese</button>
+            </div>
         </div>
 
         <!-- Slim Playback Bar -->
@@ -1058,6 +1082,7 @@
         let currentFilter = 'all';
         let currentLineageFilter = 'all';
         let layoutMode = 'circular'; // 'linear' or 'circular'
+        let currentLanguage = 'english'; // 'english', 'tibetan', 'chinese'
         let densitySensitivity = 1.0;
         let tracebackActive = false;
         let tracedNodes = new Set();
@@ -1337,6 +1362,45 @@
             const offsetAngle = (index * angleStep * 0.3); // Smaller clustering within lineage
 
             return baseAngle + offsetAngle;
+        }
+
+        // Language-aware display functions
+        function getDisplayName(node, language) {
+            language = language || currentLanguage;
+            switch (language) {
+                case 'tibetan':
+                    return node.tibetan || node.wylie || node.name;
+                case 'chinese':
+                    return node.chinese || node.name;
+                case 'english':
+                default:
+                    return node.name;
+            }
+        }
+
+        function getDisplayDescription(node, language) {
+            language = language || currentLanguage;
+            switch (language) {
+                case 'tibetan':
+                    return node.descriptionTibetan || node.description;
+                case 'chinese':
+                    return node.descriptionChinese || node.description;
+                case 'english':
+                default:
+                    return node.description;
+            }
+        }
+
+        function getCurrentLanguageFont() {
+            switch (currentLanguage) {
+                case 'tibetan':
+                    return "'Noto Sans Tibetan', sans-serif";
+                case 'chinese':
+                    return "'Noto Sans SC', sans-serif";
+                case 'english':
+                default:
+                    return "'Arial', sans-serif";
+            }
         }
 
         // Create normalized time-based Y-scale for optimal vertical spacing
@@ -1780,7 +1844,7 @@
         function showTooltip(event, d) {
             tooltip.transition().duration(200).style('opacity', .9);
             tooltip.html(`
-                <strong>${d.name}</strong><br/>
+                <strong>${getDisplayName(d)}</strong><br/>
                 Transmission: ${d.transmission}<br/>
                 Lineage: ${d.lineage}<br/>
                 Time Position: ${d.position}<br/>
@@ -1921,6 +1985,55 @@
                 }
 
                 console.log(`Layout mode switched to: ${mode}`);
+            }
+        }
+
+        function setLanguage(language) {
+            if (currentLanguage !== language) {
+                currentLanguage = language;
+
+                // Update button states
+                document.querySelectorAll('.controls .control-group:nth-child(6) button').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                document.getElementById(`${language}-btn`).classList.add('active');
+
+                // Update all visible text elements
+                updateLanguageDisplay();
+
+                console.log(`Language switched to: ${language}`);
+            }
+        }
+
+        function updateLanguageDisplay() {
+            // Update node tooltips
+            if (nodeElements) {
+                nodeElements.selectAll('title').text(d => getDisplayName(d));
+            }
+
+            // Update any open popup
+            if (currentPopupData) {
+                updatePopupLanguage(currentPopupData);
+            }
+
+            // Update search placeholder
+            updateSearchPlaceholder();
+
+            // Apply language-specific styling to body
+            document.body.className = document.body.className.replace(/\b(english|tibetan|chinese)-text\b/g, '');
+            document.body.classList.add(`${currentLanguage}-text`);
+            document.body.style.fontFamily = getCurrentLanguageFont();
+        }
+
+        function updateSearchPlaceholder() {
+            const searchInput = document.getElementById('search-input');
+            if (searchInput) {
+                const placeholders = {
+                    'english': 'Search teachers by name...',
+                    'tibetan': 'སློབ་དཔོན་གྱི་མིང་ཅན་འཚོལ་ཞིབ།',
+                    'chinese': '按姓名搜索老师...'
+                };
+                searchInput.placeholder = placeholders[currentLanguage] || placeholders['english'];
             }
         }
 
@@ -2485,6 +2598,8 @@
         document.addEventListener('DOMContentLoaded', function() {
             init();
             initializeSearch();
+            // Initialize language display
+            updateSearchPlaceholder();
         });
 
         // Add body click listener to clear traceback and close popup
@@ -2542,8 +2657,8 @@
             currentPopupData = data;
             currentPopupNode = event.target;
 
-            // Set content
-            title.textContent = data.name || data.id;
+            // Set content with language-aware display
+            title.textContent = getDisplayName(data) || data.id;
 
             // Clear and hide images container initially
             imagesContainer.innerHTML = '';
@@ -2579,8 +2694,8 @@
                 dates.style.display = 'none';
             }
 
-            // Description
-            const desc = data.description || '';
+            // Description with language-aware display
+            const desc = getDisplayDescription(data);
             if (desc && desc.trim()) {
                 description.innerHTML = desc;
                 description.style.display = 'block';
@@ -2637,6 +2752,36 @@
             popup.classList.add('hidden');
             currentPopupNode = null;
             currentPopupData = null;
+        }
+
+        function updatePopupLanguage(data) {
+            if (!data) return;
+
+            // Update title
+            const title = document.getElementById('popup-title');
+            if (title) {
+                title.textContent = getDisplayName(data) || data.id;
+            }
+
+            // Update description
+            const description = document.getElementById('popup-description');
+            if (description) {
+                const desc = getDisplayDescription(data);
+                if (desc && desc.trim()) {
+                    description.innerHTML = desc;
+                    description.style.display = 'block';
+                } else {
+                    description.style.display = 'none';
+                }
+            }
+
+            // Apply language-specific styling to popup
+            const popup = document.getElementById('popup-card');
+            if (popup) {
+                popup.className = popup.className.replace(/\b(english|tibetan|chinese)-text\b/g, '');
+                popup.classList.add(`${currentLanguage}-text`);
+                popup.style.fontFamily = getCurrentLanguageFont();
+            }
         }
 
         // Text normalization for image filenames (copied from original)
