@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Buddhist Lineage - Temporal Playhead Visualization</title>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <style>
@@ -15,6 +15,11 @@
             background: #0a0a0a;
             color: #ffffff;
             overflow: hidden;
+            touch-action: none; /* Prevent any touch gestures on body */
+            user-select: none; /* Prevent text selection on mobile */
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
         }
 
         #container {
