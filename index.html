@@ -300,6 +300,42 @@
             color: #333;
         }
 
+        #popup-img-subtext {
+            font-size: 12px;
+            font-style: italic;
+            color: #666;
+            margin-top: 5px;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        #popup-links {
+            font-size: 14px;
+            margin-top: 15px;
+            padding-top: 10px;
+            border-top: 1px solid #eee;
+        }
+
+        .popup-links h4 {
+            margin: 0 0 8px 0;
+            font-size: 14px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .popup-links a {
+            color: #4a90e2;
+            text-decoration: none;
+            margin-right: 15px;
+            display: inline-block;
+            margin-bottom: 5px;
+        }
+
+        .popup-links a:hover {
+            text-decoration: underline;
+            color: #357abd;
+        }
+
         .node.dimmed {
             opacity: 0.2 !important;
         }
@@ -994,9 +1030,11 @@
             </div>
             <div class="popup-body">
                 <div id="popup-images" class="popup-images"></div>
+                <div id="popup-img-subtext" class="popup-img-subtext"></div>
                 <div id="popup-tibetan"></div>
                 <div id="popup-dates"></div>
                 <div id="popup-description"></div>
+                <div id="popup-links" class="popup-links"></div>
             </div>
         </div>
     </div>
@@ -1174,7 +1212,11 @@
                     dates: d.Dates || '',
                     description: d.Description_English || '',
                     descriptionTibetan: d.Description_Tibetan || '',
-                    descriptionChinese: d.Description_Chinese || ''
+                    descriptionChinese: d.Description_Chinese || '',
+                    // New fields for image subtext and links
+                    imgSubtext: d.Img_Subtext || '',
+                    linksNames: d.Links_Names || '',
+                    linksUrls: d.Links_URLs || ''
                 };
             });
 
@@ -2480,6 +2522,46 @@
                 description.style.display = 'block';
             } else {
                 description.style.display = 'none';
+            }
+
+            // Image subtext
+            const imgSubtextContainer = document.getElementById('popup-img-subtext');
+            const imgSubtext = data.imgSubtext || '';
+            if (imgSubtext && imgSubtext.trim()) {
+                imgSubtextContainer.innerHTML = imgSubtext;
+                imgSubtextContainer.style.display = 'block';
+            } else {
+                imgSubtextContainer.style.display = 'none';
+            }
+
+            // Links section
+            const linksContainer = document.getElementById('popup-links');
+            const linksNames = data.linksNames || '';
+            const linksUrls = data.linksUrls || '';
+
+            if (linksNames && linksNames.trim() && linksUrls && linksUrls.trim()) {
+                const namesArray = linksNames.split(';').map(name => name.trim()).filter(name => name);
+                const urlsArray = linksUrls.split(';').map(url => url.trim()).filter(url => url);
+
+                if (namesArray.length > 0 && urlsArray.length > 0) {
+                    let linksHTML = '<h4>Links</h4>';
+
+                    // Pair each name with corresponding URL (1:1 mapping)
+                    for (let i = 0; i < Math.min(namesArray.length, urlsArray.length); i++) {
+                        const name = namesArray[i];
+                        const url = urlsArray[i];
+                        if (name && url) {
+                            linksHTML += `<a href="${url}" target="_blank" rel="noopener noreferrer">${name}</a>`;
+                        }
+                    }
+
+                    linksContainer.innerHTML = linksHTML;
+                    linksContainer.style.display = 'block';
+                } else {
+                    linksContainer.style.display = 'none';
+                }
+            } else {
+                linksContainer.style.display = 'none';
             }
 
             // Show popup
