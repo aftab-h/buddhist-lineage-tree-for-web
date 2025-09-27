@@ -32,6 +32,7 @@
             width: 100%;
             height: 100%;
             background: #0a0a0a;
+            touch-action: manipulation; /* Allow D3 pan/zoom but prevent browser zoom */
         }
 
         /* Node Styles */
@@ -308,6 +309,11 @@
 
         .english-text {
             font-family: 'Arial', sans-serif !important;
+        }
+
+        /* Prevent accidental zoom on UI elements */
+        .controls, .popup-card, #playback-bar, #legend-icon, #controls-icon {
+            touch-action: manipulation !important;
         }
 
         #popup-dates {
@@ -2074,6 +2080,7 @@
         const uiTranslations = {
             english: {
                 // Control Panel Labels
+                search: 'Search Teachers',
                 searchPlaceholder: 'Search teachers by name...',
                 filterTransmission: 'Filter by Transmission',
                 filterLineage: 'Filter by Lineage',
@@ -2101,6 +2108,7 @@
             },
             tibetan: {
                 // Control Panel Labels
+                search: 'འཚོལ་ཞིབ།',
                 searchPlaceholder: 'སློབ་དཔོན་གྱི་མིང་ཅན་འཚོལ་ཞིབ།',
                 filterTransmission: 'སྐུ་གསུམ་གྱི་རྒྱུད་པས་དབྱེ་བ།',
                 filterLineage: 'བརྒྱུད་པས་དབྱེ་བ།',
@@ -2128,6 +2136,7 @@
             },
             chinese: {
                 // Control Panel Labels
+                search: '搜索老师',
                 searchPlaceholder: '按姓名搜索老师...',
                 filterTransmission: '按传承方式筛选',
                 filterLineage: '按传承谱系筛选',
@@ -2165,13 +2174,23 @@
         function updateAllUILanguage() {
             const t = uiTranslations[currentLanguage];
 
-            // Update control panel labels
-            const labels = document.querySelectorAll('.controls label');
-            if (labels[0]) labels[0].textContent = t.searchPlaceholder.replace('...', '').replace('按姓名搜索老师', '搜索老师').replace('སློབ་དཔོན་གྱི་མིང་ཅན་འཚོལ་ཞིབ།', 'འཚོལ་ཞིབ།');
-            if (labels[1]) labels[1].textContent = t.filterTransmission;
-            if (labels[2]) labels[2].textContent = t.filterLineage;
-            if (labels[3]) labels[3].textContent = t.layoutMode;
-            if (labels[4]) labels[4].textContent = t.language;
+            // Update control panel labels using specific selectors
+            const searchLabel = document.querySelector('.controls .control-group:nth-child(1) label');
+            if (searchLabel) searchLabel.textContent = t.search;
+
+            // Layout Force label stays as is (it's a technical term)
+
+            const transmissionLabel = document.querySelector('.controls .control-group:nth-child(3) label');
+            if (transmissionLabel) transmissionLabel.textContent = t.filterTransmission;
+
+            const lineageLabel = document.querySelector('.controls .control-group:nth-child(4) label');
+            if (lineageLabel) lineageLabel.textContent = t.filterLineage;
+
+            const layoutLabel = document.querySelector('.controls .control-group:nth-child(5) label');
+            if (layoutLabel) layoutLabel.textContent = t.layoutMode;
+
+            const languageLabel = document.querySelector('.controls .control-group:nth-child(6) label');
+            if (languageLabel) languageLabel.textContent = t.language;
 
             // Update transmission filter buttons
             const transmissionBtns = document.querySelectorAll('.controls .control-group:nth-child(3) button');
