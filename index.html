@@ -1560,10 +1560,17 @@
             // Calculate where to position the axis so it appears with enough space for text labels
             // We need to invert the transform to find where screen coordinates map to in content space
             const screenLeftInContentSpace = -transform.x / transform.k;
-            const axisX = screenLeftInContentSpace + (60 / transform.k); // 60px from screen edge for text space
+            // Ensure minimum 100px of screen space, accounting for zoom level properly
+            const minScreenDistance = Math.max(100, 100 * transform.k); // More space when zoomed in
+            const axisX = screenLeftInContentSpace + (minScreenDistance / transform.k);
 
             const timeAxis = svg.select('.time-axis');
             if (!timeAxis.node()) return;
+
+            // Update background rectangle
+            timeAxis.select('.axis-background')
+                .attr('x', axisX - 80)
+                .attr('width', 80);
 
             // Update main axis line
             timeAxis.select('line')
@@ -1580,9 +1587,9 @@
                 .attr('x1', axisX - 5)   // was margin.left - 25, now axisX - 5
                 .attr('x2', axisX + 5);   // was margin.left - 15, now axisX + 5
 
-            // Update tick labels - position them to the left of the axis line
+            // Update tick labels - position them with more space from edge
             timeAxis.selectAll('.time-tick text')
-                .attr('x', axisX - 5)    // 5px to the left of the axis line
+                .attr('x', axisX - 10)    // 10px to the left of the axis line
                 .style('text-anchor', 'end');  // Right-align text to axis
 
             // Update node circles
@@ -1600,6 +1607,16 @@
 
             // Set initial axis position with enough space for labels
             const initialAxisX = margin.left + 20;  // Move further from left edge
+
+            // Add background rectangle for visual padding
+            timeAxis.append('rect')
+                .attr('class', 'axis-background')
+                .attr('x', initialAxisX - 80)
+                .attr('y', margin.top)
+                .attr('width', 80)
+                .attr('height', yScale.totalHeight - margin.top)
+                .attr('fill', 'rgba(10, 10, 10, 0.9)')
+                .attr('stroke', 'none');
 
             // Add main axis line
             timeAxis.append('line')
@@ -1649,7 +1666,7 @@
                         .attr('stroke-width', 2);
 
                     g.append('text')
-                        .attr('x', initialAxisX - 5)
+                        .attr('x', initialAxisX - 10)
                         .attr('y', y + 4)
                         .attr('class', 'time-label')
                         .style('fill', '#aaa')
