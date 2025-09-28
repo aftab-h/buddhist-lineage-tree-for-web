@@ -1557,12 +1557,9 @@
         function updateYAxisPosition(transform) {
             if (layoutMode !== 'linear') return;
 
-            // Calculate where to position the axis so it appears with enough space for text labels
-            // We need to invert the transform to find where screen coordinates map to in content space
+            // Position axis close to left edge with minimal space for text
             const screenLeftInContentSpace = -transform.x / transform.k;
-            // Ensure minimum 100px of screen space, accounting for zoom level properly
-            const minScreenDistance = Math.max(100, 100 * transform.k); // More space when zoomed in
-            const axisX = screenLeftInContentSpace + (minScreenDistance / transform.k);
+            const axisX = screenLeftInContentSpace + (60 / transform.k);
 
             const timeAxis = svg.select('.time-axis');
             if (!timeAxis.node()) return;
@@ -1586,7 +1583,8 @@
             // Update tick labels - position them with more space from edge
             timeAxis.selectAll('.time-tick text')
                 .attr('x', axisX - 10)    // 10px to the left of the axis line
-                .style('text-anchor', 'end');  // Right-align text to axis
+                .style('text-anchor', 'end')  // Right-align text to axis
+                .style('font-size', `${12 / transform.k}px`);  // Counter-scale font size
 
             // Update node circles
             timeAxis.selectAll('.time-tick circle')
@@ -1658,6 +1656,7 @@
                         .attr('class', 'time-label')
                         .style('fill', '#aaa')
                         .style('text-anchor', 'end')  // Right-align text to axis
+                        .style('font-size', '12px')  // Fixed font size
                         .text(marker.year > 0 ? `${marker.year} CE` : `${Math.abs(marker.year)} BCE`);
 
                 } else if (marker.type === 'half-century') {
