@@ -1557,9 +1557,9 @@
         function updateYAxisPosition(transform) {
             if (layoutMode !== 'linear') return;
 
-            // Position axis close to left edge with minimal space for text
+            // Position axis very close to left edge
             const screenLeftInContentSpace = -transform.x / transform.k;
-            const axisX = screenLeftInContentSpace + (60 / transform.k);
+            const axisX = screenLeftInContentSpace + (50 / transform.k);
 
             const timeAxis = svg.select('.time-axis');
             if (!timeAxis.node()) return;
@@ -1582,9 +1582,11 @@
 
             // Update tick labels - position them with more space from edge
             timeAxis.selectAll('.time-tick text')
-                .attr('x', axisX - 10)    // 10px to the left of the axis line
-                .style('text-anchor', 'end')  // Right-align text to axis
-                .style('font-size', `${12 / transform.k}px`);  // Counter-scale font size
+                .attr('x', axisX + 2)    // 2px to the right of the axis line
+                .style('text-anchor', 'start')  // Left-align text from position
+                .style('font-size', `${14 / transform.k}px`)  // Counter-scale font size, slightly bigger
+                .style('stroke', 'none')  // Remove any stroke that might be scaling
+                .style('stroke-width', '0px');  // Ensure no outline
 
             // Update node circles
             timeAxis.selectAll('.time-tick circle')
@@ -1651,12 +1653,14 @@
                         .attr('stroke-width', 2);
 
                     g.append('text')
-                        .attr('x', initialAxisX - 10)
+                        .attr('x', initialAxisX + 8)
                         .attr('y', y + 4)
                         .attr('class', 'time-label')
                         .style('fill', '#aaa')
-                        .style('text-anchor', 'end')  // Right-align text to axis
-                        .style('font-size', '12px')  // Fixed font size
+                        .style('text-anchor', 'start')  // Left-align text from position
+                        .style('font-size', '14px')  // Fixed font size, slightly bigger
+                        .style('stroke', 'none')  // No stroke/outline
+                        .style('stroke-width', '0px')  // Ensure no outline
                         .text(marker.year > 0 ? `${marker.year} CE` : `${Math.abs(marker.year)} BCE`);
 
                 } else if (marker.type === 'half-century') {
