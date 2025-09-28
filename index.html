@@ -1175,6 +1175,7 @@
                 .scaleExtent([0.1, 4])
                 .on('zoom', (event) => {
                     svg.select('.main-group').attr('transform', event.transform);
+                    updateYAxisPosition(event.transform);
                 });
 
             svg.call(zoomBehavior);
@@ -1553,6 +1554,42 @@
             return yScale;
         }
 
+        function updateYAxisPosition(transform) {
+            if (layoutMode !== 'linear') return;
+
+            // Calculate where to position the axis so it appears with enough space for text labels
+            // We need to invert the transform to find where screen coordinates map to in content space
+            const screenLeftInContentSpace = -transform.x / transform.k;
+            const axisX = screenLeftInContentSpace + (60 / transform.k); // 60px from screen edge for text space
+
+            const timeAxis = svg.select('.time-axis');
+            if (!timeAxis.node()) return;
+
+            // Update main axis line
+            timeAxis.select('line')
+                .attr('x1', axisX)
+                .attr('x2', axisX);
+
+            // Update century tick marks (x1: -30, x2: -15)
+            timeAxis.selectAll('.time-tick line[stroke="#888"]')
+                .attr('x1', axisX - 10)  // was margin.left - 30, now axisX - 10
+                .attr('x2', axisX + 5);   // was margin.left - 15, now axisX + 5
+
+            // Update half-century tick marks (x1: -25, x2: -15)
+            timeAxis.selectAll('.time-tick line[stroke="#555"]')
+                .attr('x1', axisX - 5)   // was margin.left - 25, now axisX - 5
+                .attr('x2', axisX + 5);   // was margin.left - 15, now axisX + 5
+
+            // Update tick labels - position them to the left of the axis line
+            timeAxis.selectAll('.time-tick text')
+                .attr('x', axisX - 5)    // 5px to the left of the axis line
+                .style('text-anchor', 'end');  // Right-align text to axis
+
+            // Update node circles
+            timeAxis.selectAll('.time-tick circle')
+                .attr('cx', axisX);       // was margin.left - 20, now axisX
+        }
+
         function createNormalizedTimeAxis(container, yScale) {
             const timeAxis = container.append('g')
                 .attr('class', 'time-axis')
@@ -1561,10 +1598,13 @@
             const sortedNodes = yScale.sortedNodes;
             const nodePositions = yScale.nodePositions;
 
+            // Set initial axis position with enough space for labels
+            const initialAxisX = margin.left + 20;  // Move further from left edge
+
             // Add main axis line
             timeAxis.append('line')
-                .attr('x1', margin.left - 20)
-                .attr('x2', margin.left - 20)
+                .attr('x1', initialAxisX)
+                .attr('x2', initialAxisX)
                 .attr('y1', margin.top)
                 .attr('y2', yScale.totalHeight)
                 .attr('stroke', '#444')
@@ -1601,24 +1641,25 @@
 
                 if (marker.type === 'century') {
                     g.append('line')
-                        .attr('x1', margin.left - 30)
-                        .attr('x2', margin.left - 15)
+                        .attr('x1', initialAxisX - 10)
+                        .attr('x2', initialAxisX + 5)
                         .attr('y1', y)
                         .attr('y2', y)
                         .attr('stroke', '#888')
                         .attr('stroke-width', 2);
 
                     g.append('text')
-                        .attr('x', margin.left - 35)
+                        .attr('x', initialAxisX - 5)
                         .attr('y', y + 4)
                         .attr('class', 'time-label')
                         .style('fill', '#aaa')
+                        .style('text-anchor', 'end')  // Right-align text to axis
                         .text(marker.year > 0 ? `${marker.year} CE` : `${Math.abs(marker.year)} BCE`);
 
                 } else if (marker.type === 'half-century') {
                     g.append('line')
-                        .attr('x1', margin.left - 25)
-                        .attr('x2', margin.left - 15)
+                        .attr('x1', initialAxisX - 5)
+                        .attr('x2', initialAxisX + 5)
                         .attr('y1', y)
                         .attr('y2', y)
                         .attr('stroke', '#555')
@@ -1626,7 +1667,7 @@
 
                 } else if (marker.type === 'node') {
                     g.append('circle')
-                        .attr('cx', margin.left - 20)
+                        .attr('cx', initialAxisX)
                         .attr('cy', y)
                         .attr('r', 2)
                         .attr('fill', '#4a90e2')
