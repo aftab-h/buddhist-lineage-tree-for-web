@@ -1567,10 +1567,6 @@
             const timeAxis = svg.select('.time-axis');
             if (!timeAxis.node()) return;
 
-            // Update background rectangle
-            timeAxis.select('.axis-background')
-                .attr('x', axisX - 80)
-                .attr('width', 80);
 
             // Update main axis line
             timeAxis.select('line')
@@ -1608,15 +1604,6 @@
             // Set initial axis position with enough space for labels
             const initialAxisX = margin.left + 20;  // Move further from left edge
 
-            // Add background rectangle for visual padding
-            timeAxis.append('rect')
-                .attr('class', 'axis-background')
-                .attr('x', initialAxisX - 80)
-                .attr('y', margin.top)
-                .attr('width', 80)
-                .attr('height', yScale.totalHeight - margin.top)
-                .attr('fill', 'rgba(10, 10, 10, 0.9)')
-                .attr('stroke', 'none');
 
             // Add main axis line
             timeAxis.append('line')
