@@ -1058,6 +1058,16 @@
             <div class="playback-settings-dropdown" id="playback-settings">
                 <label>Animation Speed</label>
                 <input type="range" id="speedSlider" min="0.1" max="3" step="0.1" value="1">
+
+                <label style="margin-top: 10px;">Force Tweaks (Linear Mode)</label>
+                <label style="font-size: 11px;">Y-Force: <span id="yForceValue">0.9</span></label>
+                <input type="range" id="yForceSlider" min="0.5" max="5" step="0.1" value="0.9">
+
+                <label style="font-size: 11px;">Link Strength: <span id="linkForceValue">0.05</span></label>
+                <input type="range" id="linkForceSlider" min="0" max="0.5" step="0.01" value="0.05">
+
+                <label style="font-size: 11px;">Charge: <span id="chargeForceValue">-80</span></label>
+                <input type="range" id="chargeForceSlider" min="-200" max="-20" step="10" value="-80">
             </div>
         </div>
 
@@ -1139,6 +1149,7 @@
         let tracedNodes = new Set();
         let tracedLinks = new Set();
         let tracebackTimeouts = []; // Track animation timeouts
+        let globalYScale = null; // Global Y-scale for linear mode (calculated once)
 
         // Popup variables
         let currentPopupNode = null;
@@ -1215,6 +1226,36 @@
                 if (simulation) {
                     const strength = -parseInt(this.value);
                     simulation.force('charge').strength(strength);
+                    simulation.alpha(0.3).restart();
+                }
+            });
+
+            // Y-Force slider
+            document.getElementById('yForceSlider').addEventListener('input', function() {
+                const value = parseFloat(this.value);
+                document.getElementById('yForceValue').textContent = value.toFixed(1);
+                if (simulation && layoutMode === 'linear') {
+                    simulation.force('y').strength(value);
+                    simulation.alpha(0.3).restart();
+                }
+            });
+
+            // Link Force slider
+            document.getElementById('linkForceSlider').addEventListener('input', function() {
+                const value = parseFloat(this.value);
+                document.getElementById('linkForceValue').textContent = value.toFixed(2);
+                if (simulation && layoutMode === 'linear') {
+                    simulation.force('link').strength(value);
+                    simulation.alpha(0.3).restart();
+                }
+            });
+
+            // Charge Force slider
+            document.getElementById('chargeForceSlider').addEventListener('input', function() {
+                const value = parseInt(this.value);
+                document.getElementById('chargeForceValue').textContent = value;
+                if (simulation && layoutMode === 'linear') {
+                    simulation.force('charge').strength(value);
                     simulation.alpha(0.3).restart();
                 }
             });
@@ -1365,6 +1406,11 @@
             console.log(`Found ${mindToMindNodes.length} Mind to Mind nodes:`, mindToMindNodes.slice(0, 3));
 
             console.log(`Loaded ${nodes.length} nodes and ${links.length} links`);
+
+            // Calculate global Y-scale once using all nodes
+            globalYScale = createNormalizedTimeScale(nodes);
+            console.log('Global Y-scale calculated for linear mode');
+            console.log('Test: Longchen (1308) Y position =', globalYScale(1308));
         }
 
         // Create radial positioning function for circular mode
@@ -1688,8 +1734,7 @@
 
             // Create time axis for linear mode (conditional)
             if (layoutMode === 'linear') {
-                const yScale = createNormalizedTimeScale(nodes);
-                createNormalizedTimeAxis(mainGroup, yScale);
+                createNormalizedTimeAxis(mainGroup, globalYScale);
             }
 
             // Create empty selections that will be populated by update()
@@ -1746,16 +1791,12 @@
                     .on('tick', tick);
             } else {
                 // Linear mode: time-based Y positioning with moderate horizontal spread
-                const yScale = createNormalizedTimeScale(nodes);
                 simulation = d3.forceSimulation()
-                    .force('charge', d3.forceManyBody().strength(-120)) // Moderate repulsion
-                    .force('link', d3.forceLink().id(d => d.id).distance(50).strength(0.3))
-                    .force('x', d3.forceX(centerX).strength(0.05)) // Gentle X centering
-                    .force('y', d3.forceY(d => yScale(d.position)).strength(0.9))
-                    .force('collision', d3.forceCollide().radius(d => {
-                        const connections = d.teachers.length + d.students.length;
-                        return Math.max(7, Math.min(15, connections * 1.8 + 7)); // Moderate collision radius
-                    }))
+                    .force('charge', d3.forceManyBody().strength(-80)) // Reduced repulsion to minimize drift
+                    .force('link', d3.forceLink().id(d => d.id).distance(50).strength(0.05)) // Minimal link strength
+                    .force('x', d3.forceX(centerX).strength(0.03)) // Minimal X centering
+                    .force('y', d3.forceY(d => globalYScale(d.position)).strength(0.9)) // Original Y force strength
+                    // Note: Collision force disabled in linear mode to preserve chronological Y positions
                     .on('tick', tick);
             }
         }
@@ -1772,6 +1813,12 @@
             nodeElements
                 .attr('cx', d => d.x)
                 .attr('cy', d => d.y);
+
+            // Debug: Track Longchen's Y position
+            const longchen = nodeElements.data().find(d => d.name === 'Longchen Rabjampa');
+            if (longchen && Math.random() < 0.01) { // Log 1% of ticks to avoid spam
+                console.log('Longchen Y:', longchen.y, 'Expected:', globalYScale(1308), 'Diff:', longchen.y - globalYScale(1308));
+            }
         }
 
         function updateVisualization() {
@@ -1835,9 +1882,8 @@
                         newNode.y = centerY + radius * Math.sin(angle);
                     } else {
                         // For linear mode, start at appropriate Y position with wider X spread
-                        const yScale = createNormalizedTimeScale(nodes);
                         newNode.x = centerX + (Math.random() - 0.5) * 200; // Much wider initial spread
-                        newNode.y = yScale(d.position);
+                        newNode.y = globalYScale(d.position);
                     }
                     return newNode;
                 }
@@ -2049,8 +2095,7 @@
                 if (mode === 'linear' && !svg.select('.time-axis').node()) {
                     // Create time axis if switching to linear for the first time
                     const mainGroup = svg.select('.main-group');
-                    const yScale = createNormalizedTimeScale(nodes);
-                    createNormalizedTimeAxis(mainGroup, yScale);
+                    createNormalizedTimeAxis(mainGroup, globalYScale);
                 }
 
                 // Stop current simulation and create new one
