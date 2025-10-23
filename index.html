@@ -1220,35 +1220,6 @@
                 }
             });
 
-            // Y-Force slider
-            document.getElementById('yForceSlider').addEventListener('input', function() {
-                const value = parseFloat(this.value);
-                document.getElementById('yForceValue').textContent = value.toFixed(1);
-                if (simulation && layoutMode === 'linear') {
-                    simulation.force('y').strength(value);
-                    simulation.alpha(0.3).restart();
-                }
-            });
-
-            // Link Force slider
-            document.getElementById('linkForceSlider').addEventListener('input', function() {
-                const value = parseFloat(this.value);
-                document.getElementById('linkForceValue').textContent = value.toFixed(2);
-                if (simulation && layoutMode === 'linear') {
-                    simulation.force('link').strength(value);
-                    simulation.alpha(0.3).restart();
-                }
-            });
-
-            // Charge Force slider
-            document.getElementById('chargeForceSlider').addEventListener('input', function() {
-                const value = parseInt(this.value);
-                document.getElementById('chargeForceValue').textContent = value;
-                if (simulation && layoutMode === 'linear') {
-                    simulation.force('charge').strength(value);
-                    simulation.alpha(0.3).restart();
-                }
-            });
         }
 
         async function loadData() {
