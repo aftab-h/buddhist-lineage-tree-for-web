@@ -1,19 +1,16 @@
 ================================================================================
 TEACHING RELATIONSHIPS TRANSFORMATION REPORT
 ================================================================================
-Date: 2025-10-24 16:24:30
+Date: 2025-10-24 16:37:37
 
 SUMMARY
 --------------------------------------------------------------------------------
-Total relationships in 'Received_Teachings_From': 312
-Total relationships in 'Taught':                 293
+Total relationships in 'Received_Teachings_From': 313
+Total relationships in 'Taught':                 295
 ✗ MISMATCH: Relationship counts differ!
-  Difference: 19
+  Difference: 18
 
-MISSING NAMES (teachers not found in Name_English)
---------------------------------------------------------------------------------
-  Student: Khedrup Delek Gyatso
-  Missing Teacher: Takok Jadral Chöjé Tashi Jungne
+✓ No missing names - all teachers found successfully
 
 SAMPLE TRANSFORMATIONS (showing first 10)
 --------------------------------------------------------------------------------
@@ -57,7 +54,7 @@ Teacher: Buddha 5: Vajradhara
   Received from ← Buddha 4: Zhönnu Rolpa
 
 
-FULL TRANSFORMATION LIST (311 relationships)
+FULL TRANSFORMATION LIST (313 relationships)
 --------------------------------------------------------------------------------
 1st Dodrupchen, Jigmé Trinlé Özer → [8 students]
     • 2nd Dodrupchen, Jigmé Phuntsok Jungné
@@ -315,7 +312,7 @@ Lama Ngakchen (Orgyen Tutop Lingpa) → [1 students]
     • Nyoshul Lungtok Tenpai Nyima Gyaltsen Palzangpo
 Lhatsün Namkha Jigmé → [1 students]
     • Dzogchenpa Longdzok Tadral
-Longchen Rabjampa → [10 students]
+Longchen Rabjampa → [11 students]
     • Dokhampa Dengom Chödrak Zangpo
     • Guru Ösel Rangdrol
     • Jadralwa Zöpa
@@ -325,6 +322,7 @@ Longchen Rabjampa → [10 students]
     • Orgyen Chöjé
     • Rigdzin Jigmé Lingpa
     • Rigzin Gödem
+    • Takok Jadral Chöjé Tashi Jungné
     • Tulku Paljor Gyaltsen
 Lungtrul Shedrup Tenpai Nyima → [5 students]
     • Choktrul Nyima Gyaltsen Rinpoché
@@ -419,8 +417,9 @@ Supreme Emanation Blessing → [3 students]
     • Only Child of the Buddha
     • Statue
     • Vajra
-Takok Jadral Chöjé Tashi Jungné → [1 students]
+Takok Jadral Chöjé Tashi Jungné → [2 students]
     • Guru Zhenpen
+    • Khedrup Delek Gyatso
 Terchen Gyurmé Dorjé → [6 students]
     • 2nd Dzogchen Rinpoche, Gyurmé Tekchok Tendzin
     • Gyalse Rinchen Namgyal
