@@ -1587,19 +1587,9 @@
                 .attr('x1', axisX - 60)
                 .attr('x2', axisX + primordialZoneWidth - 60);
 
-            // Update main axis line
-            timeAxis.select('line')
-                .attr('x1', axisX)
-                .attr('x2', axisX);
-
             // Update century tick marks (x1: -30, x2: -15)
             timeAxis.selectAll('.time-tick line[stroke="#888"]')
                 .attr('x1', axisX - 10)  // was margin.left - 30, now axisX - 10
-                .attr('x2', axisX + 5);   // was margin.left - 15, now axisX + 5
-
-            // Update half-century tick marks (x1: -25, x2: -15)
-            timeAxis.selectAll('.time-tick line[stroke="#555"]')
-                .attr('x1', axisX - 5)   // was margin.left - 25, now axisX - 5
                 .attr('x2', axisX + 5);   // was margin.left - 15, now axisX + 5
 
             // Update tick labels - position them with more space from edge
@@ -1609,10 +1599,6 @@
                 .style('font-size', `${14 / transform.k}px`)  // Counter-scale font size, slightly bigger
                 .style('stroke', 'none')  // Remove any stroke that might be scaling
                 .style('stroke-width', '0px');  // Ensure no outline
-
-            // Update node circles
-            timeAxis.selectAll('.time-tick circle')
-                .attr('cx', axisX);       // was margin.left - 20, now axisX
         }
 
         function createNormalizedTimeAxis(container, yScale) {
@@ -1682,15 +1668,6 @@
                 .attr('stroke-width', 3)
                 .attr('stroke-dasharray', '5,5');
 
-            // Add main axis line
-            timeAxis.append('line')
-                .attr('x1', initialAxisX)
-                .attr('x2', initialAxisX)
-                .attr('y1', margin.top)
-                .attr('y2', yScale.totalHeight)
-                .attr('stroke', '#444')
-                .attr('stroke-width', 2);
-
             // Create time markers
             const timeMarkers = [];
             const timeExtent = d3.extent(sortedNodes, d => d.position);
@@ -1699,13 +1676,6 @@
             for (let year = Math.floor(timeExtent[0] / 100) * 100; year <= Math.ceil(timeExtent[1] / 100) * 100; year += 100) {
                 if (year >= timeExtent[0] && year <= timeExtent[1] && year >= PRIMORDIAL_THRESHOLD) {
                     timeMarkers.push({ year: year, type: 'century' });
-                }
-            }
-
-            // Add 50-year markers (skip primordial zone < 600)
-            for (let year = Math.floor(timeExtent[0] / 50) * 50; year <= Math.ceil(timeExtent[1] / 50) * 50; year += 50) {
-                if (year >= timeExtent[0] && year <= timeExtent[1] && year % 100 !== 0 && year >= PRIMORDIAL_THRESHOLD) {
-                    timeMarkers.push({ year: year, type: 'half-century' });
                 }
             }
 
@@ -1732,15 +1702,6 @@
                         .style('stroke', 'none')  // No stroke/outline
                         .style('stroke-width', '0px')  // Ensure no outline
                         .text(marker.year > 0 ? `${marker.year} CE` : `${Math.abs(marker.year)} BCE`);
-
-                } else if (marker.type === 'half-century') {
-                    g.append('line')
-                        .attr('x1', initialAxisX - 5)
-                        .attr('x2', initialAxisX + 5)
-                        .attr('y1', y)
-                        .attr('y2', y)
-                        .attr('stroke', '#555')
-                        .attr('stroke-width', 1);
                 }
             });
         }
