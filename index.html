@@ -1619,12 +1619,13 @@
 
             // Add primordial zone background
             const primordialZoneWidth = 150;
+            const primordialBoxTop = 0;  // Start at very top to capture Samantabhadra
             timeAxis.append('rect')
                 .attr('class', 'primordial-zone')
                 .attr('x', initialAxisX - 60)
-                .attr('y', margin.top)
+                .attr('y', primordialBoxTop)
                 .attr('width', primordialZoneWidth)
-                .attr('height', primordialY - margin.top)
+                .attr('height', primordialY - primordialBoxTop)
                 .attr('fill', 'url(#primordial-gradient)')
                 .attr('opacity', 0.3);
 
@@ -1650,7 +1651,7 @@
             // Add "Primordial Transmission" label
             timeAxis.append('text')
                 .attr('x', initialAxisX - 10)
-                .attr('y', margin.top + 30)
+                .attr('y', primordialBoxTop + 20)
                 .attr('class', 'primordial-label')
                 .style('fill', '#aaa')
                 .style('font-size', '14px')
