@@ -1,67 +1,19 @@
 ================================================================================
 TEACHING RELATIONSHIPS TRANSFORMATION REPORT
 ================================================================================
-Date: 2025-10-24 15:47:51
+Date: 2025-10-24 16:24:30
 
 SUMMARY
 --------------------------------------------------------------------------------
-Total relationships in 'Received_Teachings_From': 316
-Total relationships in 'Taught':                 281
+Total relationships in 'Received_Teachings_From': 312
+Total relationships in 'Taught':                 293
 ✗ MISMATCH: Relationship counts differ!
-  Difference: 35
+  Difference: 19
 
 MISSING NAMES (teachers not found in Name_English)
 --------------------------------------------------------------------------------
-  Student: Longchen Rabjampa
-  Missing Teacher: Kumārarāja, Gyalsé Lekpa Gyaltsen
-
-  Student: Longchen Rabjampa
-  Missing Teacher: Rigdzin Chenpo Kumaradza
-
-  Student: 4th Zhechen Gyaltsap Gyurmé Pema Namgyal
-  Missing Teacher: Mipham Rinpoche
-
-  Student: 2nd Dzigar Kongtrul
-  Missing Teacher: Orgyen Tobgyal
-
-  Student: 2nd Dzigar Kongtrul
-  Missing Teacher: Orgyen Tobgyal
-
-  Student: 3rd Katok Situ Kunchen Orgyen Chökyi Dorjé
-  Missing Teacher: Mipham Rinpoche
-
   Student: Khedrup Delek Gyatso
   Missing Teacher: Takok Jadral Chöjé Tashi Jungne
-
-  Student: Guru Zhenpen
-  Missing Teacher: Namkha Dorje
-
-  Student: Nyoshul Lungtok Tenpai Nyima Gyaltsen Palzangpo
-  Missing Teacher: Khen Rinpoché Dorjé Dzupa Tohden
-
-  Student: Nyoshul Lungtok Tenpai Nyima Gyaltsen Palzangpo
-  Missing Teacher: Khenchen Ngawang Palzangpo
-
-  Student: Nyoshul Lungtok Tenpai Nyima Gyaltsen Palzangpo
-  Missing Teacher: Lama Ngakchen
-
-  Student: Nyoshul Lungtok Tenpai Nyima Gyaltsen Palzangpo
-  Missing Teacher: Terchen Lerab Lingpa
-
-  Student: Khenchen Ngawang Palzangpo (Khenpo Ngaga)
-  Missing Teacher: Khenchen Ngawang Palzangpo
-
-  Student: Khenchen Ngawang Palzangpo (Khenpo Ngaga)
-  Missing Teacher: 2nd Palyul Drupwang Pema Norbu
-
-  Student: Choktrul Orgyen Chemchok
-  Missing Teacher: Choktrul Sang-ngak Tendzin
-
-  Student: Lungtrul Shedrup Tenpai Nyima
-  Missing Teacher: Khen Ngawang Palzang Yangsi Rinpoché
-
-  Student: Zhenga Dorjé Chang Zhenpen Chökyi Nangwa
-  Missing Teacher: Bo Gangkar Rinpoché
 
 SAMPLE TRANSFORMATIONS (showing first 10)
 --------------------------------------------------------------------------------
@@ -105,7 +57,7 @@ Teacher: Buddha 5: Vajradhara
   Received from ← Buddha 4: Zhönnu Rolpa
 
 
-FULL TRANSFORMATION LIST (299 relationships)
+FULL TRANSFORMATION LIST (311 relationships)
 --------------------------------------------------------------------------------
 1st Dodrupchen, Jigmé Trinlé Özer → [8 students]
     • 2nd Dodrupchen, Jigmé Phuntsok Jungné
@@ -120,9 +72,10 @@ FULL TRANSFORMATION LIST (299 relationships)
     • 3rd Dodrupchen, Jigmé Tenpai Nyima
 2nd Dzogchen Rinpoche, Gyurmé Tekchok Tendzin → [1 students]
     • Barchung Lama Tashi Gyatso
-2nd Palyul Drupwang Pema Norbu, Rigdzin Kunzang Shedrupa → [2 students]
+2nd Palyul Drupwang Pema Norbu (Rigdzin Kunzang Shedrupa) → [3 students]
     • 3rd Palyul Drupwang Pema Norbu, Jigmé Tupten Shedrup Chokyi Drayang (Kyabjé Penor Rinpoché)
     • Dartang Choktrul Chökyi Dawa Rinpoché
+    • Khenchen Ngawang Palzangpo (Khenpo Ngaga)
 2nd Pema Lingpa, Tendzin Chökyi Drakpa → [1 students]
     • Khenpo Do-ngak Tendzin
 3rd Dodrupchen, Jigmé Tenpai Nyima → [1 students]
@@ -148,6 +101,8 @@ Aro Yeshe Jungné → [1 students]
     • Setsün
 Barchung Lama Tashi Gyatso → [1 students]
     • Gemang Gyalse Rigpai Dorjé (Gyalse Zhenpen Tayé Özer)
+Bo Gangkar Rinpoché (Karma Shedrup Chökyi Seng-gé) → [1 students]
+    • Zhenga Dorjé Chang Zhenpen Chökyi Nangwa
 Buddha 10: Kashyapa the Elder → [1 students]
     • Buddha 11: Ngondzok Gyalpo
 Buddha 11: Ngondzok Gyalpo → [1 students]
@@ -192,6 +147,8 @@ Choktrul Lozang Tendzin → [1 students]
     • Apang Terchen Orgyen Trinlé Lingpa
 Choktrul Orgyen Chemchok → [1 students]
     • Choktrul Sang-ngak Tendzin (Tulku Sang-ngak)
+Choktrul Sang-ngak Tendzin (Tulku Sang-ngak) → [1 students]
+    • Choktrul Orgyen Chemchok
 Chöjé Kunga Gyaltsen Palzang → [1 students]
     • Tulku Natsok Rangdrol
 Chönyön Dharma Seng-gé → [1 students]
@@ -307,14 +264,18 @@ Karmapa Rangjung Dorjé → [1 students]
     • Gyalwa Yungtön Dorjé
 Khedrup Delek Gyatso → [1 students]
     • Takok Jadral Chöjé Tashi Jungné
+Khen Ngawang Palzang Yangsi Rinpoché (Tekchok Tenpai Gyaltsen) → [1 students]
+    • Lungtrul Shedrup Tenpai Nyima
+Khen Rinpoché Dorjé Dzinpa Tobden (Tubten Gyaltsen Özer) → [1 students]
+    • Nyoshul Lungtok Tenpai Nyima Gyaltsen Palzangpo
 Khenchen Chabdal Lhundrup → [1 students]
     • Gyalse Tulku Drakpa Ozer
 Khenchen Gönpo → [1 students]
     • Khenpo Tsöndrü
 Khenchen Kunzang Palden Chodrak → [1 students]
     • Bötrul Do-ngak Tenpai Nyima
-Khenchen Ngawang Palzangpo (Khenpo Ngaga) → [17 students]
-    • 2nd Palyul Drupwang Pema Norbu, Rigdzin Kunzang Shedrupa
+Khenchen Ngawang Palzangpo (Khenpo Ngaga) → [18 students]
+    • 2nd Palyul Drupwang Pema Norbu (Rigdzin Kunzang Shedrupa)
     • Bairo Rinpoché
     • Chatral Rinpoché Sanjé Dorjé
     • Choktrul Orgyen Chemchok
@@ -326,6 +287,7 @@ Khenchen Ngawang Palzangpo (Khenpo Ngaga) → [17 students]
     • Khenchen Yizhin Norbu Tupten Gyaltsen Özer
     • Lama Rinpoché Orgyen Rigdzin
     • Lungtrul Shedrup Tenpai Nyima
+    • Nyoshul Lungtok Tenpai Nyima Gyaltsen Palzangpo
     • Polu Khen Rinpoché Dorjé
     • Taklung Tsetrul Rinpoché
     • Tersé Chimé Rinpoché
@@ -340,14 +302,17 @@ Khenpo Do-ngak Tendzin → [1 students]
     • Rigdzin Chenpo Trinlé Lhundrup
 Khugyur Salwaichok → [1 students]
     • Nyang Jangchub Drak and others
-Kumārarāja → [1 students]
+Kumārarāja → [2 students]
     • Karmapa Rangjung Dorjé
+    • Longchen Rabjampa
 Kunchen Ngawang Pema → [1 students]
     • Dzogchenpa Sönam Wangpo
 Kunzang Mingyur Paldron → [1 students]
     • Khenchen Oddiyyana
 Kyabgön Pema Gyatso → [1 students]
     • Dakki Chönyi Zangmo
+Lama Ngakchen (Orgyen Tutop Lingpa) → [1 students]
+    • Nyoshul Lungtok Tenpai Nyima Gyaltsen Palzangpo
 Lhatsün Namkha Jigmé → [1 students]
     • Dzogchenpa Longdzok Tadral
 Longchen Rabjampa → [10 students]
@@ -378,7 +343,8 @@ Mipam Jamyang Namgyal Gyatso → [3 students]
     • 3rd Katok Situ Kunchen Orgyen Chökyi Dorjé
     • 4th Zhechen Gyaltsap Gyurmé Pema Namgyal
     • Khenchen Jampal Dewai Nyima
-Namkha Dorjé → [1 students]
+Namkha Dorjé → [2 students]
+    • Guru Zhenpen
     • Ösel Longyang
 Neten Chokling → [1 students]
     • Orgyen Tobgyal Rinpoche
@@ -404,6 +370,8 @@ Nyoshul Lungtok Tenpai Nyima Gyaltsen Palzangpo → [7 students]
 Orgyen Tendzin Norbu → [2 students]
     • Dergé Lama Kunga Palden
     • Zhenga Dorjé Chang Zhenpen Chökyi Nangwa
+Orgyen Tobgyal Rinpoche → [1 students]
+    • 2nd Dzigar Kongtrul
 Padmasambhava → [4 students]
     • Karmapa Rangjung Dorjé
     • King Trisong Detsen
@@ -460,8 +428,9 @@ Terchen Gyurmé Dorjé → [6 students]
     • Kunzang Mingyur Paldron
     • Lotsawa Chöpal Gyatso (Lochen Dharma Shri)
     • Riksé Choktrul Pema Gyurmé Gyatso
-Terchen Lerab Lingpa (Tertön Sogyal) → [4 students]
+Terchen Lerab Lingpa (Tertön Sogyal) → [5 students]
     • Dretsé Tulku
+    • Nyoshul Lungtok Tenpai Nyima Gyaltsen Palzangpo
     • Pema Gyaltsen
     • Sungtrul Kunzang Nyima
     • Öpame Thekchok Dorje
@@ -482,9 +451,10 @@ Trulzhik Sang-gyé Önpo Sherab Gyatso → [1 students]
     • Gyalse Dawa Drakpa
 Trulzhik Senggé Gyabpa → [1 students]
     • Melong Dorjé
-Tulku Legden/Gyalse Legpa → [3 students]
+Tulku Legden/Gyalse Legpa → [4 students]
     • Jadralwa Zöpa
     • Karmapa Rangjung Dorjé
+    • Longchen Rabjampa
     • Meban Rinchen Lingpa
 Tulku Natsok Rangdrol → [1 students]
     • 2nd Pema Lingpa, Tendzin Chökyi Drakpa
