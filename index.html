@@ -1571,6 +1571,21 @@
             const timeAxis = svg.select('.time-axis');
             if (!timeAxis.node()) return;
 
+            const primordialZoneWidth = 200;
+
+            // Update primordial zone background
+            timeAxis.select('.primordial-zone')
+                .attr('x', axisX - 60);
+
+            // Update primordial label
+            timeAxis.select('.primordial-label')
+                .attr('x', axisX - 10)
+                .style('font-size', `${16 / transform.k}px`);
+
+            // Update primordial divider
+            timeAxis.select('.primordial-divider')
+                .attr('x1', axisX - 60)
+                .attr('x2', axisX + primordialZoneWidth - 60);
 
             // Update main axis line
             timeAxis.select('line')
@@ -1611,6 +1626,61 @@
             // Set initial axis position with enough space for labels
             const initialAxisX = margin.left + 20;  // Move further from left edge
 
+            // Define primordial time threshold
+            const PRIMORDIAL_THRESHOLD = 600;
+            const primordialY = yScale(PRIMORDIAL_THRESHOLD);
+
+            // Add primordial zone background
+            const primordialZoneWidth = 200;
+            timeAxis.append('rect')
+                .attr('class', 'primordial-zone')
+                .attr('x', initialAxisX - 60)
+                .attr('y', margin.top)
+                .attr('width', primordialZoneWidth)
+                .attr('height', primordialY - margin.top)
+                .attr('fill', 'url(#primordial-gradient)')
+                .attr('opacity', 0.3);
+
+            // Define gradient for primordial zone
+            const defs = container.select('defs').empty() ? container.append('defs') : container.select('defs');
+            const gradient = defs.append('linearGradient')
+                .attr('id', 'primordial-gradient')
+                .attr('x1', '0%')
+                .attr('y1', '0%')
+                .attr('x2', '0%')
+                .attr('y2', '100%');
+
+            gradient.append('stop')
+                .attr('offset', '0%')
+                .attr('stop-color', '#4a5f9f')
+                .attr('stop-opacity', 0.6);
+
+            gradient.append('stop')
+                .attr('offset', '100%')
+                .attr('stop-color', '#6b4f9f')
+                .attr('stop-opacity', 0.3);
+
+            // Add "Primordial Transmission" label
+            timeAxis.append('text')
+                .attr('x', initialAxisX - 10)
+                .attr('y', margin.top + 30)
+                .attr('class', 'primordial-label')
+                .style('fill', '#9ba4d4')
+                .style('font-size', '16px')
+                .style('font-style', 'italic')
+                .style('text-anchor', 'start')
+                .text('Primordial Transmission');
+
+            // Add visual divider at position 600
+            timeAxis.append('line')
+                .attr('class', 'primordial-divider')
+                .attr('x1', initialAxisX - 60)
+                .attr('x2', initialAxisX + primordialZoneWidth - 60)
+                .attr('y1', primordialY)
+                .attr('y2', primordialY)
+                .attr('stroke', '#7788cc')
+                .attr('stroke-width', 3)
+                .attr('stroke-dasharray', '5,5');
 
             // Add main axis line
             timeAxis.append('line')
@@ -1625,16 +1695,16 @@
             const timeMarkers = [];
             const timeExtent = d3.extent(sortedNodes, d => d.position);
 
-            // Add century markers
+            // Add century markers (skip primordial zone < 600)
             for (let year = Math.floor(timeExtent[0] / 100) * 100; year <= Math.ceil(timeExtent[1] / 100) * 100; year += 100) {
-                if (year >= timeExtent[0] && year <= timeExtent[1]) {
+                if (year >= timeExtent[0] && year <= timeExtent[1] && year >= PRIMORDIAL_THRESHOLD) {
                     timeMarkers.push({ year: year, type: 'century' });
                 }
             }
 
-            // Add 50-year markers
+            // Add 50-year markers (skip primordial zone < 600)
             for (let year = Math.floor(timeExtent[0] / 50) * 50; year <= Math.ceil(timeExtent[1] / 50) * 50; year += 50) {
-                if (year >= timeExtent[0] && year <= timeExtent[1] && year % 100 !== 0) {
+                if (year >= timeExtent[0] && year <= timeExtent[1] && year % 100 !== 0 && year >= PRIMORDIAL_THRESHOLD) {
                     timeMarkers.push({ year: year, type: 'half-century' });
                 }
             }
