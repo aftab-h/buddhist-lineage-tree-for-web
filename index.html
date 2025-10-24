@@ -1709,13 +1709,6 @@
                 }
             }
 
-            // Add node markers
-            sortedNodes.forEach((node, i) => {
-                if (i % 5 === 0) {
-                    timeMarkers.push({ year: node.position, type: 'node', node: node });
-                }
-            });
-
             timeMarkers.forEach(marker => {
                 const y = yScale(marker.year);
                 const g = timeAxis.append('g').attr('class', 'time-tick');
@@ -1748,14 +1741,6 @@
                         .attr('y2', y)
                         .attr('stroke', '#555')
                         .attr('stroke-width', 1);
-
-                } else if (marker.type === 'node') {
-                    g.append('circle')
-                        .attr('cx', initialAxisX)
-                        .attr('cy', y)
-                        .attr('r', 2)
-                        .attr('fill', '#4a90e2')
-                        .attr('opacity', 0.6);
                 }
             });
         }
