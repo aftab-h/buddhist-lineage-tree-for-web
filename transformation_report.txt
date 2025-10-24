@@ -1,0 +1,544 @@
+================================================================================
+TEACHING RELATIONSHIPS TRANSFORMATION REPORT
+================================================================================
+Date: 2025-10-24 15:47:51
+
+SUMMARY
+--------------------------------------------------------------------------------
+Total relationships in 'Received_Teachings_From': 316
+Total relationships in 'Taught':                 281
+✗ MISMATCH: Relationship counts differ!
+  Difference: 35
+
+MISSING NAMES (teachers not found in Name_English)
+--------------------------------------------------------------------------------
+  Student: Longchen Rabjampa
+  Missing Teacher: Kumārarāja, Gyalsé Lekpa Gyaltsen
+
+  Student: Longchen Rabjampa
+  Missing Teacher: Rigdzin Chenpo Kumaradza
+
+  Student: 4th Zhechen Gyaltsap Gyurmé Pema Namgyal
+  Missing Teacher: Mipham Rinpoche
+
+  Student: 2nd Dzigar Kongtrul
+  Missing Teacher: Orgyen Tobgyal
+
+  Student: 2nd Dzigar Kongtrul
+  Missing Teacher: Orgyen Tobgyal
+
+  Student: 3rd Katok Situ Kunchen Orgyen Chökyi Dorjé
+  Missing Teacher: Mipham Rinpoche
+
+  Student: Khedrup Delek Gyatso
+  Missing Teacher: Takok Jadral Chöjé Tashi Jungne
+
+  Student: Guru Zhenpen
+  Missing Teacher: Namkha Dorje
+
+  Student: Nyoshul Lungtok Tenpai Nyima Gyaltsen Palzangpo
+  Missing Teacher: Khen Rinpoché Dorjé Dzupa Tohden
+
+  Student: Nyoshul Lungtok Tenpai Nyima Gyaltsen Palzangpo
+  Missing Teacher: Khenchen Ngawang Palzangpo
+
+  Student: Nyoshul Lungtok Tenpai Nyima Gyaltsen Palzangpo
+  Missing Teacher: Lama Ngakchen
+
+  Student: Nyoshul Lungtok Tenpai Nyima Gyaltsen Palzangpo
+  Missing Teacher: Terchen Lerab Lingpa
+
+  Student: Khenchen Ngawang Palzangpo (Khenpo Ngaga)
+  Missing Teacher: Khenchen Ngawang Palzangpo
+
+  Student: Khenchen Ngawang Palzangpo (Khenpo Ngaga)
+  Missing Teacher: 2nd Palyul Drupwang Pema Norbu
+
+  Student: Choktrul Orgyen Chemchok
+  Missing Teacher: Choktrul Sang-ngak Tendzin
+
+  Student: Lungtrul Shedrup Tenpai Nyima
+  Missing Teacher: Khen Ngawang Palzang Yangsi Rinpoché
+
+  Student: Zhenga Dorjé Chang Zhenpen Chökyi Nangwa
+  Missing Teacher: Bo Gangkar Rinpoché
+
+SAMPLE TRANSFORMATIONS (showing first 10)
+--------------------------------------------------------------------------------
+Teacher: Samantabhadra / Samantabhadrī
+  Taught → Buddhas of the Five Families
+
+Teacher: Buddhas of the Five Families
+  Taught → Supreme Emanation Blessing, Sublime Wisdom Emanation (Vajradhara)
+  Received from ← Samantabhadra / Samantabhadrī
+
+Teacher: Supreme Emanation Blessing
+  Taught → Statue, Only Child of the Buddha, Vajra
+  Received from ← Buddhas of the Five Families
+
+Teacher: Sublime Wisdom Emanation (Vajradhara)
+  Taught → Vajrasattva, Vajrapāṇi, Buddha 1: Cheu Nangwa Dampa Samkyi Mikhyapa
+  Received from ← Buddhas of the Five Families
+
+Teacher: Vajrapāṇi
+  Taught → Garab Dorjé
+  Received from ← Sublime Wisdom Emanation (Vajradhara)
+
+Teacher: Buddha 1: Cheu Nangwa Dampa Samkyi Mikhyapa
+  Taught → Buddha 2: Cheu Ö Mitrukpa
+  Received from ← Sublime Wisdom Emanation (Vajradhara)
+
+Teacher: Buddha 2: Cheu Ö Mitrukpa
+  Taught → Buddha 3: Jampal Jigpa Kyopa
+  Received from ← Buddha 1: Cheu Nangwa Dampa Samkyi Mikhyapa
+
+Teacher: Buddha 3: Jampal Jigpa Kyopa
+  Taught → Buddha 4: Zhönnu Rolpa
+  Received from ← Buddha 2: Cheu Ö Mitrukpa
+
+Teacher: Buddha 4: Zhönnu Rolpa
+  Taught → Buddha 5: Vajradhara
+  Received from ← Buddha 3: Jampal Jigpa Kyopa
+
+Teacher: Buddha 5: Vajradhara
+  Taught → Buddha 6: Zhönnu Pawo Tobden Chenpo
+  Received from ← Buddha 4: Zhönnu Rolpa
+
+
+FULL TRANSFORMATION LIST (299 relationships)
+--------------------------------------------------------------------------------
+1st Dodrupchen, Jigmé Trinlé Özer → [8 students]
+    • 2nd Dodrupchen, Jigmé Phuntsok Jungné
+    • 4th Dzogchen Rinpoche, Mingyur Namkhai Dorjé
+    • Chogyal Ngagi Wangpo
+    • Choklung Repa Damtsik Dorje
+    • Chöying Tobden Dorjé
+    • Du Khyentsé Yeshé Dorjé
+    • Gemang Gyalse Rigpai Dorjé (Gyalse Zhenpen Tayé Özer)
+    • Trehorpa Kyabgön Yeshe Gyaltsen
+2nd Dodrupchen, Jigmé Phuntsok Jungné → [1 students]
+    • 3rd Dodrupchen, Jigmé Tenpai Nyima
+2nd Dzogchen Rinpoche, Gyurmé Tekchok Tendzin → [1 students]
+    • Barchung Lama Tashi Gyatso
+2nd Palyul Drupwang Pema Norbu, Rigdzin Kunzang Shedrupa → [2 students]
+    • 3rd Palyul Drupwang Pema Norbu, Jigmé Tupten Shedrup Chokyi Drayang (Kyabjé Penor Rinpoché)
+    • Dartang Choktrul Chökyi Dawa Rinpoché
+2nd Pema Lingpa, Tendzin Chökyi Drakpa → [1 students]
+    • Khenpo Do-ngak Tendzin
+3rd Dodrupchen, Jigmé Tenpai Nyima → [1 students]
+    • 4th Dodrupchen, Jigmé Trinlé Palbar
+4th Zhechen Gyaltsap Gyurmé Pema Namgyal → [2 students]
+    • Dilgo Khyentsé Rinpoche Rabsel Dawa
+    • Dilgo Khyentsé Rinpoche Rabsel Dawa
+Adzom Drukpa Rinpoche Drodul Pawo Dorjé → [9 students]
+    • Adzom Druktrul Tubten Pema Trinlé
+    • Adzom Gyalse Gyurmé Dorjé
+    • Dilgo Khyentsé Rinpoche Rabsel Dawa
+    • Golok Lama Kunzang
+    • Jamyang Khyentse Chökyi Lodrö
+    • Jamyang Khyentse Chökyi Lodrö
+    • Serta Rinpoche
+    • Tsö Patrul Rinpoche
+    • Yukhok Jadralwa Chöying Rangdrol
+Adzom Gyalse Gyurmé Dorjé → [1 students]
+    • Khen Rinpoche Karma Dorjé
+Apang Terchen Orgyen Trinlé Lingpa → [1 students]
+    • Jangchub Dorjé
+Aro Yeshe Jungné → [1 students]
+    • Setsün
+Barchung Lama Tashi Gyatso → [1 students]
+    • Gemang Gyalse Rigpai Dorjé (Gyalse Zhenpen Tayé Özer)
+Buddha 10: Kashyapa the Elder → [1 students]
+    • Buddha 11: Ngondzok Gyalpo
+Buddha 11: Ngondzok Gyalpo → [1 students]
+    • Buddha 12: Śākyamuni Buddha
+Buddha 1: Cheu Nangwa Dampa Samkyi Mikhyapa → [1 students]
+    • Buddha 2: Cheu Ö Mitrukpa
+Buddha 2: Cheu Ö Mitrukpa → [1 students]
+    • Buddha 3: Jampal Jigpa Kyopa
+Buddha 3: Jampal Jigpa Kyopa → [1 students]
+    • Buddha 4: Zhönnu Rolpa
+Buddha 4: Zhönnu Rolpa → [1 students]
+    • Buddha 5: Vajradhara
+Buddha 5: Vajradhara → [1 students]
+    • Buddha 6: Zhönnu Pawo Tobden Chenpo
+Buddha 6: Zhönnu Pawo Tobden Chenpo → [1 students]
+    • Buddha 7: Drangsong Topai Gyalpo
+Buddha 7: Drangsong Topai Gyalpo → [1 students]
+    • Buddha 8: Ser-Ö Dampa
+Buddha 8: Ser-Ö Dampa → [1 students]
+    • Buddha 9: Tsewai Rolpai Lodrö
+Buddha 9: Tsewai Rolpai Lodrö → [1 students]
+    • Buddha 10: Kashyapa the Elder
+Buddhas of the Five Families → [2 students]
+    • Sublime Wisdom Emanation (Vajradhara)
+    • Supreme Emanation Blessing
+Bé Lodrö Wangchuk → [1 students]
+    • Drom Rinchen Bar
+Bötrul Do-ngak Tenpai Nyima → [4 students]
+    • Khen Chökhyap
+    • Khen Rinpoché Pema Tsewang Lhundrup (Khenpo Petsé)
+    • Mewa Khenchen Tupten
+    • Rahor Khenchen Tupten
+Changma Khenchen Tupten Chöpel → [1 students]
+    • Khenchen Jigmé Puntsok
+Chatral Rinpoché Sanjé Dorjé → [1 students]
+    • Dudjom Yangsi a.k.a. Dudjom Sangye Pema Shepa
+Chetsun Senggé Wangchuk → [1 students]
+    • Zhangtön Tashi Dorjé
+Chogyal Ngagi Wangpo → [1 students]
+    • Zhabkar Tsokdruk Rangdrol
+Choktrul Lozang Tendzin → [1 students]
+    • Apang Terchen Orgyen Trinlé Lingpa
+Choktrul Orgyen Chemchok → [1 students]
+    • Choktrul Sang-ngak Tendzin (Tulku Sang-ngak)
+Chöjé Kunga Gyaltsen Palzang → [1 students]
+    • Tulku Natsok Rangdrol
+Chönyön Dharma Seng-gé → [1 students]
+    • Dakki Chönyi Zangmo
+Dakki Chönyi Zangmo → [1 students]
+    • Zhadeu Trulzhik Chenpo Ngawang Chökyi Lodro
+Dangma Lhundrup Gyaltsen → [1 students]
+    • Chetsun Senggé Wangchuk
+Dawa Gyaltsen → [1 students]
+    • Rigdzin Pema Trinlé
+Dergé Lama Kunga Palden → [1 students]
+    • Choktrul Lozang Tendzin
+Dilgo Khyentsé Rinpoche Rabsel Dawa → [6 students]
+    • 2nd Dzigar Kongtrul
+    • Dilgo Khyentsé Rinpoche Rabsel Dawa
+    • Dilgo Khyentsé Yangsi
+    • Dilgo Khyentsé Yangsi
+    • Jigme Khyentse Rinpoche
+    • Sogyal Rinpoche
+Drimé Dashar and others → [1 students]
+    • Longchen Rabjampa
+Drom Rinchen Bar → [1 students]
+    • Dangma Lhundrup Gyaltsen
+Drupchen Kunzang Dorje → [1 students]
+    • Chöjé Kunga Gyaltsen Palzang
+Du Khyentsé Yeshé Dorjé → [1 students]
+    • 4th Dzogchen Rinpoche, Mingyur Namkhai Dorjé
+Dudjom Rinpoche Jigdral Yeshe Dorjé → [2 students]
+    • Dudjom Yangsi a.k.a. Dudjom Sangye Pema Shepa
+    • Minling Trichen Kunzang Wangyal
+Dza Pukhung Gyurmé Ngedön Wangpo → [1 students]
+    • Dudjom Rinpoche Jigdral Yeshe Dorjé
+Dzogchenpa Sönam Rigdzin → [1 students]
+    • Kunchen Ngawang Pema
+Dzogchenpa Sönam Wangpo → [1 students]
+    • Lhatsün Namkha Jigmé
+Garab Dorjé → [4 students]
+    • Mañjuśrimitra
+    • Vairocana
+    • Śrī Siṃha
+    • Ḍākinīs
+Golok Khenchen Munsel → [1 students]
+    • Choktrul Garwang Nyima
+Guru Jober → [1 students]
+    • Trulzhik Senggé Gyabpa
+Guru Zhenpen → [1 students]
+    • Namkha Dorjé
+Gyalse Dawa Drakpa → [1 students]
+    • Drupchen Kunzang Dorje
+Gyalse Rinchen Namgyal → [2 students]
+    • Khenchen Oddiyyana
+    • Ngak Rabjampa Orgyen Chodrak
+Gyalse Tulku Drakpa Ozer → [1 students]
+    • Trulzhik Sang-gyé Önpo Sherab Gyatso
+Jamgön Kongtrul Yönten Gyatso Lodrö Tayé → [9 students]
+    • 3rd Katok Situ Kunchen Orgyen Chökyi Dorjé
+    • 3rd Katok Situ Kunchen Orgyen Chökyi Dorjé
+    • 4th Zhechen Gyaltsap Gyurmé Pema Namgyal
+    • 4th Zhechen Gyaltsap Gyurmé Pema Namgyal
+    • Chungtrul Pema Wangchen
+    • Chungtrul Pema Wangchen
+    • Gyakob Tulku Kunzang
+    • Jedrung Trinlé Jampa Jungné
+    • Tokden Śākya Śrī
+Jamyang Khyentse Chökyi Lodrö → [16 students]
+    • 2nd Dzigar Kongtrul
+    • 2nd Dzigar Kongtrul
+    • Dilgo Khyentsé Rinpoche Rabsel Dawa
+    • Dilgo Khyentsé Rinpoche Rabsel Dawa
+    • Katok Öntrul Rinpoche
+    • Katok Öntrul Rinpoche
+    • Khen Rinpoche Karma Dorjé
+    • Lakar Sogyal Choktrul Rinpoche
+    • Lakar Sogyal Choktrul Rinpoche
+    • Minling Trichen Kunzang Wangyal
+    • Minling Trichen Kunzang Wangyal
+    • Neten Chokling
+    • Orgyen Tobgyal Rinpoche
+    • Orgyen Tobgyal Rinpoche
+    • Sakya Khen Rinpoche Appey
+    • Sakya Khen Rinpoche Appey
+Jamyang Khyentsé Wangpo → [18 students]
+    • 3rd Katok Situ Kunchen Orgyen Chökyi Dorjé
+    • 3rd Katok Situ Kunchen Orgyen Chökyi Dorjé
+    • 4th Zhechen Gyaltsap Gyurmé Pema Namgyal
+    • 4th Zhechen Gyaltsap Gyurmé Pema Namgyal
+    • 5th Dzogchen Rinpoche Thupten Chökyi Dorjé
+    • Adzom Drukpa Rinpoche Drodul Pawo Dorjé
+    • Adzom Drukpa Rinpoche Drodul Pawo Dorjé
+    • Dilgo Khyentsé Rinpoche Rabsel Dawa
+    • Dza Pukhung Gyurmé Ngedön Wangpo
+    • Dza Pukhung Gyurmé Ngedön Wangpo
+    • Gyakob Tulku Kunzang
+    • Jamgön Kongtrul Yönten Gyatso Lodrö Tayé
+    • Jamyang Khyentse Chökyi Lodrö
+    • Jedrung Trinlé Jampa Jungné
+    • Mipam Jamyang Namgyal Gyatso
+    • Terchen Orgyen Chokgyur Lingpa
+    • Terchen Orgyen Chokgyur Lingpa
+    • Öpame Thekchok Dorje
+Jangtön Namdak → [1 students]
+    • Kadampa Deshek
+Jedrung Trinlé Jampa Jungné → [2 students]
+    • Dudjom Rinpoche Jigdral Yeshe Dorjé
+    • Kangyur Rinpoche Longchen Yeshé Dorjé
+Jetsunma Trinle Chodron → [1 students]
+    • Jamyang Khyentsé Wangpo
+Jigmé Gyalwai Nyugu → [1 students]
+    • Paltrul Orgyen Jigmé Chokyi Wangpo
+Jñānasūtra → [1 students]
+    • Vimalamitra
+Karmapa Rangjung Dorjé → [1 students]
+    • Gyalwa Yungtön Dorjé
+Khedrup Delek Gyatso → [1 students]
+    • Takok Jadral Chöjé Tashi Jungné
+Khenchen Chabdal Lhundrup → [1 students]
+    • Gyalse Tulku Drakpa Ozer
+Khenchen Gönpo → [1 students]
+    • Khenpo Tsöndrü
+Khenchen Kunzang Palden Chodrak → [1 students]
+    • Bötrul Do-ngak Tenpai Nyima
+Khenchen Ngawang Palzangpo (Khenpo Ngaga) → [17 students]
+    • 2nd Palyul Drupwang Pema Norbu, Rigdzin Kunzang Shedrupa
+    • Bairo Rinpoché
+    • Chatral Rinpoché Sanjé Dorjé
+    • Choktrul Orgyen Chemchok
+    • Golok Khenchen Munsel
+    • Golok Lama Garchö
+    • Katok Chaktsa Rinpoché
+    • Khen Rinpoché Lekshé Jorden
+    • Khenchen Nuden Khyentsei Lodrö
+    • Khenchen Yizhin Norbu Tupten Gyaltsen Özer
+    • Lama Rinpoché Orgyen Rigdzin
+    • Lungtrul Shedrup Tenpai Nyima
+    • Polu Khen Rinpoché Dorjé
+    • Taklung Tsetrul Rinpoché
+    • Tersé Chimé Rinpoché
+    • Trakya Lama Rinpoché Palden
+    • Tromgé Choktrul Arik Rinpoché
+Khenchen Oddiyyana → [1 students]
+    • Trichen Gyurme Trinle Namgyal
+Khenchen Yönten Gyatso → [2 students]
+    • Changma Khenchen Tupten Chöpel
+    • Washul Mewai Khenchen Tsewang Rigdzin
+Khenpo Do-ngak Tendzin → [1 students]
+    • Rigdzin Chenpo Trinlé Lhundrup
+Khugyur Salwaichok → [1 students]
+    • Nyang Jangchub Drak and others
+Kumārarāja → [1 students]
+    • Karmapa Rangjung Dorjé
+Kunchen Ngawang Pema → [1 students]
+    • Dzogchenpa Sönam Wangpo
+Kunzang Mingyur Paldron → [1 students]
+    • Khenchen Oddiyyana
+Kyabgön Pema Gyatso → [1 students]
+    • Dakki Chönyi Zangmo
+Lhatsün Namkha Jigmé → [1 students]
+    • Dzogchenpa Longdzok Tadral
+Longchen Rabjampa → [10 students]
+    • Dokhampa Dengom Chödrak Zangpo
+    • Guru Ösel Rangdrol
+    • Jadralwa Zöpa
+    • Jamyang Khyentsé Wangpo
+    • Khedrup Delek Gyatso
+    • Khenchen Chabdal Lhundrup
+    • Orgyen Chöjé
+    • Rigdzin Jigmé Lingpa
+    • Rigzin Gödem
+    • Tulku Paljor Gyaltsen
+Lungtrul Shedrup Tenpai Nyima → [5 students]
+    • Choktrul Nyima Gyaltsen Rinpoché
+    • Dragyab Lama Choden Rinpoché
+    • Jokhang Choktrul Rinpoché
+    • Khen Ngawang Palzang Yangsi Rinpoché (Tekchok Tenpai Gyaltsen)
+    • Nyoshul Khenpo Jamyang Dorjé
+Mañjuśrimitra → [1 students]
+    • Śrī Siṃha
+Meban Rinchen Lingpa → [2 students]
+    • Jadralwa Zöpa
+    • Rigzin Gödem
+Melong Dorjé → [1 students]
+    • Kumārarāja
+Mipam Jamyang Namgyal Gyatso → [3 students]
+    • 3rd Katok Situ Kunchen Orgyen Chökyi Dorjé
+    • 4th Zhechen Gyaltsap Gyurmé Pema Namgyal
+    • Khenchen Jampal Dewai Nyima
+Namkha Dorjé → [1 students]
+    • Ösel Longyang
+Neten Chokling → [1 students]
+    • Orgyen Tobgyal Rinpoche
+Ngak Rabjampa Orgyen Chodrak → [2 students]
+    • Jetsunma Trinle Chodron
+    • Ngakyi Rabjampa Orgyen Palgön (Drupwang Shrinatha)
+Ngakyi Rabjampa Orgyen Palgön (Drupwang Shrinatha) → [1 students]
+    • Rigdzin Jigmé Lingpa
+Ngenlam Jangchub Gyaltsen → [1 students]
+    • Zadam Rinchenyik
+Nyang Tingzin Zangpo → [1 students]
+    • Bé Lodrö Wangchuk
+Nyima Bum → [1 students]
+    • Guru Jober
+Nyoshul Lungtok Tenpai Nyima Gyaltsen Palzangpo → [7 students]
+    • Khen Rinpoché Dorjé Dzinpa Tobden (Tubten Gyaltsen Özer)
+    • Khenchen Ngawang Palzangpo (Khenpo Ngaga)
+    • Lama Ngakchen (Orgyen Tutop Lingpa)
+    • Lhazang Lama Rigdzin
+    • Naktar Tulku Sonam Chokdrup
+    • Sa-ngen Lama Wangchen
+    • Terchen Lerab Lingpa (Tertön Sogyal)
+Orgyen Tendzin Norbu → [2 students]
+    • Dergé Lama Kunga Palden
+    • Zhenga Dorjé Chang Zhenpen Chökyi Nangwa
+Padmasambhava → [4 students]
+    • Karmapa Rangjung Dorjé
+    • King Trisong Detsen
+    • Princess Lhacam Pemasel
+    • Yeshe Tsogyel
+Palpung Tai Situ Rinpoché Pema Wangchok Gyalpo → [2 students]
+    • 1st Dzigar Kongtrul Rinpoché
+    • Zurmang Khenchen Pema Namgyal
+Paltrul Orgyen Jigmé Chokyi Wangpo → [10 students]
+    • 2nd Katok Situ, Chökyi Lodrö
+    • Dzogchen Khenchen Pema Dorje
+    • Golok Lang Lama Tupten Chokyi Jorpa
+    • Jamyang Khyentsé Wangpo
+    • Khenchen Kunzang Palden Chodrak
+    • Khenchen Yönten Gyatso
+    • Minyak Kunzang Sönam
+    • Nyoshul Lungtok Tenpai Nyima Gyaltsen Palzangpo
+    • Orgyen Tendzin Norbu
+    • Tendzin Drakpa
+Pang Sang-gyé Gönpo → [1 students]
+    • Ngenlam Jangchub Gyaltsen
+Pema Ledreltsel/Tsultrim Dorjé → [1 students]
+    • Tulku Legden/Gyalse Legpa
+Rigdzin Chenpo Trinlé Lhundrup → [1 students]
+    • Terchen Gyurmé Dorjé
+Rigdzin Jigmé Lingpa → [5 students]
+    • 1st Dodrupchen, Jigmé Trinlé Özer
+    • 1st Katok Situ
+    • Getsé Jigmé Ngotsar Tendzin
+    • Jigmé Gyalwai Nyugu
+    • Jigmé Kundrol Namgyal
+Rigdzin Pema Lingpa → [1 students]
+    • Dawa Gyaltsen
+Ritrul Rigdzin Chögyal a.k.a. Drubwang Adzin Rinpoche → [1 students]
+    • Namkha Drimed Rinpoche
+Samantabhadra / Samantabhadrī → [1 students]
+    • Buddhas of the Five Families
+Setsün → [1 students]
+    • Jangtön Namdak
+Sublime Wisdom Emanation (Vajradhara) → [3 students]
+    • Buddha 1: Cheu Nangwa Dampa Samkyi Mikhyapa
+    • Vajrapāṇi
+    • Vajrasattva
+Supreme Emanation Blessing → [3 students]
+    • Only Child of the Buddha
+    • Statue
+    • Vajra
+Takok Jadral Chöjé Tashi Jungné → [1 students]
+    • Guru Zhenpen
+Terchen Gyurmé Dorjé → [6 students]
+    • 2nd Dzogchen Rinpoche, Gyurmé Tekchok Tendzin
+    • Gyalse Rinchen Namgyal
+    • Katokpa Gyalse Rinpoche Sonam Detsen
+    • Kunzang Mingyur Paldron
+    • Lotsawa Chöpal Gyatso (Lochen Dharma Shri)
+    • Riksé Choktrul Pema Gyurmé Gyatso
+Terchen Lerab Lingpa (Tertön Sogyal) → [4 students]
+    • Dretsé Tulku
+    • Pema Gyaltsen
+    • Sungtrul Kunzang Nyima
+    • Öpame Thekchok Dorje
+Terchen Orgyen Chokgyur Lingpa → [2 students]
+    • Neten Chokling
+    • Tulku Urgyen Rinpoche
+Tokden Śākya Śrī → [2 students]
+    • Lopön Rinpoche Lama Sönam Zangpo
+    • Ritrul Rigdzin Chögyal a.k.a. Drubwang Adzin Rinpoche
+Trehorpa Kyabgön Yeshe Gyaltsen → [1 students]
+    • Chönyön Dharma Seng-gé
+Trichen Gyurme Trinle Namgyal → [1 students]
+    • Jetsunma Trinle Chodron
+Tromgé Choktrul Arik Rinpoché → [2 students]
+    • Chagdud Tulku Padma Gargyi Wangchuk
+    • Khen Lama Rinpoché Achuk
+Trulzhik Sang-gyé Önpo Sherab Gyatso → [1 students]
+    • Gyalse Dawa Drakpa
+Trulzhik Senggé Gyabpa → [1 students]
+    • Melong Dorjé
+Tulku Legden/Gyalse Legpa → [3 students]
+    • Jadralwa Zöpa
+    • Karmapa Rangjung Dorjé
+    • Meban Rinchen Lingpa
+Tulku Natsok Rangdrol → [1 students]
+    • 2nd Pema Lingpa, Tendzin Chökyi Drakpa
+Tulku Urgyen Rinpoche → [1 students]
+    • Dilgo Khyentsé Yangsi
+Vairocana → [2 students]
+    • Pang Sang-gyé Gönpo
+    • Yudra Nyingpo
+Vajrapāṇi → [1 students]
+    • Garab Dorjé
+Vimalamitra → [2 students]
+    • King Trisong Detsen
+    • Nyang Tingzin Zangpo
+Yeshe Tsogyel → [1 students]
+    • Princess Lhacam Pemasel
+Yudra Nyingpo → [2 students]
+    • Aro Yeshe Jungné
+    • Drimé Dashar and others
+Yukhok Jadralwa Chöying Rangdrol → [3 students]
+    • 4th Dodrupchen Jikmé Trinlé Palbar
+    • Gyarong Tsöndrü
+    • Rakor Khen Drimé Özer
+Zadam Rinchenyik → [1 students]
+    • Khugyur Salwaichok
+Zhabkar Tsokdruk Rangdrol → [1 students]
+    • Kyabgön Pema Gyatso
+Zhangtön Tashi Dorjé → [1 students]
+    • Nyima Bum
+Zhenga Dorjé Chang Zhenpen Chökyi Nangwa → [11 students]
+    • Bo Gangkar Rinpoché (Karma Shedrup Chökyi Seng-gé)
+    • Drukpa Geshé Tenpa Rinchen
+    • Khenchen Gönpo
+    • Khenchen Ngawang Palzangpo (Khenpo Ngaga)
+    • Khunu Rinpoché Tendzin Gyaltsen
+    • Nyarong Guru Tulku
+    • Palpung Tai Situ Rinpoché Pema Wangchok Gyalpo
+    • Rahor Palden Chökyi Drakpa
+    • Tuksé Doring Choktrul Rinpoché
+    • Tuksé Serkha Chodrak
+    • Zurmang Khenchen Pema Namgyal
+Zurmang Khenchen Pema Namgyal → [1 students]
+    • Zurmang Tenga Rinpoché
+Öpame Thekchok Dorje → [2 students]
+    • Gyatrul Rinpoche
+    • Orgyen Tobgyal Rinpoche
+Ösel Longyang → [2 students]
+    • Dzogchenpa Sönam Rigdzin
+    • Namkha Dorjé
+Śrī Siṃha → [4 students]
+    • Jñānasūtra
+    • Padmasambhava
+    • Vairocana
+    • Vimalamitra
+
+================================================================================
+END OF REPORT
+================================================================================
