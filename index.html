@@ -1280,7 +1280,7 @@
                     lineage: d.Lineage || 'All lineages',
                     position: positionDate,
                     teachers: (d.Received_Teachings_From || '').split(';').filter(t => t.trim()),
-                    students: (d.Gave_Teachings_To || '').split(';').filter(s => s.trim()),
+                    students: [], // Will be computed based on who lists this person as teacher
                     incarnationOf: (d.Incarnation_Of || '').split(';').filter(i => i.trim()),
                     familyFrom: (d.Family_Received_From || '').split(';').filter(f => f.trim()),
                     emanatedAs: (d['Eminated as'] || '').split(';').filter(e => e.trim()),
@@ -1297,6 +1297,17 @@
                     linksNames: d.Links_Names || '',
                     linksUrls: d.Links_URLs || ''
                 };
+            });
+
+            // Compute students array for each node based on who lists them as teacher
+            nodes.forEach(node => {
+                nodes.forEach(potentialStudent => {
+                    if (potentialStudent.teachers.includes(node.name)) {
+                        if (!node.students.includes(potentialStudent.name)) {
+                            node.students.push(potentialStudent.name);
+                        }
+                    }
+                });
             });
 
             // Process links
@@ -1880,8 +1891,8 @@
                             d.name.toLowerCase().includes('samantabhadri')) {
                             return 16; // Larger for the primordial Buddha
                         }
-                        const connections = d.teachers.length + d.students.length;
-                        return Math.max(4, Math.min(12, connections * 1.2 + 4));
+                        const students = d.students.length;
+                        return Math.max(4, Math.min(12, students * 1.5 + 4));
                     })
                     .attr('class', d => `node ${d.transmission.toLowerCase().replace(/\s+/g, '-')}`)
                     .call(node => node.append('title').text(d => getDisplayName(d)))
@@ -2597,8 +2608,8 @@
                         d.name.toLowerCase().includes('samantabhadri')) {
                         return 16;
                     }
-                    const connections = d.teachers.length + d.students.length;
-                    return Math.max(4, Math.min(12, connections * 1.2 + 4));
+                    const students = d.students.length;
+                    return Math.max(4, Math.min(12, students * 1.5 + 4));
                 });
 
             linkElements
