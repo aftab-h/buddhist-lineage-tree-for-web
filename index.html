@@ -1571,21 +1571,22 @@
             const timeAxis = svg.select('.time-axis');
             if (!timeAxis.node()) return;
 
-            const primordialZoneWidth = 200;
+            const primordialZoneWidth = 150;
 
             // Update primordial zone background
             timeAxis.select('.primordial-zone')
-                .attr('x', axisX - 60);
+                .attr('x', axisX - 60)
+                .attr('width', primordialZoneWidth / transform.k);
 
             // Update primordial label
             timeAxis.select('.primordial-label')
                 .attr('x', axisX - 10)
-                .style('font-size', `${16 / transform.k}px`);
+                .style('font-size', `${14 / transform.k}px`);
 
             // Update primordial divider
             timeAxis.select('.primordial-divider')
                 .attr('x1', axisX - 60)
-                .attr('x2', axisX + primordialZoneWidth - 60);
+                .attr('x2', axisX + (primordialZoneWidth / transform.k) - 60);
 
             // Update century tick marks (x1: -30, x2: -15)
             timeAxis.selectAll('.time-tick line[stroke="#888"]')
@@ -1617,7 +1618,7 @@
             const primordialY = yScale(PRIMORDIAL_THRESHOLD);
 
             // Add primordial zone background
-            const primordialZoneWidth = 200;
+            const primordialZoneWidth = 150;
             timeAxis.append('rect')
                 .attr('class', 'primordial-zone')
                 .attr('x', initialAxisX - 60)
@@ -1651,11 +1652,12 @@
                 .attr('x', initialAxisX - 10)
                 .attr('y', margin.top + 30)
                 .attr('class', 'primordial-label')
-                .style('fill', '#9ba4d4')
-                .style('font-size', '16px')
-                .style('font-style', 'italic')
+                .style('fill', '#aaa')
+                .style('font-size', '14px')
                 .style('text-anchor', 'start')
-                .text('Primordial Transmission');
+                .style('stroke', 'none')
+                .style('stroke-width', '0px')
+                .text('Primordial Time');
 
             // Add visual divider at position 600
             timeAxis.append('line')
@@ -2674,6 +2676,26 @@
         function togglePlaybackSettings() {
             const dropdown = document.getElementById('playback-settings');
             dropdown.classList.toggle('show');
+
+            // Add click-away listener when opening
+            if (dropdown.classList.contains('show')) {
+                setTimeout(() => {
+                    document.addEventListener('click', closePlaybackSettingsOnClickAway);
+                }, 0);
+            } else {
+                document.removeEventListener('click', closePlaybackSettingsOnClickAway);
+            }
+        }
+
+        function closePlaybackSettingsOnClickAway(event) {
+            const dropdown = document.getElementById('playback-settings');
+            const settingsBtn = document.querySelector('.settings-btn');
+
+            // Don't close if clicking inside the dropdown or on the settings button
+            if (!dropdown.contains(event.target) && !settingsBtn.contains(event.target)) {
+                dropdown.classList.remove('show');
+                document.removeEventListener('click', closePlaybackSettingsOnClickAway);
+            }
         }
 
         // Mobile-first behavior - panels start hidden
