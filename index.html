@@ -1279,7 +1279,7 @@
                     transmission: d.Transmission_Mode || 'Aural',
                     lineage: d.Lineage || 'All lineages',
                     position: positionDate,
-                    teachers: (d.Received_Teachings_From || '').split(';').filter(t => t.trim()),
+                    teachers: [], // Will be computed from who lists this person in their Taught column
                     students: (d.Taught || '').split(';').filter(s => s.trim()),
                     incarnationOf: (d.Incarnation_Of || '').split(';').filter(i => i.trim()),
                     familyFrom: (d.Family_Received_From || '').split(';').filter(f => f.trim()),
@@ -1299,7 +1299,16 @@
                 };
             });
 
-            // Students are now read directly from the 'Taught' CSV column (no computation needed)
+            // Compute teachers array for each node based on who lists them in their Taught column
+            nodes.forEach(node => {
+                nodes.forEach(potentialTeacher => {
+                    if (potentialTeacher.students.includes(node.name)) {
+                        if (!node.teachers.includes(potentialTeacher.name)) {
+                            node.teachers.push(potentialTeacher.name);
+                        }
+                    }
+                });
+            });
 
             // Process links
             links = [];
