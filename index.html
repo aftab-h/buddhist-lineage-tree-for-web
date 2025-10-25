@@ -95,25 +95,49 @@
             stroke-dasharray: 1,1;
         }
 
-        /* Traceback highlighting styles */
+        /* Traceback highlighting styles - color set by JavaScript */
         .node.traced {
-            stroke: #ffff00 !important;
             stroke-width: 3px !important;
             opacity: 1 !important;
+            /* stroke color set dynamically */
+        }
+
+        .node.traced.upstream {
             filter: drop-shadow(0 0 10px #ffff00);
+        }
+
+        .node.traced.downstream {
+            filter: drop-shadow(0 0 10px #87CEEB);
         }
 
         .node.traced.target {
             stroke-width: 5px !important;
+            filter: brightness(1.3) !important;
+        }
+
+        .node.traced.target.upstream {
             filter: drop-shadow(0 0 15px #ffff00) brightness(1.3) !important;
         }
 
-        /* Base traced link style */
+        .node.traced.target.downstream {
+            filter: drop-shadow(0 0 15px #87CEEB) brightness(1.3) !important;
+        }
+
+        /* Base traced link style - color set by JavaScript based on direction */
         .link.traced {
-            stroke: #ffff00 !important;
             stroke-width: 4px !important;
             opacity: 1 !important;
+            /* stroke color is set dynamically in JavaScript based on upstream/downstream */
+        }
+
+        /* Upstream links (ancestors/teachers) - yellow */
+        .link.traced.upstream {
             filter: drop-shadow(0 0 8px #ffff00);
+        }
+
+        /* Downstream links (descendants/students) - pale blue */
+        .link.traced.downstream {
+            filter: drop-shadow(0 0 8px #87CEEB);
         }
 
         /* Preserve relationship-specific dash patterns when highlighted */
@@ -1138,6 +1162,8 @@
         let tracebackActive = false;
         let tracedNodes = new Set();
         let tracedLinks = new Set();
+        let tracedLinksUpstream = new Set();  // Track upstream links separately
+        let tracedLinksDownstream = new Set(); // Track downstream links separately
         let tracebackTimeouts = []; // Track animation timeouts
         let globalYScale = null; // Global Y-scale for linear mode (calculated once)
 
@@ -2361,27 +2387,75 @@
             return findAllPathsToSource(targetNode);
         }
 
+        // Trace downstream to all descendants (students and their students, etc.)
+        function findAllPathsToDescendants(sourceNode) {
+            const trajectoryNodes = new Map();
+            trajectoryNodes.set(sourceNode.id, { distance: 0, node: sourceNode });
+
+            // Find all descendants - trace downward through ALL relationship types
+            function findDescendants(nodeId, distance) {
+                // ALL relationship types: teaching, incarnation, emanation, family
+                links.forEach(link => {
+                    if (link.source.id === nodeId || link.source === nodeId) {
+                        const targetId = link.target.id || link.target;
+                        if (!trajectoryNodes.has(targetId)) {
+                            const descendantNode = nodes.find(n => n.id === targetId);
+                            if (descendantNode) {
+                                console.log(`Found downstream ${link.type} relationship: ${nodeId} -> ${targetId} at distance ${distance + 1}`);
+                                trajectoryNodes.set(targetId, { distance: distance + 1, node: descendantNode });
+                                findDescendants(targetId, distance + 1);
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Trace downward through all relationships
+            findDescendants(sourceNode.id, 0);
+
+            // Convert to arrays and include the links in the trajectory
+            const trajectoryLinks = [];
+            links.forEach(link => {
+                const sourceId = link.source.id || link.source;
+                const targetId = link.target.id || link.target;
+
+                // Include link if both nodes are in trajectory
+                if (trajectoryNodes.has(sourceId) && trajectoryNodes.has(targetId)) {
+                    trajectoryLinks.push(link);
+                }
+            });
+
+            return {
+                nodes: Array.from(trajectoryNodes.values()).map(item => item.node),
+                links: trajectoryLinks,
+                trajectoryMap: trajectoryNodes
+            };
+        }
+
         function activateTraceback(clickedNode) {
             clearTraceback();
             tracebackActive = true;
 
-            const path = findPathToSource(clickedNode);
+            // Find both upstream (ancestors) and downstream (descendants) paths
+            const upstreamPath = findPathToSource(clickedNode);
+            const downstreamPath = findAllPathsToDescendants(clickedNode);
 
-            if (path.nodes.length === 0) {
-                console.log(`No path found from ${clickedNode.name}`);
-                return;
-            }
+            console.log(`Upstream from ${clickedNode.name}: ${upstreamPath.nodes.length} ancestors`);
+            console.log(`Downstream from ${clickedNode.name}: ${downstreamPath.nodes.length} descendants`);
 
-            console.log(`Traceback from ${clickedNode.name} found ${path.nodes.length} nodes in path:`);
-            path.nodes.forEach((node, i) => {
-                console.log(`  ${i + 1}. ${node.name} (${node.transmission}) - Position: ${node.position}`);
+            // Combine all nodes for auto-zoom (excluding duplicates)
+            const allNodesForZoom = [...upstreamPath.nodes];
+            downstreamPath.nodes.forEach(node => {
+                if (!allNodesForZoom.find(n => n.id === node.id)) {
+                    allNodesForZoom.push(node);
+                }
             });
 
-            // Auto-zoom to fit entire traceback path
-            autoZoomToFitTraceback(path.nodes);
+            // Auto-zoom to fit entire bidirectional path
+            autoZoomToFitTraceback(allNodesForZoom);
 
-            // Animate the traceback flow step by step with clicked node ID
-            animateTracebackFlow(path, clickedNode.id);
+            // Animate both directions simultaneously with different colors
+            animateTracebackFlow(upstreamPath, downstreamPath, clickedNode.id);
         }
 
         function autoZoomToFitTraceback(tracebackNodes) {
@@ -2441,46 +2515,51 @@
             }, 100); // Small delay to ensure positions are updated
         }
 
-        // Perfect cascade animation copied from index.html
-        function animateTracebackFlow(allPaths, clickedNodeId) {
-            const { trajectoryMap } = allPaths; // Use the distance-based map for perfect timing
-
+        // Perfect cascade animation for both upstream and downstream
+        function animateTracebackFlow(upstreamPath, downstreamPath, clickedNodeId) {
             // First dim all elements
             nodeElements.classed('dimmed', true);
             linkElements.classed('dimmed', true);
 
-            console.log(`Starting perfect traceback cascade for ${trajectoryMap.size} nodes`);
+            console.log(`Starting bidirectional cascade: ${upstreamPath.trajectoryMap.size} upstream, ${downstreamPath.trajectoryMap.size} downstream`);
 
-            // Create perfect ripple cascade effect (exactly like original)
-            createRippleCascade(trajectoryMap, clickedNodeId);
+            // Create cascade effect for both directions simultaneously with different colors
+            createRippleCascade(upstreamPath.trajectoryMap, clickedNodeId, 'upstream');
+            createRippleCascade(downstreamPath.trajectoryMap, clickedNodeId, 'downstream');
         }
 
-        function createRippleCascade(trajectoryNodes, clickedNodeId) {
-            // Clear any existing ripple timeouts first
-            tracebackTimeouts.forEach(timeoutId => clearTimeout(timeoutId));
-            tracebackTimeouts = [];
+        function createRippleCascade(trajectoryNodes, clickedNodeId, direction) {
+            // Don't clear timeouts here - both directions run simultaneously
+            console.log(`🔥 createRippleCascade called with direction: "${direction}"`);
 
-            // Sort nodes by distance for proper cascade order (EXACTLY like original)
+            // Sort nodes by distance for proper cascade order
             const sortedNodes = Array.from(trajectoryNodes.entries())
                 .sort(([,a], [,b]) => a.distance - b.distance);
 
-            // Apply animations and highlighting with staggered timing (PERFECT original timing)
+            // Color scheme based on direction
+            const colors = direction === 'upstream'
+                ? { main: '#FFD700', secondary: '#ff6b35' }  // Gold/Orange for upstream (teachers)
+                : { main: '#87CEEB', secondary: '#6FB9DB' }; // Pale blue for downstream (students)
+
+            console.log(`🎨 Using colors:`, colors, `for direction: ${direction}`);
+
+            // Apply animations and highlighting with staggered timing
             sortedNodes.forEach(([nodeId, nodeInfo], index) => {
-                const delay = index * 120; // EXACT 120ms delay from original - PERFECT timing
+                const delay = index * 120; // 120ms delay for cascade effect
                 const isMainNode = nodeId === clickedNodeId;
 
                 const timeoutId = setTimeout(() => {
                     // Add this node to traced set
                     tracedNodes.add(nodeId);
-                    console.log(`Cascade step ${index + 1}: Highlighting node "${nodeInfo.node.name}" at distance ${nodeInfo.distance}`);
+                    console.log(`${direction} cascade step ${index + 1}: "${nodeInfo.node.name}" at distance ${nodeInfo.distance}`);
 
-                    // Find the node element and apply highlighting (like original)
+                    // Find the node element and apply highlighting
                     nodeElements.filter(d => d.id === nodeId).each(function(d) {
                         const nodeElement = d3.select(this);
 
-                        // Apply highlighting effects with animation (like original)
+                        // Apply highlighting effects with direction-specific colors
                         const brightnessFactor = isMainNode ? 1.5 : 1.2;
-                        const strokeColor = isMainNode ? '#FFD700' : '#ff6b35';
+                        const strokeColor = isMainNode ? colors.main : colors.secondary;
                         const strokeWidth = isMainNode ? 4 : 3;
 
                         // Apply highlighting
@@ -2488,8 +2567,10 @@
                             .classed('dimmed', false)
                             .classed('traced', true)
                             .classed('target', isMainNode)
+                            .classed('upstream', direction === 'upstream')
+                            .classed('downstream', direction === 'downstream')
                             .transition()
-                            .duration(200) // EXACT duration from original
+                            .duration(200)
                             .style('opacity', 1)
                             .attr('stroke', strokeColor)
                             .attr('stroke-width', strokeWidth);
@@ -2511,34 +2592,55 @@
                         }
                     });
 
-                    // Highlight the incoming links with EXACT 50ms delay (like original)
+                    // Highlight the links with 50ms delay
                     const linkTimeoutId = setTimeout(() => {
                         // Check if traceback is still active before proceeding
                         if (!tracebackActive) return;
 
                         linkElements.each(function(linkData) {
+                            const sourceId = linkData.source.id || linkData.source;
                             const targetId = linkData.target.id || linkData.target;
-                            if (targetId === nodeId) {
+
+                            // For upstream: highlight incoming links (where target is this node)
+                            // For downstream: highlight outgoing links (where source is this node)
+                            const shouldHighlight = direction === 'upstream'
+                                ? (targetId === nodeId)
+                                : (sourceId === nodeId);
+
+                            if (shouldHighlight) {
                                 const linkElement = d3.select(this);
                                 tracedLinks.add(linkData);
+                                // Add to direction-specific set for color tracking
+                                if (direction === 'upstream') {
+                                    tracedLinksUpstream.add(linkData);
+                                } else {
+                                    tracedLinksDownstream.add(linkData);
+                                }
 
-                                // Highlight the link maintaining its original style
+                                // Highlight the link with direction-based color
+                                const linkStrokeColor = direction === 'upstream' ? '#ffff00' : '#87CEEB';
+                                console.log(`🔗 Setting link color to ${linkStrokeColor} for direction: ${direction}, link: ${sourceId} -> ${targetId}`);
                                 linkElement
                                     .classed('dimmed', false)
                                     .classed('traced', true)
+                                    .classed('upstream', direction === 'upstream')
+                                    .classed('downstream', direction === 'downstream')
                                     .transition()
-                                    .duration(150) // EXACT duration from original
+                                    .duration(150)
+                                    .style('stroke', linkStrokeColor)
+                                    .style('stroke-width', '4px')
                                     .style('opacity', '1');
 
-                                // Add flowing particle effect with tracked timeout
+                                // Add flowing particle effect with matching color
+                                const particleColor = linkStrokeColor;
                                 const particleTimeoutId = setTimeout(() => {
-                                    if (!tracebackActive) return; // Double-check before particle creation
-                                    createFlowingParticle(linkElement.node(), linkData);
+                                    if (!tracebackActive) return;
+                                    createFlowingParticle(linkElement.node(), linkData, particleColor, direction);
                                 }, 25);
                                 tracebackTimeouts.push(particleTimeoutId);
                             }
                         });
-                    }, 50); // EXACT 50ms delay from original - PERFECT!
+                    }, 50);
 
                     // CRITICAL: Track the link timeout so it can be cleared
                     tracebackTimeouts.push(linkTimeoutId);
@@ -2548,7 +2650,7 @@
             });
         }
 
-        function createFlowingParticle(linkElement, linkData, color = '#ffff00') {
+        function createFlowingParticle(linkElement, linkData, color = '#ffff00', direction = 'upstream') {
             if (!linkElement || !linkData.source || !linkData.target) return;
 
             const sourceX = linkData.source.x || 0;
@@ -2556,25 +2658,31 @@
             const targetX = linkData.target.x || 0;
             const targetY = linkData.target.y || 0;
 
-            // For traceback, particles should flow FROM target TO source (backward along transmission)
-            // This shows the flow of lineage tracing back to its origins
+            // Direction-based flow:
+            // Upstream: flow backward (target -> source) to show tracing to origins
+            // Downstream: flow forward (source -> target) to show transmission to descendants
+            const startX = direction === 'upstream' ? targetX : sourceX;
+            const startY = direction === 'upstream' ? targetY : sourceY;
+            const endX = direction === 'upstream' ? sourceX : targetX;
+            const endY = direction === 'upstream' ? sourceY : targetY;
+
             const particle = svg.select('.main-group')
                 .append('circle')
                 .attr('r', 3)
                 .attr('fill', color)
                 .attr('opacity', 0.8)
-                .attr('cx', targetX)  // Start at target (more recent node)
-                .attr('cy', targetY)
+                .attr('cx', startX)
+                .attr('cy', startY)
                 .style('filter', `drop-shadow(0 0 6px ${color})`)
                 .style('pointer-events', 'none');
 
-            // Animate particle flowing backward (from student to teacher, from incarnation to previous life)
+            // Animate particle flowing in appropriate direction
             particle
                 .transition()
                 .duration(600)
                 .ease(d3.easeQuadOut)
-                .attr('cx', sourceX)  // Flow to source (older node)
-                .attr('cy', sourceY)
+                .attr('cx', endX)
+                .attr('cy', endY)
                 .style('opacity', 0)
                 .remove();
         }
@@ -2590,17 +2698,22 @@
             nodeElements.interrupt();
             linkElements.interrupt();
 
-            // Remove all particles
+            // Remove all particles (both yellow and blue)
             svg.selectAll('circle[fill="#ffff00"]').remove();
+            svg.selectAll('circle[fill="#87CEEB"]').remove();
 
             tracedNodes.clear();
             tracedLinks.clear();
+            tracedLinksUpstream.clear();
+            tracedLinksDownstream.clear();
 
             // Remove all traceback classes and reset styles
             nodeElements
                 .classed('traced', false)
                 .classed('target', false)
                 .classed('dimmed', false)
+                .classed('upstream', false)
+                .classed('downstream', false)
                 .style('opacity', null)
                 .attr('r', d => {
                     // Keep Samantabhadra/Samantabhadri larger even when clearing traceback
@@ -2616,6 +2729,8 @@
                 .classed('traced', false)
                 .classed('dimmed', false)
                 .classed('flowing', false)
+                .classed('upstream', false)
+                .classed('downstream', false)
                 .style('opacity', null)
                 .style('stroke', null)
                 .style('stroke-width', null)
@@ -2634,22 +2749,33 @@
                 .classed('traced', d => tracedNodes.has(d.id))
                 .classed('dimmed', d => !tracedNodes.has(d.id));
 
-            // Highlight traced links using ID matching, dim others
+            // Highlight traced links using ID matching with direction-based colors
             linkElements
                 .each(function(d) {
-                    const isTraced = [...tracedLinks].some(tracedLink => {
-                        const sourceId = d.source.id || d.source;
-                        const targetId = d.target.id || d.target;
+                    const sourceId = d.source.id || d.source;
+                    const targetId = d.target.id || d.target;
+
+                    // Check if link is in upstream set
+                    const isUpstream = [...tracedLinksUpstream].some(tracedLink => {
                         const tracedSourceId = tracedLink.source.id || tracedLink.source;
                         const tracedTargetId = tracedLink.target.id || tracedLink.target;
                         return sourceId === tracedSourceId && targetId === tracedTargetId;
                     });
 
-                    if (isTraced) {
+                    // Check if link is in downstream set
+                    const isDownstream = [...tracedLinksDownstream].some(tracedLink => {
+                        const tracedSourceId = tracedLink.source.id || tracedLink.source;
+                        const tracedTargetId = tracedLink.target.id || tracedLink.target;
+                        return sourceId === tracedSourceId && targetId === tracedTargetId;
+                    });
+
+                    if (isUpstream || isDownstream) {
+                        // Apply direction-specific color
+                        const strokeColor = isUpstream ? '#ffff00' : '#87CEEB';
                         d3.select(this)
                             .classed('dimmed', false)
                             .classed('traced', true)
-                            .style('stroke', '#ffff00')
+                            .style('stroke', strokeColor)
                             .style('stroke-width', '4px')
                             .style('opacity', '1');
                     } else {
