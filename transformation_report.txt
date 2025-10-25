@@ -1,14 +1,14 @@
 ================================================================================
 TEACHING RELATIONSHIPS TRANSFORMATION REPORT
 ================================================================================
-Date: 2025-10-24 16:48:25
+Date: 2025-10-25 13:59:24
 
 SUMMARY
 --------------------------------------------------------------------------------
-Total relationships in 'Received_Teachings_From': 308
-Total relationships in 'Taught':                 295
+Total relationships in 'Received_Teachings_From': 292
+Total relationships in 'Taught':                 291
 ✗ MISMATCH: Relationship counts differ!
-  Difference: 13
+  Difference: 1
 
 ✓ No missing names - all teachers found successfully
 
@@ -54,7 +54,7 @@ Teacher: Buddha 5: Vajradhara
   Received from ← Buddha 4: Zhönnu Rolpa
 
 
-FULL TRANSFORMATION LIST (308 relationships)
+FULL TRANSFORMATION LIST (292 relationships)
 --------------------------------------------------------------------------------
 1st Dodrupchen, Jigmé Trinlé Özer → [8 students]
     • 2nd Dodrupchen, Jigmé Phuntsok Jungné
@@ -77,15 +77,13 @@ FULL TRANSFORMATION LIST (308 relationships)
     • Khenpo Do-ngak Tendzin
 3rd Dodrupchen, Jigmé Tenpai Nyima → [1 students]
     • 4th Dodrupchen, Jigmé Trinlé Palbar
-4th Zhechen Gyaltsap Gyurmé Pema Namgyal → [2 students]
+4th Zhechen Gyaltsap Gyurmé Pema Namgyal → [1 students]
     • Dilgo Khyentsé Rinpoche Rabsel Dawa
-    • Dilgo Khyentsé Rinpoche Rabsel Dawa
-Adzom Drukpa Rinpoche Drodul Pawo Dorjé → [9 students]
+Adzom Drukpa Rinpoche Drodul Pawo Dorjé → [8 students]
     • Adzom Druktrul Tubten Pema Trinlé
     • Adzom Gyalse Gyurmé Dorjé
     • Dilgo Khyentsé Rinpoche Rabsel Dawa
     • Golok Lama Kunzang
-    • Jamyang Khyentse Chökyi Lodrö
     • Jamyang Khyentse Chökyi Lodrö
     • Serta Rinpoche
     • Tsö Patrul Rinpoche
@@ -158,10 +156,8 @@ Dawa Gyaltsen → [1 students]
     • Rigdzin Pema Trinlé
 Dergé Lama Kunga Palden → [1 students]
     • Choktrul Lozang Tendzin
-Dilgo Khyentsé Rinpoche Rabsel Dawa → [6 students]
+Dilgo Khyentsé Rinpoche Rabsel Dawa → [4 students]
     • 2nd Dzigar Kongtrul
-    • Dilgo Khyentsé Rinpoche Rabsel Dawa
-    • Dilgo Khyentsé Yangsi
     • Dilgo Khyentsé Yangsi
     • Jigme Khyentse Rinpoche
     • Sogyal Rinpoche
@@ -207,31 +203,22 @@ Jamgön Kongtrul Yönten Gyatso Lodrö Tayé → [6 students]
     • Gyakob Tulku Kunzang
     • Jedrung Trinlé Jampa Jungné
     • Tokden Śākya Śrī
-Jamyang Khyentse Chökyi Lodrö → [16 students]
-    • 2nd Dzigar Kongtrul
+Jamyang Khyentse Chökyi Lodrö → [9 students]
     • 2nd Dzigar Kongtrul
     • Dilgo Khyentsé Rinpoche Rabsel Dawa
-    • Dilgo Khyentsé Rinpoche Rabsel Dawa
-    • Katok Öntrul Rinpoche
     • Katok Öntrul Rinpoche
     • Khen Rinpoche Karma Dorjé
     • Lakar Sogyal Choktrul Rinpoche
-    • Lakar Sogyal Choktrul Rinpoche
-    • Minling Trichen Kunzang Wangyal
     • Minling Trichen Kunzang Wangyal
     • Neten Chokling
     • Orgyen Tobgyal Rinpoche
-    • Orgyen Tobgyal Rinpoche
     • Sakya Khen Rinpoche Appey
-    • Sakya Khen Rinpoche Appey
-Jamyang Khyentsé Wangpo → [16 students]
+Jamyang Khyentsé Wangpo → [12 students]
     • 3rd Katok Situ Kunchen Orgyen Chökyi Dorjé
     • 4th Zhechen Gyaltsap Gyurmé Pema Namgyal
     • 5th Dzogchen Rinpoche Thupten Chökyi Dorjé
     • Adzom Drukpa Rinpoche Drodul Pawo Dorjé
-    • Adzom Drukpa Rinpoche Drodul Pawo Dorjé
     • Dilgo Khyentsé Rinpoche Rabsel Dawa
-    • Dza Pukhung Gyurmé Ngedön Wangpo
     • Dza Pukhung Gyurmé Ngedön Wangpo
     • Gyakob Tulku Kunzang
     • Jamgön Kongtrul Yönten Gyatso Lodrö Tayé
@@ -239,16 +226,16 @@ Jamyang Khyentsé Wangpo → [16 students]
     • Jedrung Trinlé Jampa Jungné
     • Mipam Jamyang Namgyal Gyatso
     • Terchen Orgyen Chokgyur Lingpa
-    • Terchen Orgyen Chokgyur Lingpa
-    • Öpame Thekchok Dorje
 Jangtön Namdak → [1 students]
     • Kadampa Deshek
 Jedrung Trinlé Jampa Jungné → [2 students]
     • Dudjom Rinpoche Jigdral Yeshe Dorjé
     • Kangyur Rinpoche Longchen Yeshé Dorjé
-Jetsunma Trinle Chodron → [1 students]
+Jetsunma Trinle Chodron → [2 students]
     • Jamyang Khyentsé Wangpo
-Jigmé Gyalwai Nyugu → [1 students]
+    • Jamyang Khyentsé Wangpo
+Jigmé Gyalwai Nyugu → [2 students]
+    • Jamyang Khyentsé Wangpo
     • Paltrul Orgyen Jigmé Chokyi Wangpo
 Jñānasūtra → [1 students]
     • Vimalamitra
@@ -422,12 +409,11 @@ Terchen Gyurmé Dorjé → [6 students]
     • Kunzang Mingyur Paldron
     • Lotsawa Chöpal Gyatso (Lochen Dharma Shri)
     • Riksé Choktrul Pema Gyurmé Gyatso
-Terchen Lerab Lingpa (Tertön Sogyal) → [5 students]
+Terchen Lerab Lingpa (Tertön Sogyal) → [4 students]
     • Dretsé Tulku
     • Nyoshul Lungtok Tenpai Nyima Gyaltsen Palzangpo
     • Pema Gyaltsen
     • Sungtrul Kunzang Nyima
-    • Öpame Thekchok Dorje
 Terchen Orgyen Chokgyur Lingpa → [2 students]
     • Neten Chokling
     • Tulku Urgyen Rinpoche
@@ -491,9 +477,6 @@ Zhenga Dorjé Chang Zhenpen Chökyi Nangwa → [11 students]
     • Zurmang Khenchen Pema Namgyal
 Zurmang Khenchen Pema Namgyal → [1 students]
     • Zurmang Tenga Rinpoché
-Öpame Thekchok Dorje → [2 students]
-    • Gyatrul Rinpoche
-    • Orgyen Tobgyal Rinpoche
 Ösel Longyang → [2 students]
     • Dzogchenpa Sönam Rigdzin
     • Namkha Dorjé
