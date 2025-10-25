@@ -1,14 +1,14 @@
 ================================================================================
 TEACHING RELATIONSHIPS TRANSFORMATION REPORT
 ================================================================================
-Date: 2025-10-24 16:37:37
+Date: 2025-10-24 16:48:25
 
 SUMMARY
 --------------------------------------------------------------------------------
-Total relationships in 'Received_Teachings_From': 313
+Total relationships in 'Received_Teachings_From': 308
 Total relationships in 'Taught':                 295
 ✗ MISMATCH: Relationship counts differ!
-  Difference: 18
+  Difference: 13
 
 ✓ No missing names - all teachers found successfully
 
@@ -54,7 +54,7 @@ Teacher: Buddha 5: Vajradhara
   Received from ← Buddha 4: Zhönnu Rolpa
 
 
-FULL TRANSFORMATION LIST (313 relationships)
+FULL TRANSFORMATION LIST (308 relationships)
 --------------------------------------------------------------------------------
 1st Dodrupchen, Jigmé Trinlé Özer → [8 students]
     • 2nd Dodrupchen, Jigmé Phuntsok Jungné
@@ -200,12 +200,9 @@ Gyalse Rinchen Namgyal → [2 students]
     • Ngak Rabjampa Orgyen Chodrak
 Gyalse Tulku Drakpa Ozer → [1 students]
     • Trulzhik Sang-gyé Önpo Sherab Gyatso
-Jamgön Kongtrul Yönten Gyatso Lodrö Tayé → [9 students]
-    • 3rd Katok Situ Kunchen Orgyen Chökyi Dorjé
+Jamgön Kongtrul Yönten Gyatso Lodrö Tayé → [6 students]
     • 3rd Katok Situ Kunchen Orgyen Chökyi Dorjé
     • 4th Zhechen Gyaltsap Gyurmé Pema Namgyal
-    • 4th Zhechen Gyaltsap Gyurmé Pema Namgyal
-    • Chungtrul Pema Wangchen
     • Chungtrul Pema Wangchen
     • Gyakob Tulku Kunzang
     • Jedrung Trinlé Jampa Jungné
@@ -227,10 +224,8 @@ Jamyang Khyentse Chökyi Lodrö → [16 students]
     • Orgyen Tobgyal Rinpoche
     • Sakya Khen Rinpoche Appey
     • Sakya Khen Rinpoche Appey
-Jamyang Khyentsé Wangpo → [18 students]
+Jamyang Khyentsé Wangpo → [16 students]
     • 3rd Katok Situ Kunchen Orgyen Chökyi Dorjé
-    • 3rd Katok Situ Kunchen Orgyen Chökyi Dorjé
-    • 4th Zhechen Gyaltsap Gyurmé Pema Namgyal
     • 4th Zhechen Gyaltsap Gyurmé Pema Namgyal
     • 5th Dzogchen Rinpoche Thupten Chökyi Dorjé
     • Adzom Drukpa Rinpoche Drodul Pawo Dorjé
