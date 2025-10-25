@@ -1280,7 +1280,7 @@
                     lineage: d.Lineage || 'All lineages',
                     position: positionDate,
                     teachers: (d.Received_Teachings_From || '').split(';').filter(t => t.trim()),
-                    students: [], // Will be computed based on who lists this person as teacher
+                    students: (d.Taught || '').split(';').filter(s => s.trim()),
                     incarnationOf: (d.Incarnation_Of || '').split(';').filter(i => i.trim()),
                     familyFrom: (d.Family_Received_From || '').split(';').filter(f => f.trim()),
                     emanatedAs: (d['Eminated as'] || '').split(';').filter(e => e.trim()),
@@ -1299,16 +1299,7 @@
                 };
             });
 
-            // Compute students array for each node based on who lists them as teacher
-            nodes.forEach(node => {
-                nodes.forEach(potentialStudent => {
-                    if (potentialStudent.teachers.includes(node.name)) {
-                        if (!node.students.includes(potentialStudent.name)) {
-                            node.students.push(potentialStudent.name);
-                        }
-                    }
-                });
-            });
+            // Students are now read directly from the 'Taught' CSV column (no computation needed)
 
             // Process links
             links = [];
