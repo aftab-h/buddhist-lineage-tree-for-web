@@ -2530,7 +2530,6 @@
 
         function createRippleCascade(trajectoryNodes, clickedNodeId, direction) {
             // Don't clear timeouts here - both directions run simultaneously
-            console.log(`🔥 createRippleCascade called with direction: "${direction}"`);
 
             // Sort nodes by distance for proper cascade order
             const sortedNodes = Array.from(trajectoryNodes.entries())
@@ -2541,17 +2540,19 @@
                 ? { main: '#FFD700', secondary: '#ff6b35' }  // Gold/Orange for upstream (teachers)
                 : { main: '#87CEEB', secondary: '#6FB9DB' }; // Pale blue for downstream (students)
 
-            console.log(`🎨 Using colors:`, colors, `for direction: ${direction}`);
-
             // Apply animations and highlighting with staggered timing
             sortedNodes.forEach(([nodeId, nodeInfo], index) => {
                 const delay = index * 120; // 120ms delay for cascade effect
                 const isMainNode = nodeId === clickedNodeId;
 
+                // Skip styling the clicked node in downstream - it's styled by upstream
+                if (direction === 'downstream' && isMainNode) {
+                    return; // Skip this iteration
+                }
+
                 const timeoutId = setTimeout(() => {
                     // Add this node to traced set
                     tracedNodes.add(nodeId);
-                    console.log(`${direction} cascade step ${index + 1}: "${nodeInfo.node.name}" at distance ${nodeInfo.distance}`);
 
                     // Find the node element and apply highlighting
                     nodeElements.filter(d => d.id === nodeId).each(function(d) {
@@ -2562,18 +2563,18 @@
                         const strokeColor = isMainNode ? colors.main : colors.secondary;
                         const strokeWidth = isMainNode ? 4 : 3;
 
-                        // Apply highlighting
+                        // Apply highlighting with inline styles to override CSS
                         nodeElement
                             .classed('dimmed', false)
                             .classed('traced', true)
                             .classed('target', isMainNode)
                             .classed('upstream', direction === 'upstream')
                             .classed('downstream', direction === 'downstream')
+                            .style('stroke', strokeColor) // Set immediately before transition
+                            .style('stroke-width', strokeWidth + 'px')
                             .transition()
                             .duration(200)
-                            .style('opacity', 1)
-                            .attr('stroke', strokeColor)
-                            .attr('stroke-width', strokeWidth);
+                            .style('opacity', 1);
 
                         // Add simple grow/shrink animation for the clicked node
                         if (isMainNode) {
@@ -2619,7 +2620,6 @@
 
                                 // Highlight the link with direction-based color
                                 const linkStrokeColor = direction === 'upstream' ? '#ffff00' : '#87CEEB';
-                                console.log(`🔗 Setting link color to ${linkStrokeColor} for direction: ${direction}, link: ${sourceId} -> ${targetId}`);
                                 linkElement
                                     .classed('dimmed', false)
                                     .classed('traced', true)
@@ -2715,6 +2715,8 @@
                 .classed('upstream', false)
                 .classed('downstream', false)
                 .style('opacity', null)
+                .style('stroke', null)
+                .style('stroke-width', null)
                 .attr('r', d => {
                     // Keep Samantabhadra/Samantabhadri larger even when clearing traceback
                     if (d.name.toLowerCase().includes('samantabhadra') ||
