@@ -54,36 +54,38 @@ The visualization uses color coding to represent different types of dharma trans
 - **Collision Detection**: Prevents overlapping while maintaining hierarchical relationships
 
 ## Data Structure
-The project uses two CSV files that now have identical column structures (16 columns):
+The main CSV file `dzogchen_lineage.csv` uses a 20-column structure:
 
-### Unified CSV Column Structure (1-16):
-Both `dzogchen_lineage.csv` and `new_lineage_nodes.csv` now use this structure:
+### CSV Column Structure (1-20):
 
 1. **Name_English** - Teacher names in English (source of truth for all name references)
 2. **Name_Wylie_Tibetan** - Tibetan transliteration using Wylie system
 3. **Name_Tibetan** - Tibetan script
 4. **Name_Chinese** - Chinese names where applicable
 5. **Dates** - Birth and death years (e.g., "1308-1364") or time periods
-6. **Description_English** - Brief description of the master's role/significance
-7. **Description_Tibetan** - Tibetan description
-8. **Description_Chinese** - Chinese description
-9. **Transmission_Mode** - Mind-to-Mind, Symbolic, or Aural
-10. **Lineage** - Which of the three main lineages (Vairocana, Vimalamitra, Padmasambhava, or "All lineages")
-11. **Received_Teachings_From** - Teacher(s) this master learned from (semicolon-separated names)
-12. **Gave_Teachings_To** - Student(s) this master taught (semicolon-separated names)
-13. **Incarnation_Of** - Previous incarnation relationships (dotted lines in visualization)
-14. **Family_Received_From** - Family-based teaching relationships (dashed lines in visualization)
-15. **Eminated as** - Names of entities that emanated as this master (semicolon-separated)
-16. **Position_Date** - Numeric chronological positioning value (used for Y-axis positioning)
+6. **Position_Date** - Numeric chronological positioning value (used for Y-axis positioning, 0-2000+)
+7. **Img_Subtext** - Subtext for images/icons (source citations, dates, etc.)
+8. **Description_English** - Brief description of the master's role/significance
+9. **Description_Tibetan** - Tibetan description
+10. **Description_Chinese** - Chinese description
+11. **Transmission_Mode** - Mind-to-Mind, Symbolic, or Aural
+12. **Lineage** - Which of the three main lineages (Vairocana, Vimalamitra, Padmasambhava, or "All lineages")
+13. **Taught** - Regular teaching relationships: Student(s) this master taught (semicolon-separated names; solid white lines)
+14. **Taught_Familial_Related** - Familial teaching relationships: Family members this master taught (semicolon-separated names; dashed brown lines) **[Note: Currently being populated - data will be migrated from Taught column]**
+15. **Incarnation_Of** - Previous incarnation relationships (semicolon-separated names; dotted gray lines)
+16. **Family_Relationship** - Legacy TRUE/FALSE field (deprecated, replaced by Taught_Familial_Related)
+17. **Emanated as** - Names of entities that emanated as this master (semicolon-separated; double-dotted golden lines)
+18. **Links_Names** - Semicolon-separated external link labels
+19. **Links_URLs** - Semicolon-separated external link URLs (must match order of Links_Names)
+20. **Notes** - Additional notes, data issues, or context
 
 ### Key Field Usage Notes:
-- **Name_English (Column 1)**: The canonical source of truth for all name references in both files
-- **Received_Teachings_From (Column 11)**: Teacher-student relationships (solid lines), names must match Column 1 exactly
-- **Gave_Teachings_To (Column 12)**: Student-teacher relationships (solid lines), names must match Column 1 exactly
-- **Incarnation_Of (Column 13)**: Reincarnation relationships (dotted lines), names must match Column 1 exactly
-- **Family_Received_From (Column 14)**: Family teaching relationships (dashed lines), names must match Column 1 exactly
-- **Eminated as (Column 15)**: Spiritual emanation relationships, names must match Column 1 exactly
-- **Position_Date (Column 16)**: Always numeric values for chronological positioning (0-2000+)
+- **Name_English (Column 1)**: The canonical source of truth for all name references - all relationship fields must use exact matches
+- **Taught (Column 13)**: Regular teacher-student relationships (solid white lines), names must match Column 1 exactly
+- **Taught_Familial_Related (Column 14)**: **NEW** - Familial teaching relationships (dashed brown lines), names must match Column 1 exactly. Directional: teacher → student within family structures
+- **Incarnation_Of (Column 15)**: Reincarnation relationships (dotted gray lines), names must match Column 1 exactly
+- **Emanated as (Column 17)**: Spiritual emanation relationships (double-dotted golden lines), names must match Column 1 exactly
+- **Position_Date (Column 6)**: Always numeric values for chronological positioning (0-100 = pre-linear time ordinal positions, 100+ = historical years)
 - **Multiple names**: Use semicolon (;) separation, no commas within relationship fields
 
 ## Visual Line Types for Relationships
@@ -91,30 +93,31 @@ Both `dzogchen_lineage.csv` and `new_lineage_nodes.csv` now use this structure:
 The visualization uses distinct line styles to represent different types of relationships between masters:
 
 ### **Solid Lines** - Direct Teaching Transmission
-- **Source**: `Received_Teachings_From` (Column 11) and `Gave_Teachings_To` (Column 12)
+- **Source**: `Taught` (Column 13)
 - **Style**: Solid, continuous lines
-- **Color**: Typically matches lineage color (Green for Aural, Purple for Symbolic, Blue for Mind-to-Mind)
+- **Color**: White
 - **Direction**: From teacher to student (hierarchical flow)
-- **Represents**: Direct dharma transmission between teacher and student
+- **Represents**: Direct dharma transmission between teacher and student (non-familial)
 
 ### **Dotted Lines** - Incarnation Relationships
-- **Source**: `Incarnation_Of` (Column 13)
+- **Source**: `Incarnation_Of` (Column 15)
 - **Style**: Small dots with regular spacing
-- **Color**: Distinct from teaching lines (suggested: gray or muted color)
+- **Color**: Gray (#888888)
 - **Direction**: From previous incarnation to current incarnation
 - **Represents**: Reincarnation lineage showing continuation of the same consciousness stream
 
 ### **Dashed Lines** - Family Teaching Relationships
-- **Source**: `Family_Received_From` (Column 14)
-- **Style**: Medium dashes with gaps
-- **Color**: Different from other relationship types (suggested: brown or earth tone)
-- **Direction**: From family teacher to family student
+- **Source**: `Taught_Familial_Related` (Column 14) **[NEW]**
+- **Style**: Medium dashes with gaps (stroke-dasharray: 5,3)
+- **Color**: Brown (#cd853f)
+- **Direction**: From family teacher to family student (directional, not bidirectional)
 - **Represents**: Dharma transmission within family structures (father to son, uncle to nephew, etc.)
+- **Note**: Data is currently being migrated from the `Taught` column to distinguish familial from non-familial teaching relationships
 
 ### **Double-Dotted Lines** - Spiritual Emanation
-- **Source**: `Eminated as` (Column 15)
-- **Style**: Double dots or dotted with different spacing pattern
-- **Color**: Distinct emanation color (suggested: golden or bright accent)
+- **Source**: `Emanated as` (Column 17)
+- **Style**: Small double dots (stroke-dasharray: 1,1)
+- **Color**: Golden (#ffd700)
 - **Direction**: From emanating entity to emanated form
 - **Represents**: Higher spiritual beings manifesting as specific masters (different from reincarnation)
 
@@ -127,10 +130,11 @@ The visualization uses distinct line styles to represent different types of rela
 
 ### File Status & Recent Updates:
 - **`dzogchen_lineage.csv`**: Main lineage data file - **UPDATED & CLEANED**
-  - Expanded from 12 to 16-column format to match new CSV structure
-  - Enhanced merge preserved chronological positioning while adding better descriptions and broader lineage scope
-- **`new_lineage_nodes.csv`**: **FULLY MERGED** into main file (224 records integrated)
-- Both files maintained identical 16-column structures throughout merge process
+  - **Current structure**: 20 columns (expanded from 19 to add `Taught_Familial_Related`)
+  - **Latest update (October 2025)**: Added Column 14 `Taught_Familial_Related` for explicit familial teaching relationships
+  - Previously expanded from 12 to 19-column format with enhanced merge preserving chronological positioning
+- **`new_lineage_nodes.csv`**: **FULLY MERGED** into main file (224 records integrated in September 2025)
+- **Family Relationship Migration**: Column 14 (`Taught_Familial_Related`) is currently being populated - data will be manually migrated from `Taught` column to distinguish familial from non-familial teaching relationships
 
 ### Recent Data Cleanup (Completed):
 **Merge Process (septemer 23 2025):**

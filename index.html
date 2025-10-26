@@ -1302,8 +1302,8 @@
                     position: positionDate,
                     teachers: [], // Will be computed from who lists this person in their Taught column
                     students: (d.Taught || '').split(';').filter(s => s.trim()),
+                    familyStudents: (d.Taught_Familial_Related || '').split(';').filter(f => f.trim()), // Family members this person taught
                     incarnationOf: (d.Incarnation_Of || '').split(';').filter(i => i.trim()),
-                    familyFrom: (d.Family_Received_From || '').split(';').filter(f => f.trim()),
                     emanatedAs: (d['Eminated as'] || '').split(';').filter(e => e.trim()),
                     // Additional popup fields
                     wylie: d.Name_Wylie_Tibetan || '',
@@ -1358,13 +1358,13 @@
                     }
                 });
 
-                // Family relationships
-                node.familyFrom.forEach(familyName => {
-                    const family = nodes.find(n => n.id === familyName.trim());
-                    if (family) {
+                // Family relationships (teacher → student, same direction as regular teaching)
+                node.familyStudents.forEach(studentName => {
+                    const student = nodes.find(n => n.id === studentName.trim());
+                    if (student) {
                         links.push({
-                            source: family.id,
-                            target: node.id,
+                            source: node.id,      // Teacher (this node)
+                            target: student.id,   // Student (family member who received teaching)
                             type: 'family'
                         });
                     }
