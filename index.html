@@ -142,21 +142,9 @@
             /* filter: drop-shadow(0 0 8px #87CEEB); */ /* COMMENTED OUT FOR PERFORMANCE TEST */
         }
 
-        /* Preserve relationship-specific dash patterns when highlighted */
-        .link.teaching.traced {
-            stroke-dasharray: none; /* Solid line for teaching */
-        }
-
-        .link.incarnation.traced {
-            stroke-dasharray: 4,4; /* Larger dots for incarnation when highlighted */
-        }
-
-        .link.family.traced {
-            stroke-dasharray: 10,6; /* Larger dashes for family when highlighted */
-        }
-
-        .link.emanation.traced {
-            stroke-dasharray: 2,2; /* Small dots for emanation when highlighted */
+        /* Don't apply dash patterns via CSS - let JavaScript handle it after animation */
+        .link.traced {
+            /* Dash patterns will be applied by JavaScript after animation completes */
         }
 
         /* Popup card styles */
@@ -2637,18 +2625,39 @@
                                     tracedLinksDownstream.add(linkData);
                                 }
 
-                                // Highlight the link with direction-based color
+                                // Highlight the link with direction-based color AND flowing animation
                                 const linkStrokeColor = direction === 'upstream' ? '#ffff00' : '#87CEEB';
+
+                                // Get the line's total length for flowing animation
+                                const lineElement = linkElement.node();
+                                const lineLength = lineElement.getTotalLength();
+
+                                // Apply classes and colors immediately
                                 linkElement
                                     .classed('dimmed', false)
                                     .classed('traced', true)
                                     .classed('upstream', direction === 'upstream')
                                     .classed('downstream', direction === 'downstream')
-                                    .transition()
-                                    .duration(100) // Reduced from 150ms for snappier feel
                                     .style('stroke', linkStrokeColor)
                                     .style('stroke-width', '4px')
-                                    .style('opacity', '1');
+                                    .style('opacity', '1')
+                                    // Same animation for both directions
+                                    .style('stroke-dasharray', lineLength)
+                                    .style('stroke-dashoffset', lineLength)
+                                    .transition()
+                                    .duration(200)
+                                    .ease(d3.easeLinear)
+                                    .style('stroke-dashoffset', 0)
+                                    .on('end', function() {
+                                        // Restore proper dash pattern after animation
+                                        const dashPatterns = {
+                                            'teaching': 'none',
+                                            'incarnation': '4,4',
+                                            'family': '10,6',
+                                            'emanation': '2,2'
+                                        };
+                                        d3.select(this).style('stroke-dasharray', dashPatterns[linkData.type] || 'none');
+                                    });
 
                                 // Add flowing particle effect with matching color (reduced frequency for performance)
                                 // Only create particles for ~40% of links to reduce lag
