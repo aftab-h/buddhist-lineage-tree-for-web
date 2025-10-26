@@ -103,11 +103,11 @@
         }
 
         .node.traced.upstream {
-            filter: drop-shadow(0 0 10px #ffff00);
+            /* filter: drop-shadow(0 0 10px #ffff00); */ /* COMMENTED OUT FOR PERFORMANCE TEST */
         }
 
         .node.traced.downstream {
-            filter: drop-shadow(0 0 10px #87CEEB);
+            /* filter: drop-shadow(0 0 10px #87CEEB); */ /* COMMENTED OUT FOR PERFORMANCE TEST */
         }
 
         .node.traced.target {
@@ -116,11 +116,13 @@
         }
 
         .node.traced.target.upstream {
-            filter: drop-shadow(0 0 15px #ffff00) brightness(1.3) !important;
+            /* filter: drop-shadow(0 0 15px #ffff00) brightness(1.3) !important; */ /* COMMENTED OUT FOR PERFORMANCE TEST */
+            filter: brightness(1.3) !important; /* Keep brightness, remove drop-shadow */
         }
 
         .node.traced.target.downstream {
-            filter: drop-shadow(0 0 15px #87CEEB) brightness(1.3) !important;
+            /* filter: drop-shadow(0 0 15px #87CEEB) brightness(1.3) !important; */ /* COMMENTED OUT FOR PERFORMANCE TEST */
+            filter: brightness(1.3) !important; /* Keep brightness, remove drop-shadow */
         }
 
         /* Base traced link style - color set by JavaScript based on direction */
@@ -132,12 +134,12 @@
 
         /* Upstream links (ancestors/teachers) - yellow */
         .link.traced.upstream {
-            filter: drop-shadow(0 0 8px #ffff00);
+            /* filter: drop-shadow(0 0 8px #ffff00); */ /* COMMENTED OUT FOR PERFORMANCE TEST */
         }
 
         /* Downstream links (descendants/students) - pale blue */
         .link.traced.downstream {
-            filter: drop-shadow(0 0 8px #87CEEB);
+            /* filter: drop-shadow(0 0 8px #87CEEB); */ /* COMMENTED OUT FOR PERFORMANCE TEST */
         }
 
         /* Preserve relationship-specific dash patterns when highlighted */
@@ -592,19 +594,22 @@
                 stroke: #ffff00 !important;
                 stroke-width: 6px !important;
                 opacity: 1 !important;
-                filter: drop-shadow(0 0 15px #ffff00) brightness(1.5);
+                /* filter: drop-shadow(0 0 15px #ffff00) brightness(1.5); */ /* COMMENTED OUT FOR PERFORMANCE TEST */
+                filter: brightness(1.5);
             }
             50% {
                 stroke: #ff4500 !important;
                 stroke-width: 8px !important;
                 opacity: 1 !important;
-                filter: drop-shadow(0 0 20px #ff4500) brightness(2);
+                /* filter: drop-shadow(0 0 20px #ff4500) brightness(2); */ /* COMMENTED OUT FOR PERFORMANCE TEST */
+                filter: brightness(2);
             }
             100% {
                 stroke: #ffff00 !important;
                 stroke-width: 6px !important;
                 opacity: 1 !important;
-                filter: drop-shadow(0 0 15px #ffff00) brightness(1.5);
+                /* filter: drop-shadow(0 0 15px #ffff00) brightness(1.5); */ /* COMMENTED OUT FOR PERFORMANCE TEST */
+                filter: brightness(1.5);
             }
         }
 
@@ -616,7 +621,8 @@
             stroke: #00ff00 !important;
             stroke-width: 8px !important;
             opacity: 1 !important;
-            filter: drop-shadow(0 0 25px #00ff00) brightness(3) saturate(2) !important;
+            /* filter: drop-shadow(0 0 25px #00ff00) brightness(3) saturate(2) !important; */ /* COMMENTED OUT FOR PERFORMANCE TEST */
+            filter: brightness(2) saturate(1.5) !important; /* Keep some brightness/saturation, remove drop-shadow */
             fill: #ffffff !important;
         }
 
@@ -625,7 +631,8 @@
             stroke: #ff0000 !important;
             stroke-width: 12px !important;
             opacity: 1 !important;
-            filter: drop-shadow(0 0 30px #ff0000) brightness(3) saturate(3) !important;
+            /* filter: drop-shadow(0 0 30px #ff0000) brightness(3) saturate(3) !important; */ /* COMMENTED OUT FOR PERFORMANCE TEST */
+            filter: brightness(2) saturate(2) !important; /* Keep some brightness/saturation, remove drop-shadow */
             fill: #ffffff !important;
         }
 
@@ -2689,7 +2696,7 @@
                 .attr('opacity', 0.8)
                 .attr('cx', startX)
                 .attr('cy', startY)
-                .style('filter', `drop-shadow(0 0 6px ${color})`)
+                // .style('filter', `drop-shadow(0 0 6px ${color})`) // COMMENTED OUT FOR PERFORMANCE TEST
                 .style('pointer-events', 'none');
 
             // Animate particle flowing in appropriate direction (faster for performance)
