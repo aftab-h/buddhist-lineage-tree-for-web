@@ -2531,67 +2531,79 @@
         function createRippleCascade(trajectoryNodes, clickedNodeId, direction) {
             // Don't clear timeouts here - both directions run simultaneously
 
-            // Sort nodes by distance for proper cascade order
-            const sortedNodes = Array.from(trajectoryNodes.entries())
-                .sort(([,a], [,b]) => a.distance - b.distance);
+            // Group nodes by distance level for parallel branch animation
+            const nodesByDistance = new Map();
+            trajectoryNodes.forEach((nodeInfo, nodeId) => {
+                if (!nodesByDistance.has(nodeInfo.distance)) {
+                    nodesByDistance.set(nodeInfo.distance, []);
+                }
+                nodesByDistance.get(nodeInfo.distance).push([nodeId, nodeInfo]);
+            });
+
+            // Sort distance levels
+            const sortedDistances = Array.from(nodesByDistance.keys()).sort((a, b) => a - b);
+            console.log(`${direction}: ${sortedDistances.length} distance levels, max nodes per level: ${Math.max(...Array.from(nodesByDistance.values()).map(arr => arr.length))}`);
 
             // Color scheme based on direction
             const colors = direction === 'upstream'
-                ? { main: '#FFD700', secondary: '#ff6b35' }  // Gold/Orange for upstream (teachers)
+                ? { main: '#FFD700', secondary: '#FFFF00' }  // Gold/Yellow for upstream (teachers)
                 : { main: '#87CEEB', secondary: '#6FB9DB' }; // Pale blue for downstream (students)
 
-            // Apply animations and highlighting with staggered timing
-            sortedNodes.forEach(([nodeId, nodeInfo], index) => {
-                const delay = index * 120; // 120ms delay for cascade effect
-                const isMainNode = nodeId === clickedNodeId;
+            // Animate each distance level - all nodes at same distance animate in parallel
+            sortedDistances.forEach((distance, levelIndex) => {
+                const levelDelay = levelIndex * 100; // 100ms delay between levels (faster than before!)
+                const nodesAtThisLevel = nodesByDistance.get(distance);
 
-                // Skip styling the clicked node in downstream - it's styled by upstream
-                if (direction === 'downstream' && isMainNode) {
-                    return; // Skip this iteration
-                }
+                // All nodes at this distance level animate simultaneously
+                nodesAtThisLevel.forEach(([nodeId, nodeInfo]) => {
+                    const isMainNode = nodeId === clickedNodeId;
 
                 const timeoutId = setTimeout(() => {
                     // Add this node to traced set
                     tracedNodes.add(nodeId);
 
-                    // Find the node element and apply highlighting
-                    nodeElements.filter(d => d.id === nodeId).each(function(d) {
-                        const nodeElement = d3.select(this);
+                    // Skip ONLY styling the clicked node in downstream - it's styled by upstream
+                    // But we still want to highlight its outgoing links!
+                    if (!(direction === 'downstream' && isMainNode)) {
+                        // Find the node element and apply highlighting
+                        nodeElements.filter(d => d.id === nodeId).each(function(d) {
+                            const nodeElement = d3.select(this);
 
-                        // Apply highlighting effects with direction-specific colors
-                        const brightnessFactor = isMainNode ? 1.5 : 1.2;
-                        const strokeColor = isMainNode ? colors.main : colors.secondary;
-                        const strokeWidth = isMainNode ? 4 : 3;
+                            // Apply highlighting effects with direction-specific colors
+                            const brightnessFactor = isMainNode ? 1.5 : 1.2;
+                            const strokeColor = isMainNode ? colors.main : colors.secondary;
+                            const strokeWidth = isMainNode ? 4 : 3;
 
-                        // Apply highlighting with inline styles to override CSS
-                        nodeElement
-                            .classed('dimmed', false)
-                            .classed('traced', true)
-                            .classed('target', isMainNode)
-                            .classed('upstream', direction === 'upstream')
-                            .classed('downstream', direction === 'downstream')
-                            .style('stroke', strokeColor) // Set immediately before transition
-                            .style('stroke-width', strokeWidth + 'px')
-                            .transition()
-                            .duration(200)
-                            .style('opacity', 1);
-
-                        // Add simple grow/shrink animation for the clicked node
-                        if (isMainNode) {
-                            const originalRadius = parseFloat(nodeElement.attr('r'));
-                            const enlargedRadius = originalRadius * 1.4;
-                            const finalRadius = originalRadius * 1.15; // Just slightly bigger than original
-
+                            // Apply highlighting with inline styles to override CSS
                             nodeElement
+                                .classed('dimmed', false)
+                                .classed('traced', true)
+                                .classed('target', isMainNode)
+                                .classed('upstream', direction === 'upstream')
+                                .classed('downstream', direction === 'downstream')
+                                .style('stroke', strokeColor) // Set immediately before transition
+                                .style('stroke-width', strokeWidth + 'px')
                                 .transition()
-                                .delay(150)
-                                .duration(150)
-                                .attr('r', enlargedRadius)
-                                .transition()
-                                .duration(150)
-                                .attr('r', finalRadius);
-                        }
-                    });
+                                .duration(150) // Reduced from 200ms for snappier feel
+                                .style('opacity', 1);
+
+                            // Add simple grow/shrink animation for the clicked node
+                            if (isMainNode) {
+                                const originalRadius = parseFloat(nodeElement.attr('r'));
+                                const enlargedRadius = originalRadius * 1.4;
+                                const finalRadius = originalRadius * 1.15; // Just slightly bigger than original
+
+                                nodeElement
+                                    .transition()
+                                    .delay(150)
+                                    .duration(150)
+                                    .attr('r', enlargedRadius)
+                                    .transition()
+                                    .duration(150)
+                                    .attr('r', finalRadius);
+                            }
+                        });
+                    }
 
                     // Highlight the links with 50ms delay
                     const linkTimeoutId = setTimeout(() => {
@@ -2626,28 +2638,32 @@
                                     .classed('upstream', direction === 'upstream')
                                     .classed('downstream', direction === 'downstream')
                                     .transition()
-                                    .duration(150)
+                                    .duration(100) // Reduced from 150ms for snappier feel
                                     .style('stroke', linkStrokeColor)
                                     .style('stroke-width', '4px')
                                     .style('opacity', '1');
 
-                                // Add flowing particle effect with matching color
-                                const particleColor = linkStrokeColor;
-                                const particleTimeoutId = setTimeout(() => {
-                                    if (!tracebackActive) return;
-                                    createFlowingParticle(linkElement.node(), linkData, particleColor, direction);
-                                }, 25);
-                                tracebackTimeouts.push(particleTimeoutId);
+                                // Add flowing particle effect with matching color (reduced frequency for performance)
+                                // Only create particles for ~40% of links to reduce lag
+                                if (Math.random() < 0.4) {
+                                    const particleColor = linkStrokeColor;
+                                    const particleTimeoutId = setTimeout(() => {
+                                        if (!tracebackActive) return;
+                                        createFlowingParticle(linkElement.node(), linkData, particleColor, direction);
+                                    }, 25);
+                                    tracebackTimeouts.push(particleTimeoutId);
+                                }
                             }
                         });
                     }, 50);
 
                     // CRITICAL: Track the link timeout so it can be cleared
                     tracebackTimeouts.push(linkTimeoutId);
-                }, delay);
+                }, levelDelay); // Use levelDelay for parallel animation per distance level
 
                 tracebackTimeouts.push(timeoutId);
-            });
+                }); // Close nodesAtThisLevel.forEach
+            }); // Close sortedDistances.forEach
         }
 
         function createFlowingParticle(linkElement, linkData, color = '#ffff00', direction = 'upstream') {
@@ -2676,10 +2692,10 @@
                 .style('filter', `drop-shadow(0 0 6px ${color})`)
                 .style('pointer-events', 'none');
 
-            // Animate particle flowing in appropriate direction
+            // Animate particle flowing in appropriate direction (faster for performance)
             particle
                 .transition()
-                .duration(600)
+                .duration(400) // Reduced from 600ms for better performance
                 .ease(d3.easeQuadOut)
                 .attr('cx', endX)
                 .attr('cy', endY)
