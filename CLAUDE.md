@@ -71,22 +71,22 @@ The main CSV file `dzogchen_lineage.csv` uses a 20-column structure:
 11. **Transmission_Mode** - Mind-to-Mind, Symbolic, or Aural
 12. **Lineage** - Which of the three main lineages (Vairocana, Vimalamitra, Padmasambhava, or "All lineages")
 13. **Taught** - Regular teaching relationships: Student(s) this master taught (semicolon-separated names; solid white lines)
-14. **Taught_Familial_Related** - Familial teaching relationships: Family members this master taught (semicolon-separated names; dashed brown lines) **[Note: Currently being populated - data will be migrated from Taught column]**
-15. **Incarnation_Of** - Previous incarnation relationships (semicolon-separated names; dotted gray lines)
+14. **Taught_Familial_Related** - Familial teaching relationships: Family members this master taught (semicolon-separated names; dashed brown lines)
+15. **Reincarnated_As** - Future incarnation/emanation relationships: Who this master reincarnated or emanated as (semicolon-separated names; dotted gray lines) **[Consolidated: Combines both reincarnation and emanation into single relationship type]**
 16. **Family_Relationship** - Legacy TRUE/FALSE field (deprecated, replaced by Taught_Familial_Related)
-17. **Emanated as** - Names of entities that emanated as this master (semicolon-separated; double-dotted golden lines)
+17. **Emanated as** - Deprecated column (data consolidated into Reincarnated_As, Column 15)
 18. **Links_Names** - Semicolon-separated external link labels
 19. **Links_URLs** - Semicolon-separated external link URLs (must match order of Links_Names)
 20. **Notes** - Additional notes, data issues, or context
 
 ### Key Field Usage Notes:
 - **Name_English (Column 1)**: The canonical source of truth for all name references - all relationship fields must use exact matches
-- **Taught (Column 13)**: Regular teacher-student relationships (solid white lines), names must match Column 1 exactly
-- **Taught_Familial_Related (Column 14)**: **NEW** - Familial teaching relationships (dashed brown lines), names must match Column 1 exactly. Directional: teacher → student within family structures
-- **Incarnation_Of (Column 15)**: Reincarnation relationships (dotted gray lines), names must match Column 1 exactly
-- **Emanated as (Column 17)**: Spiritual emanation relationships (double-dotted golden lines), names must match Column 1 exactly
+- **Taught (Column 13)**: Regular teacher-student relationships (solid white lines), names must match Column 1 exactly. Directional: teacher → student (downstream)
+- **Taught_Familial_Related (Column 14)**: Familial teaching relationships (dashed brown lines), names must match Column 1 exactly. Directional: teacher → student within family structures (downstream)
+- **Reincarnated_As (Column 15)**: **RENAMED & CONSOLIDATED** - Reincarnation/emanation relationships (dotted gray lines), names must match Column 1 exactly. Directional: current incarnation → future incarnation (downstream). Combines both reincarnation and emanation.
 - **Position_Date (Column 6)**: Always numeric values for chronological positioning (0-100 = pre-linear time ordinal positions, 100+ = historical years)
 - **Multiple names**: Use semicolon (;) separation, no commas within relationship fields
+- **Data Direction**: All relationship columns now use consistent downstream direction (current → future), making highlighting behavior predictable
 
 ## Visual Line Types for Relationships
 
@@ -99,27 +99,20 @@ The visualization uses distinct line styles to represent different types of rela
 - **Direction**: From teacher to student (hierarchical flow)
 - **Represents**: Direct dharma transmission between teacher and student (non-familial)
 
-### **Dotted Lines** - Incarnation Relationships
-- **Source**: `Incarnation_Of` (Column 15)
-- **Style**: Small dots with regular spacing
+### **Dotted Lines** - Reincarnation & Emanation (Consolidated)
+- **Source**: `Reincarnated_As` (Column 15) **[RENAMED & CONSOLIDATED]**
+- **Style**: Small dots with regular spacing (stroke-dasharray: 4,4)
 - **Color**: Gray (#888888)
-- **Direction**: From previous incarnation to current incarnation
-- **Represents**: Reincarnation lineage showing continuation of the same consciousness stream
+- **Direction**: From current incarnation to future incarnation (downstream)
+- **Represents**: Both reincarnation lineage (continuation of same consciousness stream) AND spiritual emanation (higher beings manifesting as specific masters)
+- **Note**: Previously separate "Incarnation" and "Emanation" relationships are now unified under single dotted line type for simplicity
 
 ### **Dashed Lines** - Family Teaching Relationships
-- **Source**: `Taught_Familial_Related` (Column 14) **[NEW]**
-- **Style**: Medium dashes with gaps (stroke-dasharray: 5,3)
+- **Source**: `Taught_Familial_Related` (Column 14)
+- **Style**: Medium dashes with gaps (stroke-dasharray: 10,6)
 - **Color**: Brown (#cd853f)
-- **Direction**: From family teacher to family student (directional, not bidirectional)
+- **Direction**: From family teacher to family student (downstream, directional)
 - **Represents**: Dharma transmission within family structures (father to son, uncle to nephew, etc.)
-- **Note**: Data is currently being migrated from the `Taught` column to distinguish familial from non-familial teaching relationships
-
-### **Double-Dotted Lines** - Spiritual Emanation
-- **Source**: `Emanated as` (Column 17)
-- **Style**: Small double dots (stroke-dasharray: 1,1)
-- **Color**: Golden (#ffd700)
-- **Direction**: From emanating entity to emanated form
-- **Represents**: Higher spiritual beings manifesting as specific masters (different from reincarnation)
 
 ### **Implementation Guidelines**
 - **Line Hierarchy**: Solid teaching lines should be most prominent, other relationships secondary
@@ -130,11 +123,17 @@ The visualization uses distinct line styles to represent different types of rela
 
 ### File Status & Recent Updates:
 - **`dzogchen_lineage.csv`**: Main lineage data file - **UPDATED & CLEANED**
-  - **Current structure**: 20 columns (expanded from 19 to add `Taught_Familial_Related`)
-  - **Latest update (October 2025)**: Added Column 14 `Taught_Familial_Related` for explicit familial teaching relationships
+  - **Current structure**: 20 columns
+  - **Latest updates (October 2025)**:
+    - Added Column 14 `Taught_Familial_Related` for explicit familial teaching relationships
+    - Renamed Column 15 from `Incarnation_Of` → `Reincarnated_As` (reversed direction: now downstream)
+    - Consolidated emanation data into `Reincarnated_As` column (Column 17 `Emanated as` now deprecated)
+    - **ALL relationship columns now use consistent downstream direction** (current → future)
   - Previously expanded from 12 to 19-column format with enhanced merge preserving chronological positioning
 - **`new_lineage_nodes.csv`**: **FULLY MERGED** into main file (224 records integrated in September 2025)
-- **Family Relationship Migration**: Column 14 (`Taught_Familial_Related`) is currently being populated - data will be manually migrated from `Taught` column to distinguish familial from non-familial teaching relationships
+- **Data Migration Completed**:
+  - 6 family relationships moved to `Taught_Familial_Related`
+  - 33 reincarnation/emanation relationships consolidated in `Reincarnated_As` (all reversed to downstream direction)
 
 ### Recent Data Cleanup (Completed):
 **Merge Process (septemer 23 2025):**
@@ -170,11 +169,10 @@ The visualization uses distinct line styles to represent different types of rela
 - **Lineage Filtering**: Focus on individual lineages
 - **Responsive Design**: Adapts to different screen sizes
 - **Century Markers**: Timeline visualization along the bottom
-- **Relationship Legend**: Visual legend showing all four line types:
-  - **Solid Lines**: Direct teaching transmission (teacher-student)
-  - **Dotted Lines**: Incarnation relationships (reincarnation lineages)
+- **Relationship Legend**: Visual legend showing all three line types:
+  - **Solid Lines**: Direct teaching transmission (teacher-student, non-familial)
+  - **Dotted Lines**: Reincarnation & Emanation (consolidated - includes both reincarnation lineages and spiritual emanation)
   - **Dashed Lines**: Family teaching relationships (family dharma transmission)
-  - **Double-Dotted Lines**: Spiritual emanation (higher beings manifesting as masters)
 
 ## Scalability Requirements & Current Challenges
 

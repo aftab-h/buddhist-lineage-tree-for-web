@@ -1303,8 +1303,7 @@
                     teachers: [], // Will be computed from who lists this person in their Taught column
                     students: (d.Taught || '').split(';').filter(s => s.trim()),
                     familyStudents: (d.Taught_Familial_Related || '').split(';').filter(f => f.trim()), // Family members this person taught
-                    incarnationOf: (d.Incarnation_Of || '').split(';').filter(i => i.trim()),
-                    emanatedAs: (d['Eminated as'] || '').split(';').filter(e => e.trim()),
+                    reincarnatedAs: (d.Reincarnated_As || '').split(';').filter(i => i.trim()), // Future incarnations (downstream)
                     // Additional popup fields
                     wylie: d.Name_Wylie_Tibetan || '',
                     tibetan: d.Name_Tibetan || '',
@@ -1346,13 +1345,13 @@
                     }
                 });
 
-                // Incarnation relationships
-                node.incarnationOf.forEach(prevName => {
-                    const prev = nodes.find(n => n.id === prevName.trim());
-                    if (prev) {
+                // Reincarnation/Emanation relationships (consolidated - current → future incarnation)
+                node.reincarnatedAs.forEach(futureIncarnationName => {
+                    const futureIncarnation = nodes.find(n => n.id === futureIncarnationName.trim());
+                    if (futureIncarnation) {
                         links.push({
-                            source: prev.id,
-                            target: node.id,
+                            source: node.id,              // Current incarnation
+                            target: futureIncarnation.id, // Future incarnation (downstream)
                             type: 'incarnation'
                         });
                     }
@@ -1366,18 +1365,6 @@
                             source: node.id,      // Teacher (this node)
                             target: student.id,   // Student (family member who received teaching)
                             type: 'family'
-                        });
-                    }
-                });
-
-                // Emanation relationships
-                node.emanatedAs.forEach(emanationName => {
-                    const emanation = nodes.find(n => n.id === emanationName.trim());
-                    if (emanation) {
-                        links.push({
-                            source: node.id,
-                            target: emanation.id,
-                            type: 'emanation'
                         });
                     }
                 });
@@ -2339,7 +2326,7 @@
 
             // Find all ancestors - trace upward through ALL relationship types
             function findAncestors(nodeId, distance) {
-                // ALL relationship types: teaching, incarnation, emanation, family
+                // ALL relationship types: teaching, incarnation (includes emanation), family
                 links.forEach(link => {
                     if (link.target.id === nodeId || link.target === nodeId) {
                         const sourceId = link.source.id || link.source;
@@ -2389,7 +2376,7 @@
 
             // Find all descendants - trace downward through ALL relationship types
             function findDescendants(nodeId, distance) {
-                // ALL relationship types: teaching, incarnation, emanation, family
+                // ALL relationship types: teaching, incarnation (includes emanation), family
                 links.forEach(link => {
                     if (link.source.id === nodeId || link.source === nodeId) {
                         const targetId = link.target.id || link.target;
@@ -2652,9 +2639,8 @@
                                         // Restore proper dash pattern after animation
                                         const dashPatterns = {
                                             'teaching': 'none',
-                                            'incarnation': '4,4',
-                                            'family': '10,6',
-                                            'emanation': '2,2'
+                                            'incarnation': '4,4',  // Includes emanation (consolidated)
+                                            'family': '10,6'
                                         };
                                         d3.select(this).style('stroke-dasharray', dashPatterns[linkData.type] || 'none');
                                     });
