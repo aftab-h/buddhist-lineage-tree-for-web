@@ -2320,13 +2320,22 @@
 
                 // If no significant dragging occurred, treat as a click
                 if (!isDragging) {
-                    console.log('Node clicked (not dragged) - triggering traceback and popup for:', d.name);
+                    console.log('Node clicked (not dragged):', d.name);
 
-                    // Show popup with node information
-                    showPopup(d, event);
+                    // Check if this node is already in the current traceback
+                    const isAlreadyHighlighted = tracebackActive && tracedNodes.has(d.id);
 
-                    // Trigger traceback animation
-                    activateTraceback(d);
+                    if (isAlreadyHighlighted) {
+                        // Node is already highlighted - just update popup and zoom to it
+                        console.log('Node already in traceback - preserving animation, updating popup and zooming');
+                        showPopup(d, event);
+                        zoomToSingleNode(d);
+                    } else {
+                        // New node - show popup and trigger full traceback animation
+                        console.log('New node - triggering full traceback');
+                        showPopup(d, event);
+                        activateTraceback(d);
+                    }
                 }
             }
 
@@ -2853,6 +2862,30 @@
 
                 console.log(`Auto-zoomed to fit ${nodePositions.length} nodes: scale=${scale.toFixed(2)}, center=(${centerX.toFixed(0)}, ${centerY.toFixed(0)})`);
             }, 100); // Small delay to ensure positions are updated
+        }
+
+        // Zoom to a single node (used when clicking already-highlighted nodes)
+        function zoomToSingleNode(node) {
+            if (!node || node.x === undefined || node.y === undefined || !zoomBehavior) {
+                console.log('Cannot zoom to node - invalid node or zoom behavior');
+                return;
+            }
+
+            setTimeout(() => {
+                const targetScale = 1.5;        // Moderate zoom level
+                const translateX = width / 2 - node.x * targetScale;
+                const translateY = height / 2 - node.y * targetScale;
+
+                const transform = d3.zoomIdentity
+                    .translate(translateX, translateY)
+                    .scale(targetScale);
+
+                svg.transition()
+                    .duration(750)  // Slightly faster than full traceback zoom
+                    .call(zoomBehavior.transform, transform);
+
+                console.log(`Zoomed to single node: ${node.name}`);
+            }, 50);
         }
 
         // Perfect cascade animation for both upstream and downstream
