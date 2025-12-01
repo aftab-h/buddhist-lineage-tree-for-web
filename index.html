@@ -3025,12 +3025,11 @@
                                     .style('opacity', '1');
 
                                 // ANIMATION STRATEGY:
-                                // - Downstream (blue): Use stroke-dashoffset animation (works perfectly)
-                                // - Upstream (yellow): Skip dashoffset animation, use only particles
-                                //   (Lines point downward from source→target, dashoffset can't flow upward reliably)
+                                // - Downstream (blue): Animate stroke-dashoffset from lineLength→0 (reveals downward, source→target)
+                                // - Upstream (yellow): Animate stroke-dashoffset from -lineLength→0 (reveals upward, target→source)
 
                                 if (direction === 'downstream') {
-                                    // Downstream: animate line drawing from source to target (downward)
+                                    // Downstream: animate line drawing from source to target (downward) - standard approach
                                     linkElement
                                         .style('stroke-dasharray', lineLength)
                                         .style('stroke-dashoffset', lineLength)
@@ -3048,28 +3047,24 @@
                                             d3.select(this).style('stroke-dasharray', dashPatterns[linkData.type] || 'none');
                                         });
                                 } else {
-                                    // Upstream: just set the dash pattern immediately (no animation)
-                                    // Rely on flowing particles for directional flow indication
-                                    const dashPatterns = {
-                                        'teaching': 'none',
-                                        'incarnation': '4,4',
-                                        'family': '10,6'
-                                    };
-                                    linkElement.style('stroke-dasharray', dashPatterns[linkData.type] || 'none');
-                                }
-
-                                // Add flowing particle effect with matching color
-                                // Upstream: Higher particle frequency (80%) since we rely on them for directional flow
-                                // Downstream: Lower frequency (40%) since stroke-dashoffset animation shows direction
-                                const particleFrequency = direction === 'upstream' ? 0.8 : 0.4;
-
-                                if (Math.random() < particleFrequency) {
-                                    const particleColor = linkStrokeColor;
-                                    const particleTimeoutId = setTimeout(() => {
-                                        if (!tracebackActive) return;
-                                        createFlowingParticle(linkElement.node(), linkData, particleColor, direction);
-                                    }, 25);
-                                    tracebackTimeouts.push(particleTimeoutId);
+                                    // Upstream: Use negative stroke-dashoffset to reverse animation direction
+                                    // This reveals the line from end to start (upward flow)
+                                    linkElement
+                                        .style('stroke-dasharray', lineLength)
+                                        .style('stroke-dashoffset', -lineLength)  // Negative = reverse direction
+                                        .transition()
+                                        .duration(200)
+                                        .ease(d3.easeLinear)
+                                        .style('stroke-dashoffset', 0)            // Animate to visible
+                                        .on('end', function() {
+                                            // Restore proper dash pattern for relationship type
+                                            const dashPatterns = {
+                                                'teaching': 'none',
+                                                'incarnation': '4,4',
+                                                'family': '10,6'
+                                            };
+                                            d3.select(this).style('stroke-dasharray', dashPatterns[linkData.type] || 'none');
+                                        });
                                 }
                             }
                         });
@@ -3084,43 +3079,6 @@
             }); // Close sortedDistances.forEach
         }
 
-        function createFlowingParticle(linkElement, linkData, color = '#ffff00', direction = 'upstream') {
-            if (!linkElement || !linkData.source || !linkData.target) return;
-
-            const sourceX = linkData.source.x || 0;
-            const sourceY = linkData.source.y || 0;
-            const targetX = linkData.target.x || 0;
-            const targetY = linkData.target.y || 0;
-
-            // Direction-based flow:
-            // Upstream: flow backward (target -> source) to show tracing to origins
-            // Downstream: flow forward (source -> target) to show transmission to descendants
-            const startX = direction === 'upstream' ? targetX : sourceX;
-            const startY = direction === 'upstream' ? targetY : sourceY;
-            const endX = direction === 'upstream' ? sourceX : targetX;
-            const endY = direction === 'upstream' ? sourceY : targetY;
-
-            const particle = svg.select('.main-group')
-                .append('circle')
-                .attr('r', 3)
-                .attr('fill', color)
-                .attr('opacity', 0.8)
-                .attr('cx', startX)
-                .attr('cy', startY)
-                // .style('filter', `drop-shadow(0 0 6px ${color})`) // COMMENTED OUT FOR PERFORMANCE TEST
-                .style('pointer-events', 'none');
-
-            // Animate particle flowing in appropriate direction (faster for performance)
-            particle
-                .transition()
-                .duration(400) // Reduced from 600ms for better performance
-                .ease(d3.easeQuadOut)
-                .attr('cx', endX)
-                .attr('cy', endY)
-                .style('opacity', 0)
-                .remove();
-        }
-
         function clearTraceback() {
             tracebackActive = false;
 
@@ -3131,10 +3089,6 @@
             // Stop all transitions
             nodeElements.interrupt();
             linkElements.interrupt();
-
-            // Remove all particles (both yellow and blue)
-            svg.selectAll('circle[fill="#ffff00"]').remove();
-            svg.selectAll('circle[fill="#87CEEB"]').remove();
 
             tracedNodes.clear();
             tracedLinks.clear();
