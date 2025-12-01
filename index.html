@@ -325,6 +325,307 @@
             font-family: 'Arial', sans-serif !important;
         }
 
+        /* Welcome Modal Styles */
+        .welcome-modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 2000; /* Above popup-card (1500) */
+            animation: modalFadeIn 0.3s ease-out;
+        }
+
+        .welcome-modal.hidden {
+            display: none;
+        }
+
+        @keyframes modalFadeIn {
+            0% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.95);
+            }
+            100% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1);
+            }
+        }
+
+        .welcome-modal-content {
+            background: #1a1a1a; /* Slightly lighter than body background */
+            border: 2px solid #333333; /* Subtle border */
+            border-radius: 12px;
+            padding: 30px;
+            max-width: 550px;
+            min-height: 400px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .welcome-modal-title {
+            margin: 0 0 20px 0;
+            font-size: 24px;
+            font-weight: 600;
+            color: #ffffff;
+            text-align: center;
+            border-bottom: 1px solid #333333;
+            padding-bottom: 15px;
+        }
+
+        /* Page container with transitions */
+        .welcome-modal-page {
+            flex: 1;
+            animation: pageFadeIn 0.3s ease-out;
+        }
+
+        .welcome-modal-page.hidden {
+            display: none;
+        }
+
+        @keyframes pageFadeIn {
+            0% {
+                opacity: 0;
+                transform: translateX(10px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .welcome-modal-body {
+            color: #cccccc;
+            font-size: 14px;
+            line-height: 1.7;
+        }
+
+        .welcome-modal-body p {
+            margin: 0 0 15px 0;
+        }
+
+        .welcome-modal-body strong {
+            color: #ffffff;
+        }
+
+        /* Lists styling */
+        .lineage-list, .instruction-list, .transmission-list {
+            list-style: none;
+            padding: 0;
+            margin: 15px 0;
+        }
+
+        .lineage-list li {
+            padding: 10px 12px;
+            margin: 8px 0;
+            background: #252525;
+            border-radius: 6px;
+            border-left: 3px solid #27ae60; /* Green accent for lineages */
+        }
+
+        .transmission-list li {
+            padding: 8px 0;
+            margin: 6px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .color-indicator {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .mind-color {
+            background: #4a90e2; /* Blue for Mind-to-Mind */
+        }
+
+        .symbolic-color {
+            background: #9b59b6; /* Purple for Symbolic */
+        }
+
+        .aural-color {
+            background: #27ae60; /* Green for Aural */
+        }
+
+        .relationship-list {
+            list-style: none;
+            padding: 0;
+            margin: 15px 0;
+        }
+
+        .relationship-list li {
+            padding: 8px 0;
+            margin: 6px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .line-indicator {
+            width: 40px;
+            height: 2px;
+            flex-shrink: 0;
+        }
+
+        .teaching-line {
+            background: #ffffff; /* Solid white line */
+        }
+
+        .incarnation-line {
+            background: linear-gradient(to right, #888888 50%, transparent 50%);
+            background-size: 4px 2px;
+            background-repeat: repeat-x;
+            height: 2px;
+        }
+
+        .family-line {
+            background: linear-gradient(to right, #cd853f 60%, transparent 60%);
+            background-size: 8px 2px;
+            background-repeat: repeat-x;
+            height: 2px;
+        }
+
+        .emanation-line {
+            background: linear-gradient(to right, #ffd700 30%, transparent 30%);
+            background-size: 3px 2px;
+            background-repeat: repeat-x;
+            height: 2px;
+        }
+
+        .instruction-list li {
+            padding: 8px 0 8px 24px;
+            margin: 6px 0;
+            position: relative;
+        }
+
+        .instruction-list li::before {
+            content: "→";
+            position: absolute;
+            left: 0;
+            color: #4a90e2;
+            font-weight: bold;
+        }
+
+        .instruction-list ul {
+            margin: 8px 0 0 20px;
+            list-style: disc;
+            color: #999;
+        }
+
+        .instruction-list ul li::before {
+            display: none;
+        }
+
+        .welcome-instructions {
+            margin-bottom: 12px;
+        }
+
+        /* Footer with pagination controls */
+        .welcome-modal-footer {
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 1px solid #333333;
+        }
+
+        .page-indicators {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .page-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #444444;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .page-dot.active {
+            background: #4a90e2;
+            width: 24px;
+            border-radius: 5px;
+        }
+
+        .page-dot:hover {
+            background: #555555;
+        }
+
+        .page-dot.active:hover {
+            background: #4a90e2;
+        }
+
+        /* Button container */
+        .welcome-modal-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: space-between;
+        }
+
+        .welcome-modal-button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            flex: 1;
+        }
+
+        .welcome-modal-button.primary {
+            background: #4a90e2; /* Match active button blue */
+            color: #ffffff;
+        }
+
+        .welcome-modal-button.primary:hover {
+            background: #357abd; /* Darker blue on hover */
+        }
+
+        .welcome-modal-button.secondary {
+            background: #333333;
+            color: #cccccc;
+        }
+
+        .welcome-modal-button.secondary:hover {
+            background: #444444;
+            color: #ffffff;
+        }
+
+        .welcome-modal-button:active {
+            transform: scale(0.98);
+        }
+
+        /* Mobile responsive */
+        @media (max-width: 768px) {
+            .welcome-modal-content {
+                max-width: 90vw;
+                padding: 20px;
+                min-height: 350px;
+            }
+
+            .welcome-modal-title {
+                font-size: 20px;
+            }
+
+            .welcome-modal-body {
+                font-size: 13px;
+            }
+
+            .welcome-modal-button {
+                padding: 10px 16px;
+                font-size: 14px;
+            }
+
+            .lineage-list li {
+                padding: 8px 10px;
+            }
+        }
+
         /* Prevent accidental zoom on UI elements */
         .controls, .popup-card, #playback-bar, #legend-icon, #controls-icon {
             touch-action: manipulation !important;
@@ -1129,6 +1430,63 @@
                 <div id="popup-dates"></div>
                 <div id="popup-description"></div>
                 <div id="popup-links" class="popup-links"></div>
+            </div>
+        </div>
+
+        <!-- Welcome Modal -->
+        <div id="welcome-modal" class="welcome-modal">
+            <div class="welcome-modal-content">
+                <h2 class="welcome-modal-title">Dzogchen Lineage Transmission</h2>
+
+                <!-- Page 1: Introduction -->
+                <div class="welcome-modal-page" data-page="1">
+                    <div class="welcome-modal-body">
+                        <p>This interactive visualization maps the transmission of Dzogchen teachings across centuries, showing the relationships between teachers and students through three main lineages: <strong>Vairocana</strong>, <strong>Vimalamitra</strong>, and <strong>Padmasambhava</strong>.</p>
+
+                        <p style="margin-top: 20px;"><strong>Transmission Modes</strong> (shown by node colors):</p>
+                        <ul class="transmission-list">
+                            <li><span class="color-indicator mind-color"></span><strong>Mind-to-Mind</strong> - Direct transmission between enlightened beings</li>
+                            <li><span class="color-indicator symbolic-color"></span><strong>Symbolic</strong> - Transmission through symbols and gestures</li>
+                            <li><span class="color-indicator aural-color"></span><strong>Aural</strong> - Oral transmission through spoken teachings</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Page 2: How to Use -->
+                <div class="welcome-modal-page hidden" data-page="2">
+                    <div class="welcome-modal-body">
+                        <p class="welcome-instructions">
+                            <strong>How to explore the lineage:</strong>
+                        </p>
+                        <ul class="instruction-list">
+                            <li><strong>Click nodes</strong> to view detailed teacher information and images</li>
+                            <li><strong>Use filters</strong> to focus on specific lineages or transmission modes</li>
+                            <li><strong>Search by name</strong> to quickly find specific teachers</li>
+                            <li><strong>Switch layouts</strong> between Circular and Linear modes</li>
+                        </ul>
+
+                        <p style="margin-top: 20px;"><strong>Relationship Types</strong> (shown by line styles):</p>
+                        <ul class="relationship-list">
+                            <li><span class="line-indicator teaching-line"></span><strong>Teaching</strong> - Direct teacher-student transmission</li>
+                            <li><span class="line-indicator incarnation-line"></span><strong>Incarnation</strong> - Reincarnation lineage</li>
+                            <li><span class="line-indicator family-line"></span><strong>Family</strong> - Family teaching relationships</li>
+                            <li><span class="line-indicator emanation-line"></span><strong>Emanation</strong> - Spiritual emanation</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Navigation Footer -->
+                <div class="welcome-modal-footer">
+                    <div class="page-indicators">
+                        <span class="page-dot active" data-page="1"></span>
+                        <span class="page-dot" data-page="2"></span>
+                    </div>
+                    <div class="welcome-modal-buttons">
+                        <button class="welcome-modal-button secondary" id="modal-prev-btn" onclick="prevModalPage()" style="display: none;">Previous</button>
+                        <button class="welcome-modal-button primary" id="modal-next-btn" onclick="nextModalPage()">Next</button>
+                        <button class="welcome-modal-button primary" id="modal-close-btn" onclick="closeWelcomeModal()" style="display: none;">Get Started</button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -3039,6 +3397,18 @@
             initializeSearch();
             // Initialize language display
             updateAllUILanguage();
+
+            // Add click handlers for page dots
+            const dots = document.querySelectorAll('.page-dot');
+            dots.forEach(dot => {
+                dot.addEventListener('click', function() {
+                    currentModalPage = parseInt(this.getAttribute('data-page'));
+                    updateModalPage();
+                });
+            });
+
+            // Show welcome modal
+            showWelcomeModal();
         });
 
         // Add body click listener to clear traceback and close popup
@@ -3191,6 +3561,84 @@
             popup.classList.add('hidden');
             currentPopupNode = null;
             currentPopupData = null;
+        }
+
+        // Welcome Modal functionality
+        let currentModalPage = 1;
+        const totalModalPages = 2;
+
+        function showWelcomeModal() {
+            const modal = document.getElementById('welcome-modal');
+            if (modal) {
+                currentModalPage = 1;
+                updateModalPage();
+                modal.classList.remove('hidden');
+            }
+        }
+
+        function closeWelcomeModal() {
+            const modal = document.getElementById('welcome-modal');
+            if (modal) {
+                modal.classList.add('hidden');
+            }
+        }
+
+        function nextModalPage() {
+            if (currentModalPage < totalModalPages) {
+                currentModalPage++;
+                updateModalPage();
+            }
+        }
+
+        function prevModalPage() {
+            if (currentModalPage > 1) {
+                currentModalPage--;
+                updateModalPage();
+            }
+        }
+
+        function updateModalPage() {
+            // Hide all pages
+            const pages = document.querySelectorAll('.welcome-modal-page');
+            pages.forEach(page => page.classList.add('hidden'));
+
+            // Show current page
+            const currentPage = document.querySelector(`.welcome-modal-page[data-page="${currentModalPage}"]`);
+            if (currentPage) {
+                currentPage.classList.remove('hidden');
+            }
+
+            // Update page indicators
+            const dots = document.querySelectorAll('.page-dot');
+            dots.forEach(dot => {
+                const pageNum = parseInt(dot.getAttribute('data-page'));
+                if (pageNum === currentModalPage) {
+                    dot.classList.add('active');
+                } else {
+                    dot.classList.remove('active');
+                }
+            });
+
+            // Update button visibility
+            const prevBtn = document.getElementById('modal-prev-btn');
+            const nextBtn = document.getElementById('modal-next-btn');
+            const closeBtn = document.getElementById('modal-close-btn');
+
+            // Show/hide Previous button
+            if (currentModalPage === 1) {
+                prevBtn.style.display = 'none';
+            } else {
+                prevBtn.style.display = 'block';
+            }
+
+            // Show Next or Close button
+            if (currentModalPage === totalModalPages) {
+                nextBtn.style.display = 'none';
+                closeBtn.style.display = 'block';
+            } else {
+                nextBtn.style.display = 'block';
+                closeBtn.style.display = 'none';
+            }
         }
 
         function updatePopupLanguage(data) {
