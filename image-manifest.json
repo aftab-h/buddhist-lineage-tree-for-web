@@ -1,6 +1,42 @@
 {
+  "1st-dodrupchen": [
+    "images/optimized/1st-dodrupchen-1.jpg"
+  ],
+  "2nd-dzigar-kongtrul": [
+    "images/optimized/2nd-dzigar-kongtrul-1.jpg"
+  ],
+  "2nd-palyul-drupwang-pema-norbu-rigdzin-kunzang-shedrupa": [
+    "images/optimized/2nd-palyul-drupwang-pema-norbu-rigdzin-kunzang-shedrupa-1.jpg"
+  ],
+  "3rd-katok-situ-kunchen-orgyen-chokyi-dorje": [
+    "images/optimized/3rd-katok-situ-kunchen-orgyen-chokyi-dorje-1.jpg"
+  ],
+  "4th-dodrupchen-jikme-trinle-palbar": [
+    "images/optimized/4th-dodrupchen-jikme-trinle-palbar-1.jpg"
+  ],
+  "4th-zhechen-gyaltsap-gyurme-pema-namgyal": [
+    "images/optimized/4th-zhechen-gyaltsap-gyurme-pema-namgyal-1.jpg"
+  ],
+  "5th-dzogchen-rinpoche-thupten-chokyi-dorje": [
+    "images/optimized/5th-dzogchen-rinpoche-thupten-chokyi-dorje-1.jpg"
+  ],
+  "adzom-drukpa-rinpoche-drodul-pawo-dorje": [
+    "images/optimized/adzom-drukpa-rinpoche-drodul-pawo-dorje-1.jpg"
+  ],
+  "adzom-druktrul-tubten-pema-trinle": [
+    "images/optimized/adzom-druktrul-tubten-pema-trinle-1.jpg"
+  ],
+  "adzom-gyalse-gyurme-dorje": [
+    "images/optimized/adzom-gyalse-gyurme-dorje-1.jpg"
+  ],
+  "apang-terchen-orgyen-trinle-lingpa": [
+    "images/optimized/apang-terchen-orgyen-trinle-lingpa-1.jpg"
+  ],
   "aro-yeshe-jungne": [
     "images/optimized/aro-yeshe-jungne-1.jpg"
+  ],
+  "bairo-rinpoche": [
+    "images/optimized/bairo-rinpoche-1.jpg"
   ],
   "be-lodro-wangchuk": [
     "images/optimized/be-lodro-wangchuk-1.jpg"
@@ -15,23 +51,116 @@
     "images/optimized/buddhas-of-the-five-families-4.jpg",
     "images/optimized/buddhas-of-the-five-families-5.jpg"
   ],
+  "chagdud-tulku-padma-gargyi-wangchuk": [
+    "images/optimized/chagdud-tulku-padma-gargyi-wangchuk-1.jpg"
+  ],
+  "changma-khenchen-tupten-chopel": [
+    "images/optimized/changma-khenchen-tupten-chopel-1.jpg"
+  ],
+  "chatral-rinpoche-sanje-dorje": [
+    "images/optimized/chatral-rinpoche-sanje-dorje-1.jpg"
+  ],
   "chetsun-sengge-wangchuk": [
     "images/optimized/chetsun-sengge-wangchuk-1.jpg"
+  ],
+  "dakki-chonyi-zangmo": [
+    "images/optimized/dakki-chonyi-zangmo-1.jpg"
+  ],
+  "dartang-choktrul-chokyi-dawa-rinpoche": [
+    "images/optimized/dartang-choktrul-chokyi-dawa-rinpoche-1.jpg"
+  ],
+  "dilgo-khyentse-rinpoche-rabsel-dawa": [
+    "images/optimized/dilgo-khyentse-rinpoche-rabsel-dawa-1.jpg"
+  ],
+  "dilgo-khyentse-yangsi": [
+    "images/optimized/dilgo-khyentse-yangsi-1.jpg"
+  ],
+  "dudjom-rinpoche-jigdral-yeshe-dorje": [
+    "images/optimized/dudjom-rinpoche-jigdral-yeshe-dorje-1.jpg"
+  ],
+  "dudjom-yangsi-aka-dudjom-sangye-pema-shepa": [
+    "images/optimized/dudjom-yangsi-aka-dudjom-sangye-pema-shepa-1.jpg"
   ],
   "garab-dorje": [
     "images/optimized/garab-dorje-1.jpg"
   ],
+  "gemang-gyalse-rigpai-dorje-gyalse-zhenpen-taye-ozer": [
+    "images/optimized/gemang-gyalse-rigpai-dorje-gyalse-zhenpen-taye-ozer-1.jpg"
+  ],
+  "golok-khenchen-munsel": [
+    "images/optimized/golok-khenchen-munsel-1.jpg"
+  ],
   "guru-jober": [
     "images/optimized/guru-jober-1.jpg"
+  ],
+  "gyakob-tulku-kunzang": [
+    "images/optimized/gyakob-tulku-kunzang-1.jpg"
   ],
   "gyalwa-yungton-dorje": [
     "images/optimized/gyalwa-yungton-dorje-1.jpg"
   ],
+  "jamgon-kongtrul-yonten-gyatso-lodro-taye": [
+    "images/optimized/jamgon-kongtrul-yonten-gyatso-lodro-taye-1.jpg"
+  ],
+  "jamyang-khyentse-chokyi-lodro": [
+    "images/optimized/jamyang-khyentse-chokyi-lodro-1.jpg"
+  ],
+  "jamyang-khyentse-wangpo": [
+    "images/optimized/jamyang-khyentse-wangpo-1.jpg"
+  ],
+  "jedrung-trinle-jampa-jungne": [
+    "images/optimized/jedrung-trinle-jampa-jungne-1.jpg"
+  ],
+  "jetsunma-trinle-chodron": [
+    "images/optimized/jetsunma-trinle-chodron-1.jpg"
+  ],
+  "jigme-gyalwai-nyugu": [
+    "images/optimized/jigme-gyalwai-nyugu-1.jpg"
+  ],
+  "jigme-khyentse-rinpoche": [
+    "images/optimized/jigme-khyentse-rinpoche-1.jpg"
+  ],
   "jnanasutra": [
     "images/optimized/jnanasutra-1.jpg"
   ],
+  "kangyur-rinpoche-longchen-yeshe-dorje": [
+    "images/optimized/kangyur-rinpoche-longchen-yeshe-dorje-1.jpg"
+  ],
   "karmapa-rangjung-dorje": [
     "images/optimized/karmapa-rangjung-dorje-1.jpg"
+  ],
+  "katokpa-gyalse-rinpoche-sonam-detsen": [
+    "images/optimized/katokpa-gyalse-rinpoche-sonam-detsen-1.jpg"
+  ],
+  "khen-chokhyap": [
+    "images/optimized/khen-chokhyap-1.jpg"
+  ],
+  "khen-ngawang-palzang-yangsi-rinpoche-tekchok-tenpai-gyaltsen": [
+    "images/optimized/khen-ngawang-palzang-yangsi-rinpoche-tekchok-tenpai-gyaltsen-1.jpg"
+  ],
+  "khen-rinpoche-lekshe-jorden": [
+    "images/optimized/khen-rinpoche-lekshe-jorden-1.jpg"
+  ],
+  "khen-rinpoche-pema-tsewang-lhundrup-khenpo-petse": [
+    "images/optimized/khen-rinpoche-pema-tsewang-lhundrup-khenpo-petse-1.jpg"
+  ],
+  "khenchen-gonpo": [
+    "images/optimized/khenchen-gonpo-1.jpg"
+  ],
+  "khenchen-jampal-dewai-nyima": [
+    "images/optimized/khenchen-jampal-dewai-nyima-1.jpg"
+  ],
+  "khenchen-kunzang-palden-chodrak": [
+    "images/optimized/khenchen-kunzang-palden-chodrak-1.jpg"
+  ],
+  "khenchen-ngawang-palzangpo-khenpo-ngaga": [
+    "images/optimized/khenchen-ngawang-palzangpo-khenpo-ngaga-1.jpg"
+  ],
+  "khenpo-tsondru": [
+    "images/optimized/khenpo-tsondru-1.jpg"
+  ],
+  "khunu-rinpoche-tendzin-gyaltsen": [
+    "images/optimized/khunu-rinpoche-tendzin-gyaltsen-1.jpg"
   ],
   "king-trisong-detsen": [
     "images/optimized/king-trisong-detsen-1.jpg"
@@ -39,8 +168,20 @@
   "kumararja": [
     "images/optimized/kumararja-1.jpg"
   ],
+  "kunzang-mingyur-paldron": [
+    "images/optimized/kunzang-mingyur-paldron-1.jpg"
+  ],
+  "lhatsun-namkha-jigme": [
+    "images/optimized/lhatsun-namkha-jigme-1.jpg"
+  ],
   "longchenpa-drime-ozer": [
     "images/optimized/longchenpa-drime-ozer-1.jpg"
+  ],
+  "lopon-rinpoche-lama-sonam-zangpo": [
+    "images/optimized/lopon-rinpoche-lama-sonam-zangpo-1.jpg"
+  ],
+  "lotsawa-chopal-gyatso-lochen-dharma-shri": [
+    "images/optimized/lotsawa-chopal-gyatso-lochen-dharma-shri-1.jpg"
   ],
   "manjusrimitra": [
     "images/optimized/manjusrimitra-1.jpg"
@@ -51,26 +192,68 @@
   "melong-dorje": [
     "images/optimized/melong-dorje-1.jpg"
   ],
+  "mewa-khenchen-tupten": [
+    "images/optimized/mewa-khenchen-tupten-1.jpg"
+  ],
+  "minling-trichen-kunzang-wangyal": [
+    "images/optimized/minling-trichen-kunzang-wangyal-1.jpg"
+  ],
+  "mipam-jamyang-namgyal-gyatso": [
+    "images/optimized/mipam-jamyang-namgyal-gyatso-1.jpg"
+  ],
+  "neten-chokling": [
+    "images/optimized/neten-chokling-1.jpg"
+  ],
   "nyang-tingzin-zanpo": [
     "images/optimized/nyang-tingzin-zanpo-1.jpg"
   ],
   "nyima-bum": [
     "images/optimized/nyima-bum-1.jpg"
   ],
+  "nyoshul-khenpo-jamyang-dorje": [
+    "images/optimized/nyoshul-khenpo-jamyang-dorje-1.jpg"
+  ],
+  "orgyen-tobgyal-rinpoche": [
+    "images/optimized/orgyen-tobgyal-rinpoche-1.jpg"
+  ],
   "padmasambhava": [
     "images/optimized/padmasambhava-1.jpg"
+  ],
+  "palpung-tai-situ-rinpoche-pema-wangchok-gyalpo": [
+    "images/optimized/palpung-tai-situ-rinpoche-pema-wangchok-gyalpo-1.jpg"
+  ],
+  "paltrul-orgyen-jigme-chokyi-wangpo": [
+    "images/optimized/paltrul-orgyen-jigme-chokyi-wangpo-1.jpg"
   ],
   "pema-ledreltsel-tsultrim-dorje": [
     "images/optimized/pema-ledreltsel-tsultrim-dorje-1.jpg"
   ],
+  "polu-khen-rinpoche-dorje": [
+    "images/optimized/polu-khen-rinpoche-dorje-1.jpg"
+  ],
   "princess-lhacam-pema-sel": [
     "images/optimized/princess-lhacam-pema-sel-1.jpg"
+  ],
+  "rahor-khenchen-tupten": [
+    "images/optimized/rahor-khenchen-tupten-1.jpg"
+  ],
+  "rigdzin-jigme-lingpa": [
+    "images/optimized/rigdzin-jigme-lingpa-1.jpg"
   ],
   "rigzin-godem": [
     "images/optimized/rigzin-godem-1.jpg"
   ],
+  "ritrul-rigdzin-chogyal-aka-drubwang-adzin-rinpoche": [
+    "images/optimized/ritrul-rigdzin-chogyal-aka-drubwang-adzin-rinpoche-1.jpg"
+  ],
+  "sakya-khen-rinpoche-appey": [
+    "images/optimized/sakya-khen-rinpoche-appey-1.jpg"
+  ],
   "samantabhadra-samantabhadri": [
     "images/optimized/samantabhadra-samantabhadri-1.jpg"
+  ],
+  "serta-rinpoche": [
+    "images/optimized/serta-rinpoche-1.jpg"
   ],
   "sri-simha": [
     "images/optimized/sri-simha-1.jpg"
@@ -81,8 +264,32 @@
   "sublime-wisdom-emanation-vajradhara": [
     "images/optimized/sublime-wisdom-emanation-vajradhara-1.jpg"
   ],
+  "sungtrul-kunzang-nyima": [
+    "images/optimized/sungtrul-kunzang-nyima-1.jpg"
+  ],
+  "taklung-tsetrul-rinpoche": [
+    "images/optimized/taklung-tsetrul-rinpoche-1.jpg"
+  ],
+  "terchen-gyurme-dorje": [
+    "images/optimized/terchen-gyurme-dorje-1.jpg"
+  ],
+  "terchen-lerab-lingpa-terton-sogyal": [
+    "images/optimized/terchen-lerab-lingpa-terton-sogyal-1.jpg"
+  ],
+  "terchen-orgyen-chokgyur-lingpa": [
+    "images/optimized/terchen-orgyen-chokgyur-lingpa-1.jpg"
+  ],
+  "tokden-sakya-sri": [
+    "images/optimized/tokden-sakya-sri-1.jpg"
+  ],
+  "tromge-choktrul-arik-rinpoche": [
+    "images/optimized/tromge-choktrul-arik-rinpoche-1.jpg"
+  ],
   "trulzhik-sengge-gyabpa": [
     "images/optimized/trulzhik-sengge-gyabpa-1.jpg"
+  ],
+  "tso-patrul-rinpoche": [
+    "images/optimized/tso-patrul-rinpoche-1.jpg"
   ],
   "vairocana": [
     "images/optimized/vairocana-1.jpg"
@@ -99,13 +306,25 @@
   "vimalamitra": [
     "images/optimized/vimalamitra-1.jpg"
   ],
+  "washul-mewai-khenchen-tsewang-rigdzin": [
+    "images/optimized/washul-mewai-khenchen-tsewang-rigdzin-1.jpg"
+  ],
   "yeshe-tsogyel": [
     "images/optimized/yeshe-tsogyel-1.jpg"
   ],
   "yudra-nyingpo": [
     "images/optimized/yudra-nyingpo-1.jpg"
   ],
+  "yukhok-jadralwa-choying-rangdrol": [
+    "images/optimized/yukhok-jadralwa-choying-rangdrol-1.jpg"
+  ],
+  "zhabkar-tsokdruk-rangdrol": [
+    "images/optimized/zhabkar-tsokdruk-rangdrol-1.jpg"
+  ],
   "zhangton-tashi-dorje": [
     "images/optimized/zhangton-tashi-dorje-1.jpg"
+  ],
+  "zhenga-dorje-chang-zhenpen-chokyi-nangwa": [
+    "images/optimized/zhenga-dorje-chang-zhenpen-chokyi-nangwa-1.jpg"
   ]
 }

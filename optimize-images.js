@@ -6,11 +6,11 @@ const sharp = require('sharp');
 
 // Configuration
 const CONFIG = {
-    inputDir: './images',
-    outputDir: './images/optimized',
-    backupDir: './images/originals',
-    maxSize: 300,          // Max width/height in pixels
-    quality: 80,           // WebP quality (80% is good balance)
+    inputDir: process.env.INPUT_DIR || './images',
+    outputDir: process.env.OUTPUT_DIR || './images/optimized',
+    backupDir: process.env.BACKUP_DIR || './images/originals',
+    maxSize: 600,          // Max width/height in pixels (increased from 300 for ~100KB target)
+    quality: 85,           // JPEG quality (increased from 80 for better quality)
     format: 'jpeg',       // Output format
     supportedFormats: ['.jpg', '.jpeg', '.png', '.webp', '.tiff', '.bmp']
 };
