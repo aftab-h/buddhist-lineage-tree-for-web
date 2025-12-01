@@ -1515,6 +1515,7 @@
         let tracedLinks = new Set();
         let tracedLinksUpstream = new Set();  // Track upstream links separately
         let tracedLinksDownstream = new Set(); // Track downstream links separately
+        let animatingUpstreamLinks = new Set(); // Track upstream links currently animating (tick() should skip these)
         let tracebackTimeouts = []; // Track animation timeouts
         let globalYScale = null; // Global Y-scale for linear mode (calculated once)
 
@@ -2157,12 +2158,20 @@
         }
 
         function tick() {
-            // Update link positions
-            linkElements
-                .attr('x1', d => d.source.x)
-                .attr('y1', d => d.source.y)
-                .attr('x2', d => d.target.x)
-                .attr('y2', d => d.target.y);
+            // Update link positions (skip links currently animating upstream - they have reversed coordinates)
+            linkElements.each(function(d) {
+                // Skip upstream links that are currently animating
+                if (animatingUpstreamLinks.has(d)) {
+                    return; // Don't update coordinates - animation controls them
+                }
+
+                // Normal coordinate update for all other links
+                d3.select(this)
+                    .attr('x1', d.source.x)
+                    .attr('y1', d.source.y)
+                    .attr('x2', d.target.x)
+                    .attr('y2', d.target.y);
+            });
 
             // Update node positions
             nodeElements
@@ -2928,7 +2937,7 @@
 
             // Animate each distance level - all nodes at same distance animate in parallel
             sortedDistances.forEach((distance, levelIndex) => {
-                const levelDelay = levelIndex * 100; // 100ms delay between levels (faster than before!)
+                const levelDelay = levelIndex * 200; // 200ms delay between levels for smooth cascade
                 const nodesAtThisLevel = nodesByDistance.get(distance);
 
                 // All nodes at this distance level animate simultaneously
@@ -3025,18 +3034,19 @@
                                     .style('opacity', '1');
 
                                 // ANIMATION STRATEGY:
-                                // - Downstream (blue): Animate stroke-dashoffset from lineLength→0 (reveals downward, source→target)
-                                // - Upstream (yellow): Animate stroke-dashoffset from -lineLength→0 (reveals upward, target→source)
+                                // - Downstream (blue): Line drawn source→target, animate lineLength→0 (reveals from source downward)
+                                // - Upstream (yellow): REVERSE coordinates to target→source, animate lineLength→0 (reveals from target upward)
 
                                 if (direction === 'downstream') {
-                                    // Downstream: animate line drawing from source to target (downward) - standard approach
+                                    // Downstream: Animate line drawing from source to target (downward)
+                                    // Line is already drawn correctly (source→target), just animate dashoffset
                                     linkElement
                                         .style('stroke-dasharray', lineLength)
-                                        .style('stroke-dashoffset', lineLength)
+                                        .style('stroke-dashoffset', lineLength)  // Start hidden
                                         .transition()
-                                        .duration(200)
+                                        .duration(300)  // Faster but still visible
                                         .ease(d3.easeLinear)
-                                        .style('stroke-dashoffset', 0)
+                                        .style('stroke-dashoffset', 0)           // Reveal line
                                         .on('end', function() {
                                             // Restore proper dash pattern after animation
                                             const dashPatterns = {
@@ -3047,23 +3057,48 @@
                                             d3.select(this).style('stroke-dasharray', dashPatterns[linkData.type] || 'none');
                                         });
                                 } else {
-                                    // Upstream: Use negative stroke-dashoffset to reverse animation direction
-                                    // This reveals the line from end to start (upward flow)
+                                    // Upstream: Reverse line coordinates so it flows FROM clicked node UPWARD to ancestor
+                                    // Original line: source (ancestor) → target (clicked node) = downward
+                                    // Reversed line: target (clicked node) → source (ancestor) = upward
+
+                                    const sourceX = linkData.source.x;
+                                    const sourceY = linkData.source.y;
+                                    const targetX = linkData.target.x;
+                                    const targetY = linkData.target.y;
+
+                                    // Add to animating set so tick() doesn't override our coordinates
+                                    animatingUpstreamLinks.add(linkData);
+
+                                    // REVERSE: Draw line from target→source (clicked node→ancestor)
                                     linkElement
+                                        .attr('x1', targetX)  // Start at clicked node (target)
+                                        .attr('y1', targetY)
+                                        .attr('x2', sourceX)  // End at ancestor (source)
+                                        .attr('y2', sourceY)
                                         .style('stroke-dasharray', lineLength)
-                                        .style('stroke-dashoffset', -lineLength)  // Negative = reverse direction
+                                        .style('stroke-dashoffset', lineLength)  // Start hidden
                                         .transition()
-                                        .duration(200)
+                                        .duration(300)  // Faster but still visible
                                         .ease(d3.easeLinear)
-                                        .style('stroke-dashoffset', 0)            // Animate to visible
+                                        .style('stroke-dashoffset', 0)           // Reveal upward
                                         .on('end', function() {
-                                            // Restore proper dash pattern for relationship type
+                                            // Restore proper dash pattern
                                             const dashPatterns = {
                                                 'teaching': 'none',
                                                 'incarnation': '4,4',
                                                 'family': '10,6'
                                             };
                                             d3.select(this).style('stroke-dasharray', dashPatterns[linkData.type] || 'none');
+
+                                            // Restore normal coordinates (source→target)
+                                            d3.select(this)
+                                                .attr('x1', sourceX)
+                                                .attr('y1', sourceY)
+                                                .attr('x2', targetX)
+                                                .attr('y2', targetY);
+
+                                            // Remove from animating set - tick() can update it again
+                                            animatingUpstreamLinks.delete(linkData);
                                         });
                                 }
                             }
@@ -3090,10 +3125,20 @@
             nodeElements.interrupt();
             linkElements.interrupt();
 
+            // Restore coordinates for any upstream links that are still animating
+            animatingUpstreamLinks.forEach(linkData => {
+                linkElements.filter(d => d === linkData)
+                    .attr('x1', linkData.source.x)
+                    .attr('y1', linkData.source.y)
+                    .attr('x2', linkData.target.x)
+                    .attr('y2', linkData.target.y);
+            });
+
             tracedNodes.clear();
             tracedLinks.clear();
             tracedLinksUpstream.clear();
             tracedLinksDownstream.clear();
+            animatingUpstreamLinks.clear(); // Clear animating links set
 
             // Remove all traceback classes and reset styles
             nodeElements
