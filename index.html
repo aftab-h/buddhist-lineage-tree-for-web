@@ -3023,13 +3023,13 @@
                                     .style('stroke', linkStrokeColor)
                                     .style('stroke-width', '4px')
                                     .style('opacity', '1')
-                                    // Same animation for both directions
+                                    // Direction-specific animation: upstream flows backward (target→source), downstream flows forward (source→target)
                                     .style('stroke-dasharray', lineLength)
-                                    .style('stroke-dashoffset', lineLength)
+                                    .style('stroke-dashoffset', direction === 'upstream' ? 0 : lineLength)
                                     .transition()
                                     .duration(200)
                                     .ease(d3.easeLinear)
-                                    .style('stroke-dashoffset', 0)
+                                    .style('stroke-dashoffset', direction === 'upstream' ? -lineLength : 0)
                                     .on('end', function() {
                                         // Restore proper dash pattern after animation
                                         const dashPatterns = {
