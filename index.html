@@ -3022,27 +3022,48 @@
                                     .classed('downstream', direction === 'downstream')
                                     .style('stroke', linkStrokeColor)
                                     .style('stroke-width', '4px')
-                                    .style('opacity', '1')
-                                    // Direction-specific animation: upstream flows backward (target→source), downstream flows forward (source→target)
-                                    .style('stroke-dasharray', lineLength)
-                                    .style('stroke-dashoffset', direction === 'upstream' ? 0 : lineLength)
-                                    .transition()
-                                    .duration(200)
-                                    .ease(d3.easeLinear)
-                                    .style('stroke-dashoffset', direction === 'upstream' ? -lineLength : 0)
-                                    .on('end', function() {
-                                        // Restore proper dash pattern after animation
-                                        const dashPatterns = {
-                                            'teaching': 'none',
-                                            'incarnation': '4,4',  // Includes emanation (consolidated)
-                                            'family': '10,6'
-                                        };
-                                        d3.select(this).style('stroke-dasharray', dashPatterns[linkData.type] || 'none');
-                                    });
+                                    .style('opacity', '1');
 
-                                // Add flowing particle effect with matching color (reduced frequency for performance)
-                                // Only create particles for ~40% of links to reduce lag
-                                if (Math.random() < 0.4) {
+                                // ANIMATION STRATEGY:
+                                // - Downstream (blue): Use stroke-dashoffset animation (works perfectly)
+                                // - Upstream (yellow): Skip dashoffset animation, use only particles
+                                //   (Lines point downward from source→target, dashoffset can't flow upward reliably)
+
+                                if (direction === 'downstream') {
+                                    // Downstream: animate line drawing from source to target (downward)
+                                    linkElement
+                                        .style('stroke-dasharray', lineLength)
+                                        .style('stroke-dashoffset', lineLength)
+                                        .transition()
+                                        .duration(200)
+                                        .ease(d3.easeLinear)
+                                        .style('stroke-dashoffset', 0)
+                                        .on('end', function() {
+                                            // Restore proper dash pattern after animation
+                                            const dashPatterns = {
+                                                'teaching': 'none',
+                                                'incarnation': '4,4',
+                                                'family': '10,6'
+                                            };
+                                            d3.select(this).style('stroke-dasharray', dashPatterns[linkData.type] || 'none');
+                                        });
+                                } else {
+                                    // Upstream: just set the dash pattern immediately (no animation)
+                                    // Rely on flowing particles for directional flow indication
+                                    const dashPatterns = {
+                                        'teaching': 'none',
+                                        'incarnation': '4,4',
+                                        'family': '10,6'
+                                    };
+                                    linkElement.style('stroke-dasharray', dashPatterns[linkData.type] || 'none');
+                                }
+
+                                // Add flowing particle effect with matching color
+                                // Upstream: Higher particle frequency (80%) since we rely on them for directional flow
+                                // Downstream: Lower frequency (40%) since stroke-dashoffset animation shows direction
+                                const particleFrequency = direction === 'upstream' ? 0.8 : 0.4;
+
+                                if (Math.random() < particleFrequency) {
                                     const particleColor = linkStrokeColor;
                                     const particleTimeoutId = setTimeout(() => {
                                         if (!tracebackActive) return;
