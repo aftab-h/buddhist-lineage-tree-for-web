@@ -1311,6 +1311,12 @@
             </div>
 
             <div class="control-group">
+                <label>Layout Mode</label>
+                <button onclick="setLayoutMode('circular')" class="active" id="circular-btn">Circular</button>
+                <button onclick="setLayoutMode('linear')" id="linear-btn">Linear</button>
+            </div>
+
+            <div class="control-group">
                 <label>Filter by Transmission</label>
                 <button onclick="filterTransmission('all')" class="active">All</button>
                 <button onclick="filterTransmission('Mind to Mind')">Mind</button>
@@ -1324,12 +1330,6 @@
                 <button onclick="filterLineage('Vairocana')">Vairocana</button>
                 <button onclick="filterLineage('Vimalamitra')">Vimalamitra</button>
                 <button onclick="filterLineage('Padmasambhava')">Padmasambhava</button>
-            </div>
-
-            <div class="control-group">
-                <label>Layout Mode</label>
-                <button onclick="setLayoutMode('circular')" class="active" id="circular-btn">Circular</button>
-                <button onclick="setLayoutMode('linear')" id="linear-btn">Linear</button>
             </div>
 
             <div class="control-group">
@@ -2433,7 +2433,7 @@
             currentFilter = mode;
 
             // Update button states
-            document.querySelectorAll('.controls .control-group:nth-child(3) button').forEach(btn => {
+            document.querySelectorAll('.controls .control-group:nth-child(4) button').forEach(btn => {
                 btn.classList.remove('active');
             });
             event.target.classList.add('active');
@@ -2445,7 +2445,7 @@
             currentLineageFilter = lineage;
 
             // Update button states
-            document.querySelectorAll('.controls .control-group:nth-child(4) button').forEach(btn => {
+            document.querySelectorAll('.controls .control-group:nth-child(5) button').forEach(btn => {
                 btn.classList.remove('active');
             });
             event.target.classList.add('active');
@@ -2458,7 +2458,7 @@
                 layoutMode = mode;
 
                 // Update button states
-                document.querySelectorAll('.controls .control-group:nth-child(5) button').forEach(btn => {
+                document.querySelectorAll('.controls .control-group:nth-child(3) button').forEach(btn => {
                     btn.classList.remove('active');
                 });
                 document.getElementById(mode === 'linear' ? 'linear-btn' : 'circular-btn').classList.add('active');
@@ -2651,34 +2651,34 @@
 
             // Layout Force label stays as is (it's a technical term)
 
-            const transmissionLabel = document.querySelector('.controls .control-group:nth-child(3) label');
+            const layoutLabel = document.querySelector('.controls .control-group:nth-child(3) label');
+            if (layoutLabel) layoutLabel.textContent = t.layoutMode;
+
+            const transmissionLabel = document.querySelector('.controls .control-group:nth-child(4) label');
             if (transmissionLabel) transmissionLabel.textContent = t.filterTransmission;
 
-            const lineageLabel = document.querySelector('.controls .control-group:nth-child(4) label');
+            const lineageLabel = document.querySelector('.controls .control-group:nth-child(5) label');
             if (lineageLabel) lineageLabel.textContent = t.filterLineage;
-
-            const layoutLabel = document.querySelector('.controls .control-group:nth-child(5) label');
-            if (layoutLabel) layoutLabel.textContent = t.layoutMode;
 
             const languageLabel = document.querySelector('.controls .control-group:nth-child(6) label');
             if (languageLabel) languageLabel.textContent = t.language;
 
+            // Update layout mode buttons
+            const layoutBtns = document.querySelectorAll('.controls .control-group:nth-child(3) button');
+            if (layoutBtns[0]) layoutBtns[0].textContent = t.circular;
+            if (layoutBtns[1]) layoutBtns[1].textContent = t.linear;
+
             // Update transmission filter buttons
-            const transmissionBtns = document.querySelectorAll('.controls .control-group:nth-child(3) button');
+            const transmissionBtns = document.querySelectorAll('.controls .control-group:nth-child(4) button');
             if (transmissionBtns[0]) transmissionBtns[0].textContent = t.all;
             if (transmissionBtns[1]) transmissionBtns[1].textContent = t.mind;
             if (transmissionBtns[2]) transmissionBtns[2].textContent = t.symbolic;
             if (transmissionBtns[3]) transmissionBtns[3].textContent = t.aural;
 
             // Update lineage filter buttons
-            const lineageBtns = document.querySelectorAll('.controls .control-group:nth-child(4) button');
+            const lineageBtns = document.querySelectorAll('.controls .control-group:nth-child(5) button');
             if (lineageBtns[0]) lineageBtns[0].textContent = t.all;
             // Keep lineage names as they are (proper names)
-
-            // Update layout mode buttons
-            const layoutBtns = document.querySelectorAll('.controls .control-group:nth-child(5) button');
-            if (layoutBtns[0]) layoutBtns[0].textContent = t.circular;
-            if (layoutBtns[1]) layoutBtns[1].textContent = t.linear;
 
             // Update language dropdown options
             const langSelect = document.getElementById('language-select');
